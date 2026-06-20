@@ -9,6 +9,8 @@ const { formatListen, averageLevel, trayState, fakeBar } = require('../src/utils
 const src  = (f) => fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8');
 const main    = src('main.js');
 const preload = src('preload.js');
+const stations = src('stations.js');
+const renderer = src('renderer.js');
 
 // ── formatListen ─────────────────────────────────────────────
 test('formatListen: 0 ms', () => assert.equal(formatListen(0), '0 min'));
@@ -99,6 +101,88 @@ test('IPC: alle preload-invoke-Kanäle haben ipcMain.handle in main.js', () => {
   }
 });
 
+test('Security: BrowserWindow verwendet kein webSecurity: false', () => {
+  assert.ok(!/webSecurity\s*:\s*false/.test(main), 'main.js should not disable Electron webSecurity');
+});
+
+test('Window: Hauptfenster bleibt feste 400x400 UI', () => {
+  assert.ok(main.includes('full: { width: 400, height: 400 }'), 'Full-View-Größe muss fest definiert sein');
+  assert.ok(main.includes('resizable: false'), 'BrowserWindow sollte nicht frei skalierbar sein');
+  assert.ok(main.includes('maxWidth: startSize.width, maxHeight: startSize.height'), 'Fenster-Maximalgröße fehlt');
+  assert.ok(main.includes('fullWidth = SIZES.full.width'), 'gespeicherte Breite darf die feste UI nicht überschreiben');
+  assert.ok(!main.includes('mainWindow.getSize()'), 'Resize-Events dürfen keine freie Full-View-Größe persistieren');
+});
+
+test('Stations: NDR 2 verwendet keine bekannten toten URLs', () => {
+  assert.ok(!stations.includes('ndr-ndr2-niedersachsen.icecast.ndr.de'), 'NDR 2 stream host no longer resolves');
+  assert.ok(!stations.includes('NDR_2_logo_2015.png'), 'NDR 2 icon URL returns 404');
+});
+
+test('Stations: feste Firebase-Konfiguration ist nicht mehr Teil des Runtime-Quelltexts', () => {
+  assert.ok(!fs.existsSync(path.join(__dirname, '..', 'src', 'firebase-config.js')));
+  assert.ok(!stations.includes('firebase-config'));
+  assert.ok(!stations.includes('databaseURL'));
+});
+
+test('Stations: loadStations fällt bei API-Fehlern auf DEFAULT_STATIONS zurück', () => {
+  assert.ok(stations.includes('const DEFAULT_STATIONS = ['), 'DEFAULT_STATIONS fehlen');
+  assert.ok(stations.includes('catch (err)') && stations.includes('Failed to fetch stations from Radio Browser'), 'API-Fehler werden nicht abgefangen');
+  assert.ok(stations.includes('mergeStations(DEFAULT_STATIONS, apiStations)'), 'DEFAULT_STATIONS werden nicht mit API/Cache gemerged');
+  assert.ok(stations.includes('return merged.map(enrichStationIcon)'), 'Stationen werden vor Rückgabe normalisiert');
+});
+
+test('Renderer: selectStation persistiert Auswahl, synchronisiert main und startet gestoppten Player', () => {
+  const match = renderer.match(/function selectStation\(station\) \{([\s\S]*?)\n\}/);
+  assert.ok(match, 'selectStation nicht gefunden');
+  const body = match[1];
+  assert.ok(body.includes("localStorage.setItem('wl.lastStationId', station.id)"), 'letzte Station wird nicht persistiert');
+  assert.ok(body.includes('api.selectStation(station)'), 'main process wird nicht synchronisiert');
+  assert.ok(body.includes('if (wasPlaying)') && body.includes('stopPlay();') && body.includes('startPlay();'), 'laufender Stream wird beim Stationswechsel nicht neu gestartet');
+  assert.ok(body.includes('api.playPause(true)'), 'gestoppter Player startet bei Stationsauswahl nicht');
+});
+
+test('Renderer: reconnect meldet reconnecting und setzt bei Erfolg wieder live/stopped', () => {
+  assert.ok(renderer.includes('function scheduleReconnect()'), 'scheduleReconnect fehlt');
+  assert.ok(renderer.includes('if (reconnectTimer || !playing) return;'), 'Reconnect darf nicht laufen, wenn der Player gestoppt ist');
+  assert.ok(renderer.includes('setReconnecting(true)'), 'Reconnect-State wird nicht gesetzt');
+  assert.ok(renderer.includes('reconnectAttempt++'), 'Reconnect-Versuche werden nicht hochgezählt');
+  assert.ok(renderer.includes("if (playing) reportConnectionState(muted ? 'muted' : 'live')"), 'Live-State wird nach Erfolg nicht gemeldet');
+  assert.ok(renderer.includes("reportConnectionState('stopped')"), 'Stopped-State wird beim Stop nicht gemeldet');
+});
+
+test('Renderer: Sender-Normalisierung nutzt stationGain zwischen analyser und limiter', () => {
+  assert.ok(renderer.includes('function stationGainKey(id)'), 'stationGainKey fehlt');
+  assert.ok(renderer.includes('const STATION_GAIN_MIN_DB = -9'), 'untere dB-Grenze fehlt');
+  assert.ok(renderer.includes('const STATION_GAIN_MAX_DB = 9'), 'obere dB-Grenze fehlt');
+  assert.ok(renderer.includes('stationGain = audioCtx.createGain()'), 'GainNode wird nicht erstellt');
+  assert.ok(renderer.includes('analyser.connect(stationGain)'), 'stationGain hängt nicht nach dem analyser');
+  assert.ok(renderer.includes('stationGain.connect(limiter)'), 'stationGain hängt nicht vor dem limiter');
+  assert.ok(renderer.includes('Math.pow(10, db / 20)'), 'dB werden nicht in linearen Gain konvertiert');
+});
+
+test('Renderer: Sender-Trim ist pro Station bedienbar und persistiert', () => {
+  const html = src('index.html');
+  assert.ok(html.includes('id="station-gain-pill"'), 'Trim-Pill fehlt');
+  assert.ok(!html.includes('id="btn-station-gain-down"'), 'leiser Button sollte nicht permanent sichtbar sein');
+  assert.ok(!html.includes('id="btn-station-gain-up"'), 'lauter Button sollte nicht permanent sichtbar sein');
+  assert.ok(renderer.includes("localStorage.setItem(stationGainKey(activeStation.id), String(next))"), 'Trim wird nicht persistiert');
+  assert.ok(renderer.includes("localStorage.removeItem(stationGainKey(activeStation.id))"), '0 dB Trim wird nicht zurückgesetzt');
+  assert.ok(renderer.includes('function resetStationGain()'), 'Reset-Funktion fehlt');
+  assert.ok(renderer.includes("safeAddListener('station-gain-pill', 'click', resetStationGain)"), 'Trim-Pill ist nicht verdrahtet');
+  assert.ok(!renderer.includes("case 'BracketLeft'"), 'Klammer-Shortcut sollte nicht verwendet werden');
+  assert.ok(!renderer.includes("case 'BracketRight'"), 'Klammer-Shortcut sollte nicht verwendet werden');
+  assert.ok(renderer.includes("case 'ArrowUp'") && renderer.includes("case 'ArrowDown'"), 'Pfeiltasten-Handling fehlt');
+  assert.ok(renderer.includes('if (e.altKey) adjustStationGain(STATION_GAIN_STEP_DB)'), 'Alt+Pfeil hoch für Sender lauter fehlt');
+  assert.ok(renderer.includes('if (e.altKey) adjustStationGain(-STATION_GAIN_STEP_DB)'), 'Alt+Pfeil runter für Sender leiser fehlt');
+});
+
+test('UI: Status-Badges bleiben einzeilig', () => {
+  const html = src('index.html');
+  assert.ok(/\.listen-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(html), 'Listen-Badge darf nicht umbrechen');
+  assert.ok(/\.live-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(html), 'Live-Badge darf nicht umbrechen');
+  assert.ok(/\.sleep-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(html), 'Sleep-Badge darf nicht umbrechen');
+});
+
 // ── window-state ─────────────────────────────────────────────
 const windowState = require('../src/window-state.js');
 
@@ -178,7 +262,6 @@ test('windowState.clear: kein Fehler wenn Datei nicht existiert', () => {
 
 // ── RECONNECT_DELAYS ─────────────────────────────────────────
 test('RECONNECT_DELAYS: exponentieller Backoff, endet bei 30s', () => {
-  const renderer = src('renderer.js');
   const match = renderer.match(/RECONNECT_DELAYS\s*=\s*\[([^\]]+)\]/);
   assert.ok(match, 'RECONNECT_DELAYS nicht gefunden');
   const delays = match[1].split(',').map(s => parseInt(s.trim(), 10));

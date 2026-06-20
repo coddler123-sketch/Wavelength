@@ -175,25 +175,23 @@ function snapMiniToNearestEdge(force = false) {
 
 function createWindow() {
   const saved = loadWindowState();
-  if (saved?.width) fullWidth = saved.width;
-  if (saved?.height) fullHeight = saved.height;
+  fullWidth = SIZES.full.width;
+  fullHeight = SIZES.full.height;
   if (saved?.isMini) isMini = true;
   if (saved && typeof saved.dockMini === 'boolean') dockMini = saved.dockMini;
 
   const startSize = isMini ? SIZES.mini : { width: fullWidth, height: fullHeight };
-  const minW = isMini ? SIZES.mini.width : 350;
-  const minH = isMini ? SIZES.mini.height : 350;
   mainWindow = new BrowserWindow({
     width: startSize.width, height: startSize.height,
     x: saved?.x, y: saved?.y,
-    frame: false, transparent: false, resizable: !isMini, maximizable: false,
-    minWidth: minW, minHeight: minH,
+    frame: false, transparent: false, resizable: false, maximizable: false,
+    minWidth: startSize.width, minHeight: startSize.height,
+    maxWidth: startSize.width, maxHeight: startSize.height,
     skipTaskbar: true, alwaysOnTop: isPinned, show: false,
     backgroundColor: BG_COLOR,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true, nodeIntegration: false,
-      webSecurity: false
+      contextIsolation: true, nodeIntegration: false
     },
     icon: getIconPath('icon.ico')
   });
@@ -212,14 +210,7 @@ function createWindow() {
   });
 
   mainWindow.on('move',  scheduleSave);
-  mainWindow.on('resize', () => {
-    if (!isMini) {
-      const [w, h] = mainWindow.getSize();
-      fullWidth = w;
-      fullHeight = h;
-    }
-    scheduleSave();
-  });
+  mainWindow.on('resize', scheduleSave);
   mainWindow.on('close', (e) => { e.preventDefault(); saveWindowState(); mainWindow.hide(); });
   mainWindow.on('hide',  () => { updateTrayMenu(); mainWindow?.webContents.send('window-visible', false); });
   mainWindow.on('show',  () => { updateTrayMenu(); mainWindow?.webContents.send('window-visible', true);  });
@@ -552,11 +543,13 @@ function toggleMini() {
 
   if (isMini) {
     mainWindow.setMinimumSize(SIZES.mini.width, SIZES.mini.height);
+    mainWindow.setMaximumSize(SIZES.mini.width, SIZES.mini.height);
   } else {
-    mainWindow.setMinimumSize(350, 350);
+    mainWindow.setMinimumSize(SIZES.full.width, SIZES.full.height);
+    mainWindow.setMaximumSize(SIZES.full.width, SIZES.full.height);
   }
 
-  mainWindow.setResizable(true);
+  mainWindow.setResizable(false);
 
   if (isMini && dockMini) {
     const display = screen.getDisplayMatching({ x: newX, y: newY, width: newW, height: newH }).workArea;
@@ -577,11 +570,7 @@ function toggleMini() {
 
   mainWindow.setBounds({ x: newX, y: newY, width: newW, height: newH }, true);
 
-  if (isMini) {
-    mainWindow.setResizable(false);
-  } else {
-    mainWindow.setResizable(true);
-  }
+  mainWindow.setResizable(false);
   sendStateToRenderer();
   updateTrayMenu();
 }
@@ -645,8 +634,8 @@ function showFirstRunHint() {
 function resetWindowPosition() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   windowState.clear(STATE_FILE, log);
-  fullWidth = 400;
-  fullHeight = 400;
+  fullWidth = SIZES.full.width;
+  fullHeight = SIZES.full.height;
   const size = isMini ? SIZES.mini : { width: fullWidth, height: fullHeight };
   const display = screen.getPrimaryDisplay().workArea;
   const x = Math.round(display.x + (display.width - size.width) / 2);

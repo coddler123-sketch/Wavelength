@@ -9,13 +9,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #0a0915;
-  --surface: #100f24;
-  --surface2: #181734;
-  --border: rgba(255,255,255,0.06);
-  --accent: #00f0ff;
-  --accent2: #0072ff;
-  --accent3: #7000ff;
+  --bg: #090a10;
+  --surface: #10131d;
+  --surface2: #171b27;
+  --border: rgba(255,255,255,0.07);
+  --accent: #5ee8ef;
+  --accent2: #2f7df6;
+  --accent3: #6652d9;
   --audio-level: 0;
   --audio-glow: 0.08;
   --audio-glow-soft: 0.04;
@@ -23,7 +23,8 @@
   --audio-logo-blur: 16px;
   --audio-button-blur: 10px;
   --text: #f0ece4;
-  --text-dim: rgba(240,236,228,0.42);
+  --text-dim: rgba(240,236,228,0.65);
+  --focus-ring: 2px solid var(--accent);
 }
 
 html, body {
@@ -33,9 +34,17 @@ html, body {
   background: var(--bg);
   font-family: 'Figtree', sans-serif;
   color: var(--text);
+  transition: opacity 0.2s ease;
+}
+
+*:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.logo-area, .station-group-header, .top-section, .hide-btn {
   user-select: none;
   -webkit-user-select: none;
-  transition: opacity 0.2s ease;
 }
 body.mini-mode.mini-idle {
   opacity: 0.65;
@@ -51,9 +60,10 @@ body::before {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 18% 18%, rgba(0,240,255,0.065) 0, transparent 40%),
-    radial-gradient(circle at 82% 62%, rgba(112,0,255,0.035) 0, transparent 48%);
-  opacity: 0.82;
+    radial-gradient(circle at 18% 16%, rgba(94,232,239,0.042) 0, transparent 38%),
+    radial-gradient(circle at 82% 68%, rgba(102,82,217,0.026) 0, transparent 46%),
+    linear-gradient(180deg, rgba(255,255,255,0.012), transparent 42%);
+  opacity: 0.72;
 }
 
 /* ── Mini mode ─────────────────────────────────── */
@@ -115,14 +125,14 @@ body.mini-mode #mini-view { display: flex; }
 }
 .logo-img-wrap {
   width: 44px; height: 44px;
-  border-radius: 11px;
-  background: #0a0915;
-  border: 1px solid rgba(0,240,255,0.18);
+  border-radius: 8px;
+  background: #0b0d14;
+  border: 1px solid rgba(94,232,239,0.14);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   box-shadow:
-    0 2px 12px rgba(0,0,0,0.4),
-    0 0 var(--audio-logo-blur) rgba(0,240,255,calc(0.06 + var(--audio-glow)));
+    0 2px 10px rgba(0,0,0,0.34),
+    0 0 calc(var(--audio-logo-blur) * 0.72) rgba(94,232,239,calc(0.035 + var(--audio-glow) * 0.72));
   overflow: hidden;
   -webkit-app-region: no-drag;
   cursor: default;
@@ -139,11 +149,11 @@ body.mini-mode #mini-view { display: flex; }
   font-size: 8px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--accent);
+  color: rgba(94,232,239,0.78);
   letter-spacing: 0.12em;
   line-height: 1;
   margin-bottom: 2px;
-  opacity: 0.85;
+  opacity: 0.78;
 }
 .logo-name {
   font-family: 'Syne', sans-serif;
@@ -153,6 +163,35 @@ body.mini-mode #mini-view { display: flex; }
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+}
+.station-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  -webkit-app-region: no-drag;
+}
+.station-gain-pill {
+  display: none;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid rgba(94,232,239,0.14);
+  border-radius: 999px;
+  background: rgba(94,232,239,0.045);
+  color: rgba(240,236,228,0.68);
+  font: 700 10px/1 'Inter', sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+.station-gain-pill.show {
+  display: inline-flex;
+}
+.station-gain-pill:hover {
+  border-color: rgba(94,232,239,0.24);
+  background: rgba(94,232,239,0.08);
+  color: var(--text);
 }
 .logo-tagline {
   font-size: 11px;
@@ -167,18 +206,21 @@ body.mini-mode #mini-view { display: flex; }
   align-items: center;
   gap: 6px;
   margin-top: 4px;
+  min-width: 0;
 }
 .sleep-badge {
   display: none;
   align-items: center;
   height: 18px;
   padding: 0 7px;
-  border-radius: 99px;
-  background: rgba(0,240,255,0.12);
-  border: 1px solid rgba(0,240,255,0.24);
-  color: #a0f9ff;
+  border-radius: 999px;
+  background: rgba(94,232,239,0.055);
+  border: 1px solid rgba(94,232,239,0.13);
+  color: rgba(180,246,250,0.76);
   font-size: 10px;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .sleep-badge.active { display: inline-flex; }
 body.sleep-active .listen-badge { display: none; }
@@ -187,25 +229,29 @@ body.sleep-active .listen-badge { display: none; }
   align-items: center;
   height: 18px;
   padding: 0 7px;
-  border-radius: 99px;
-  background: rgba(0,240,255,0.08);
-  border: 1px solid rgba(0,240,255,0.22);
-  color: rgba(0,240,255,0.78);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.032);
+  border: 1px solid rgba(255,255,255,0.065);
+  color: rgba(240,236,228,0.5);
   font-size: 10px;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .live-badge {
   display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(0,240,255,0.12);
-  border: 1px solid rgba(0,240,255,0.28);
-  color: var(--accent);
+  background: rgba(94,232,239,0.07);
+  border: 1px solid rgba(94,232,239,0.16);
+  color: rgba(180,246,250,0.82);
   font-size: 10px; font-weight: 600;
   letter-spacing: 0.08em; text-transform: uppercase;
   padding: 3px 8px; border-radius: 100px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 body.reconnecting .live-badge {
-  background: rgba(0,114,255,0.16);
-  border-color: rgba(0,114,255,0.38);
+  background: rgba(47,125,246,0.13);
+  border-color: rgba(47,125,246,0.28);
   color: var(--accent2);
 }
 body.muted-state .live-badge {
@@ -251,8 +297,8 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
 .station-picker {
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.01);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.012);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   padding: 6px;
   flex-shrink: 0;
@@ -265,19 +311,18 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
 #station-search {
   width: 100%;
   height: 26px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.075);
   border-radius: 6px;
   color: var(--text);
   padding: 0 8px;
   font-size: 11px;
-  outline: none;
   font-family: inherit;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 #station-search:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 6px rgba(0, 240, 255, 0.25);
+  border-color: rgba(94, 232, 239, 0.34);
+  box-shadow: 0 0 0 2px rgba(94, 232, 239, 0.08);
 }
 .station-list {
   flex: 1;
@@ -297,17 +342,16 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
   height: 22px;
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 4px;
+  border-radius: 6px;
   color: var(--text-dim);
   font-size: 10px;
   padding: 0 4px;
-  outline: none;
   font-family: inherit;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
 .filter-row select:focus, .filter-row select:hover {
-  border-color: var(--accent);
+  border-color: rgba(94, 232, 239, 0.24);
   color: var(--text);
 }
 .filter-row select option {
@@ -321,29 +365,29 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
   background: transparent;
 }
 .station-list::-webkit-scrollbar-thumb {
-  background: rgba(0, 114, 255, 0.3);
+  background: rgba(240, 236, 228, 0.16);
   border-radius: 4px;
 }
 .station-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 240, 255, 0.5);
+  background: rgba(94, 232, 239, 0.22);
 }
 .station-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 6px;
-  border-radius: 5px;
+  padding: 5px 6px;
+  border-radius: 6px;
   cursor: pointer;
   background: transparent;
   border-left: 2px solid transparent;
   transition: background 0.15s, border-color 0.15s;
 }
 .station-item:hover {
-  background: rgba(0, 240, 255, 0.06);
+  background: rgba(240, 236, 228, 0.04);
 }
 .station-item.active {
-  background: rgba(0, 114, 255, 0.12);
-  border-left-color: var(--accent);
+  background: rgba(47, 125, 246, 0.095);
+  border-left-color: rgba(94, 232, 239, 0.7);
 }
 .station-icon {
   width: 26px;
@@ -361,7 +405,7 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
   flex-direction: column;
 }
 .station-item-name {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -376,15 +420,15 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
 .station-tag {
   font-size: 8.5px;
   padding: 0px 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(240, 236, 228, 0.45);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(240, 236, 228, 0.36);
   text-transform: uppercase;
   font-weight: 700;
 }
 .station-item.active .station-tag {
-  background: rgba(0, 240, 255, 0.15);
-  color: rgba(0, 240, 255, 0.8);
+  background: rgba(94, 232, 239, 0.065);
+  color: rgba(180, 246, 250, 0.62);
 }
 .station-group-header {
   font-size: 8.5px;
@@ -408,10 +452,10 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
   background: rgba(255, 255, 255, 0.04);
 }
 .station-group-header.fav-header {
-  color: #ffb700;
+  color: rgba(255, 183, 0, 0.8);
 }
 .station-group-header.fav-header::after {
-  background: rgba(255, 183, 0, 0.12);
+  background: rgba(255, 183, 0, 0.08);
 }
 
 
@@ -425,11 +469,29 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
 }
+.viz-logo-underlay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(46%, 180px);
+  height: 72%;
+  transform: translate(-50%, -50%);
+  color: rgba(94,232,239,0.035);
+  opacity: calc(0.42 + var(--audio-level) * 0.14);
+  filter: blur(0.2px) drop-shadow(0 0 10px rgba(47,125,246,0.04));
+  pointer-events: none;
+  z-index: 0;
+}
+.viz-logo-underlay path {
+  stroke: currentColor;
+}
 #visualizer {
   display: block;
   width: 100%;
   height: 100%;
   cursor: pointer;
+  position: relative;
+  z-index: 1;
   -webkit-app-region: no-drag;
 }
 .viz-toast {
@@ -439,7 +501,7 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
   padding: 4px 8px;
   border-radius: 999px;
   background: rgba(10,9,21,0.85);
-  border: 1px solid rgba(0,240,255,0.28);
+  border: 1px solid rgba(94,232,239,0.16);
   color: rgba(240,236,228,0.82);
   font-size: 10px;
   font-weight: 700;
@@ -458,7 +520,7 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
 .controls { display: flex; align-items: center; justify-content: center; }
 .ctrl-btn {
   border: none; background: var(--surface2);
-  color: var(--text-dim); border-radius: 10px; cursor: pointer;
+  color: var(--text-dim); border-radius: 8px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.15s; border: 1px solid var(--border);
   -webkit-app-region: no-drag;
@@ -466,17 +528,18 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
 .ctrl-btn.lg {
   width: 50px; height: 50px;
   position: relative;
-  background: linear-gradient(135deg, var(--accent2), var(--accent3));
+  background: linear-gradient(135deg, #246fe2, #5b4cca);
   color: #fff; border-color: transparent;
   box-shadow:
-    0 4px 16px rgba(0,114,255,0.4),
-    0 0 calc(6px + var(--audio-level) * 18px) rgba(0,240,255,calc(0.22 + var(--audio-level) * 0.48)),
-    0 0 var(--audio-button-blur) rgba(112,0,255,var(--audio-glow));
+    0 4px 13px rgba(0,0,0,0.36),
+    0 0 calc(4px + var(--audio-level) * 10px) rgba(94,232,239,calc(0.09 + var(--audio-level) * 0.22));
   border-radius: 50%;
 }
 .ctrl-btn.lg:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 24px rgba(0,240,255,0.55);
+  transform: scale(1.035);
+  box-shadow:
+    0 6px 18px rgba(0,0,0,0.38),
+    0 0 14px rgba(94,232,239,0.18);
   color: #fff; border-color: transparent;
 }
 
@@ -484,9 +547,9 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
 .ctrl-btn.lg::before {
   content: "";
   position: absolute;
-  width: 110px; height: 110px;
+  width: 96px; height: 96px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(10,9,21,0.65) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(9,10,16,0.56) 0%, transparent 70%);
   pointer-events: none;
   z-index: -1;
 }
@@ -496,8 +559,8 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
 
 /* Idle breathing glow */
 @keyframes idle-breathe {
-  0%, 100% { box-shadow: 0 4px 16px rgba(0,240,255,0.22), 0 0 8px rgba(0,114,255,0.12); }
-  50%       { box-shadow: 0 6px 24px rgba(0,240,255,0.42), 0 0 20px rgba(0,114,255,0.26); }
+  0%, 100% { box-shadow: 0 4px 13px rgba(0,0,0,0.36), 0 0 8px rgba(94,232,239,0.11); }
+  50%       { box-shadow: 0 5px 16px rgba(0,0,0,0.38), 0 0 13px rgba(94,232,239,0.18); }
 }
 body:not(.is-playing):not(.reconnecting) .ctrl-btn.lg {
   animation: idle-breathe 3s ease-in-out infinite;
@@ -505,8 +568,8 @@ body:not(.is-playing):not(.reconnecting) .ctrl-btn.lg {
 
 /* Reconnecting */
 @keyframes reconnect-pulse {
-  0%, 100% { opacity: 1;    box-shadow: 0 4px 16px rgba(0,114,255,0.4); }
-  50%       { opacity: 0.45; box-shadow: 0 2px 8px rgba(0,114,255,0.1); }
+  0%, 100% { opacity: 1;    box-shadow: 0 4px 14px rgba(47,125,246,0.28); }
+  50%       { opacity: 0.5; box-shadow: 0 2px 8px rgba(47,125,246,0.08); }
 }
 body.reconnecting #btn-playstop  { animation: reconnect-pulse 1.5s ease-in-out infinite; }
 body.reconnecting #mini-playstop { animation: reconnect-pulse 1.5s ease-in-out infinite; }
@@ -528,9 +591,9 @@ body.reconnecting #mini-playstop { animation: reconnect-pulse 1.5s ease-in-out i
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 99px;
+  background: rgba(255,255,255,0.026);
+  border: 1px solid rgba(255,255,255,0.065);
+  border-radius: 8px;
   padding: 3px 10px;
 }
 .vol-row .vol-mute-btn { padding: 3px; }
@@ -541,15 +604,15 @@ body.reconnecting #mini-playstop { animation: reconnect-pulse 1.5s ease-in-out i
   display: flex;
   align-items: center;
   gap: 2px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 99px;
+  background: rgba(255,255,255,0.026);
+  border: 1px solid rgba(255,255,255,0.065);
+  border-radius: 8px;
   padding: 3px 8px;
 }
 .ctrl-pill .action-btn { width: 24px; height: 24px; border-radius: 6px; }
 
-#btn-bass[data-level="1"] { background: rgba(0,240,255,0.12); border-color: rgba(0,240,255,0.22); color: var(--accent); }
-#btn-bass[data-level="2"] { background: rgba(112,0,255,0.18); border-color: rgba(112,0,255,0.32); color: #c480ff; box-shadow: 0 0 6px rgba(112,0,255,0.2); }
+#btn-bass[data-level="1"] { background: rgba(94,232,239,0.095); border-color: rgba(94,232,239,0.2); color: var(--accent); }
+#btn-bass[data-level="2"] { background: rgba(102,82,217,0.14); border-color: rgba(102,82,217,0.26); color: #beb5ff; box-shadow: none; }
 
 .vol-mute-btn {
   border: none; background: transparent;
@@ -563,14 +626,14 @@ body.reconnecting #mini-playstop { animation: reconnect-pulse 1.5s ease-in-out i
 input[type=range] {
   flex: 1; -webkit-appearance: none; appearance: none;
   height: 4px; border-radius: 2px;
-  background: var(--surface2); outline: none; cursor: pointer;
+  background: var(--surface2); cursor: pointer;
   -webkit-app-region: no-drag;
 }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 14px; height: 14px; border-radius: 50%;
   background: var(--accent2);
-  box-shadow: 0 0 0 3px rgba(0, 114, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(47, 125, 246, 0.16);
   cursor: pointer;
 }
 .vol-val { font-size: 11px; color: var(--text-dim); width: 30px; text-align: right; flex-shrink: 0; }
@@ -591,21 +654,21 @@ input[type=range]::-webkit-slider-thumb {
   transition: opacity 0.15s, transform 0.15s;
 }
 .action-btn:hover {
-  background: rgba(255,255,255,0.065);
-  border-color: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.055);
+  border-color: rgba(255,255,255,0.1);
   color: var(--text);
 }
 .action-btn:hover svg { opacity: 1; transform: translateY(-1px); }
 .action-btn.active {
-  background: linear-gradient(135deg, rgba(0,240,255,0.18), rgba(0,114,255,0.12));
-  border-color: rgba(0,240,255,0.32);
+  background: rgba(94,232,239,0.085);
+  border-color: rgba(94,232,239,0.22);
   color: var(--accent);
 }
 .action-btn.active svg { opacity: 1; }
 .action-btn.pin-active {
-  background: linear-gradient(135deg, rgba(0,240,255,0.16), rgba(240,236,228,0.05));
-  border-color: rgba(0,240,255,0.36);
-  color: var(--accent);
+  background: rgba(94,232,239,0.075);
+  border-color: rgba(94,232,239,0.18);
+  color: rgba(180,246,250,0.82);
 }
 .action-btn.pin-active svg { opacity: 1; }
 
@@ -619,23 +682,23 @@ input[type=range]::-webkit-slider-thumb {
   gap: 10px; padding: 0 10px;
   height: 56px;
   background:
-    radial-gradient(circle at 16% 50%, rgba(0,240,255,0.08), transparent 38%),
-    linear-gradient(180deg, #100f24, #0a0915);
+    radial-gradient(circle at 16% 50%, rgba(94,232,239,0.032), transparent 38%),
+    linear-gradient(180deg, #10131d, #090a10);
   border-bottom: 1px solid var(--border);
   -webkit-app-region: drag;
 }
 .mini-logo {
   width: 36px; height: 36px;
-  border-radius: 11px;
+  border-radius: 8px;
   background:
-    radial-gradient(circle at 50% 45%, rgba(0,240,255,0.10), transparent 55%),
-    #0a0915;
-  border: 1px solid rgba(0,240,255,0.36);
+    radial-gradient(circle at 50% 45%, rgba(94,232,239,0.045), transparent 55%),
+    #0b0d14;
+  border: 1px solid rgba(94,232,239,0.14);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
   box-shadow:
-    0 0 var(--audio-logo-blur) rgba(0,240,255,calc(0.08 + var(--audio-glow))),
+    0 0 calc(var(--audio-logo-blur) * 0.68) rgba(94,232,239,calc(0.028 + var(--audio-glow) * 0.58)),
     inset 0 0 0 1px rgba(255,255,255,0.035);
   transition: box-shadow 0.12s ease-out;
   -webkit-app-region: no-drag;
@@ -656,16 +719,16 @@ input[type=range]::-webkit-slider-thumb {
 .mini-viz {
   width: 100%;
   height: 13px;
-  opacity: 0.95;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.025);
+  opacity: 0.88;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.022);
 }
 .mini-ctrls { display: flex; gap: 4px; align-items: center; -webkit-app-region: no-drag; }
 .mini-btn {
   width: 30px; height: 30px;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--text-dim); border-radius: 8px;
+  color: var(--text-dim); border-radius: 6px;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: all 0.12s;
 }
@@ -675,23 +738,23 @@ input[type=range]::-webkit-slider-thumb {
   color: var(--text);
 }
 .mini-btn.play-btn {
-  background: linear-gradient(135deg, var(--accent2), var(--accent3));
+  background: linear-gradient(135deg, #246fe2, #5b4cca);
   color: #fff;
   border-color: transparent;
   box-shadow:
-    0 3px 10px rgba(0,114,255,0.22),
+    0 3px 10px rgba(0,0,0,0.32),
     inset 0 1px 0 rgba(255,255,255,0.12);
 }
 .mini-btn.play-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 240, 255, 0.35);
+  transform: scale(1.035);
+  box-shadow: 0 4px 12px rgba(94, 232, 239, 0.16);
 }
 .mini-vol-row {
   display: flex; align-items: center;
   gap: 8px; padding: 0 12px;
   height: 26px;
-  background: rgba(0, 0, 0, 0.22);
-  border-top: 1px solid rgba(255, 255, 255, 0.02);
+  background: rgba(0, 0, 0, 0.18);
+  border-top: 1px solid rgba(255, 255, 255, 0.035);
   -webkit-app-region: no-drag;
   opacity: 0.72;
   transition: opacity 0.14s;
@@ -700,13 +763,20 @@ input[type=range]::-webkit-slider-thumb {
 .mini-vol-row input[type=range] { height: 3px; }
 .mini-vol-row input[type=range]::-webkit-slider-thumb { width: 11px; height: 11px; }
 .mini-vol-icon { color: var(--text-dim); flex-shrink: 0; display: flex; align-items: center; }
+.mini-vol-val {
+  font-size: 11px;
+  color: var(--text-dim);
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
 
 /* ── Visualizer Context Menu ──────────────────────── */
 .context-menu {
   position: absolute;
-  background: rgba(16, 15, 36, 0.94);
+  background: rgba(16, 19, 29, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 240, 255, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.58), 0 0 12px rgba(94, 232, 239, 0.08);
   border-radius: 8px;
   padding: 5px 0;
   z-index: 1000;
@@ -725,11 +795,11 @@ input[type=range]::-webkit-slider-thumb {
   border-radius: 4px;
 }
 .context-menu::-webkit-scrollbar-thumb {
-  background: rgba(0, 114, 255, 0.4);
+  background: rgba(47, 125, 246, 0.32);
   border-radius: 4px;
 }
 .context-menu::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 240, 255, 0.7);
+  background: rgba(94, 232, 239, 0.46);
 }
 .context-menu-title {
   padding: 5px 12px;
@@ -751,7 +821,7 @@ input[type=range]::-webkit-slider-thumb {
   align-items: center;
 }
 .context-menu-item:hover {
-  background: var(--accent2);
+  background: rgba(47, 125, 246, 0.82);
   color: #fff;
 }
 .context-menu-item.active {
@@ -784,15 +854,15 @@ input[type=range]::-webkit-slider-thumb {
 }
 .modal-content {
   width: 290px;
-  background: #100f24;
-  border: 1px solid rgba(0, 240, 255, 0.22);
+  background: #10131d;
+  border: 1px solid rgba(94, 232, 239, 0.16);
   border-radius: 12px;
   padding: 16px 20px;
   position: relative;
   text-align: center;
   box-shadow: 
     0 12px 36px rgba(0, 0, 0, 0.75), 
-    0 0 30px rgba(0, 240, 255, 0.15);
+    0 0 22px rgba(94, 232, 239, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -825,8 +895,8 @@ input[type=range]::-webkit-slider-thumb {
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: #0a0915;
-  border: 1px solid rgba(0, 240, 255, 0.3);
+  background: #0b0d14;
+  border: 1px solid rgba(94, 232, 239, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -915,14 +985,14 @@ input[type=range]::-webkit-slider-thumb {
   border-color: rgba(255, 255, 255, 0.14);
 }
 .modal-btn.primary {
-  background: linear-gradient(135deg, var(--accent2), var(--accent3));
+  background: linear-gradient(135deg, #246fe2, #5b4cca);
   border-color: transparent;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 114, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
 }
 .modal-btn.primary:hover {
   transform: translateY(-0.5px);
-  box-shadow: 0 6px 16px rgba(0, 114, 255, 0.45);
+  box-shadow: 0 6px 16px rgba(47, 125, 246, 0.26);
 }
 
 /* ── Track Info Marquee ─────────────────────────── */
@@ -931,8 +1001,8 @@ input[type=range]::-webkit-slider-thumb {
   align-items: center;
   gap: 8px;
   padding: 2px 10px;
-  background: rgba(0, 0, 0, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: 5px;
   height: 20px;
   overflow: hidden;
@@ -941,7 +1011,7 @@ input[type=range]::-webkit-slider-thumb {
   -webkit-app-region: no-drag;
 }
 .track-info-icon {
-  color: var(--accent);
+  color: rgba(94,232,239,0.78);
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -975,8 +1045,8 @@ input[type=range]::-webkit-slider-thumb {
 /* ── View Selector / Switcher Styling ──────────────────────── */
 .view-selector {
   display: inline-flex;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   padding: 2px;
   border-radius: 20px;
   margin-left: auto;
@@ -997,7 +1067,6 @@ input[type=range]::-webkit-slider-thumb {
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.12s ease;
-  outline: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1008,9 +1077,9 @@ input[type=range]::-webkit-slider-thumb {
   color: var(--text);
 }
 .view-btn.active {
-  background: rgba(255, 255, 255, 0.09);
-  color: var(--accent);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.075);
+  color: rgba(180,246,250,0.86);
+  box-shadow: none;
 }
 
 /* Default state: Player View is active */
@@ -1057,13 +1126,13 @@ body.view-list-active .track-info-container {
   flex-shrink: 0;
 }
 .fav-toggle-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: rgba(94,232,239,0.22);
+  color: rgba(180,246,250,0.84);
 }
 .fav-toggle-btn.active {
-  background: rgba(0, 240, 255, 0.12);
-  border-color: var(--accent);
-  color: var(--accent);
+  background: rgba(94, 232, 239, 0.085);
+  border-color: rgba(94,232,239,0.2);
+  color: rgba(180,246,250,0.88);
 }
 .fav-toggle-btn.active svg {
   fill: var(--accent);
@@ -1100,15 +1169,24 @@ body.view-list-active .track-info-container {
   flex-shrink: 0;
 }
 .recent-item:hover {
-  border-color: var(--accent);
+  border-color: rgba(94,232,239,0.28);
   transform: scale(1.05);
-  box-shadow: 0 0 6px rgba(0, 240, 255, 0.35);
+  box-shadow: 0 0 6px rgba(94, 232, 239, 0.16);
 }
 .recent-item img {
   width: 100%;
   height: 100%;
   object-fit: contain;
   padding: 2px;
+}
+
+/* ── Reduced Motion ──────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ── Station List Item Enhancements ────────────── */
@@ -1134,7 +1212,7 @@ body.view-list-active .track-info-container {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.58);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1171,6 +1249,13 @@ body.view-list-active .track-info-container {
   -webkit-app-region: no-drag;
   flex-shrink: 0;
 }
+.player-fav-btn {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  margin-left: 0;
+  padding: 0;
+}
 .fav-star-btn:hover {
   color: #ffb700;
 }
@@ -1193,7 +1278,7 @@ body.view-list-active .track-info-container {
   display: inline-block;
   width: 1.5px;
   height: 100%;
-  background: var(--accent);
+  background: rgba(94,232,239,0.82);
   border-radius: 0.5px;
   transform-origin: bottom;
   animation: eq-bounce 0.8s ease-in-out infinite;
@@ -1207,33 +1292,13 @@ body.view-list-active .track-info-container {
   50% { transform: scaleY(1); }
 }
 .station-item.active.highlighted {
-  background: rgba(0, 114, 255, 0.16);
-  border-left-color: var(--accent);
+  background: rgba(47, 125, 246, 0.14);
+  border-left-color: rgba(94,232,239,0.78);
 }
 .station-item.highlighted {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.045);
 }
 
-/* ── Visualizer Underlay Styling ────────────────── */
-.viz-underlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.15;
-  transition: opacity 0.3s ease;
-}
-.viz-underlay svg {
-  width: auto;
-  height: 85%;
-  max-width: 85%;
-  filter: drop-shadow(0 0 calc(6px + var(--audio-level) * 20px) rgba(0, 240, 255, calc(0.3 + var(--audio-level) * 0.5)));
-  transform: scale(calc(0.95 + var(--audio-level) * 0.1));
-  transition: transform 0.05s ease-out, filter 0.05s ease-out;
-}
 </style>
 </head>
 <body>
@@ -1246,24 +1311,25 @@ body.view-list-active .track-info-container {
   <div class="top-section">
     <div class="logo-area">
       <div class="logo-img-wrap" id="player-logo-wrap">
-        <img id="player-station-icon" class="logo-mark" style="display: none; object-fit: contain; padding: 3px;" />
+        <img id="player-station-icon" class="logo-mark" alt="" style="display: none; object-fit: contain; padding: 3px;" />
         <!-- Glowing Wave Vector Logo -->
         <svg id="player-default-logo" class="logo-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke="url(#logo-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
           <defs>
             <linearGradient id="logo-grad" x1="6" y1="22" x2="38" y2="22" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#7000ff"/>
-              <stop offset="50%" stop-color="#0072ff"/>
-              <stop offset="100%" stop-color="#00f0ff"/>
+              <stop offset="0%" stop-color="#6652d9"/>
+              <stop offset="50%" stop-color="#2f7df6"/>
+              <stop offset="100%" stop-color="#5ee8ef"/>
             </linearGradient>
           </defs>
         </svg>
       </div>
       <div class="logo-info">
         <div class="app-title-label">Wavelength</div>
-        <div style="display: flex; align-items: center; gap: 8px; -webkit-app-region: no-drag; min-width: 0;">
-          <div class="logo-name" id="active-station-name" style="flex-shrink: 1;">Wavelength</div>
-          <button class="fav-star-btn" id="player-fav-btn" title="Zu Favoriten hinzufügen" style="width: 20px; height: 20px; display: inline-flex; -webkit-app-region: no-drag; margin-left: 0; padding: 0;">
+        <div class="station-title-row">
+          <div class="logo-name" id="active-station-name">Wavelength</div>
+          <button class="station-gain-pill" id="station-gain-pill" title="Sender-Trim zurücksetzen" aria-label="Sender-Trim zurücksetzen"></button>
+          <button class="fav-star-btn player-fav-btn" id="player-fav-btn" title="Zu Favoriten hinzufügen">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
             </svg>
@@ -1271,15 +1337,15 @@ body.view-list-active .track-info-container {
         </div>
         <div class="logo-tagline" id="active-station-subtitle">Multi-Station Player</div>
         <div class="status-row">
-          <div class="live-badge"><span class="live-wave" aria-hidden="true"><span></span><span></span><span></span></span><span id="live-status">Stopped</span></div>
-          <span class="listen-badge" id="listen-badge">Heute 0 min</span>
-          <span class="sleep-badge" id="sleep-badge"></span>
+          <div class="live-badge"><span class="live-wave" aria-hidden="true"><span></span><span></span><span></span></span><span id="live-status" aria-live="polite" aria-atomic="true">Stopped</span></div>
+          <span class="listen-badge" id="listen-badge" aria-live="polite" aria-atomic="true">Heute 0 min</span>
+          <span class="sleep-badge" id="sleep-badge" aria-live="polite" aria-atomic="true"></span>
         </div>
       </div>
     </div>
-    <div class="view-selector">
-      <button class="view-btn active" id="btn-view-player" title="Player-Ansicht" aria-label="Player-Ansicht">Player</button>
-      <button class="view-btn" id="btn-view-list" title="Senderliste anzeigen" aria-label="Senderliste anzeigen">Sender</button>
+    <div class="view-selector" role="tablist">
+      <button class="view-btn active" id="btn-view-player" aria-pressed="true" aria-label="Player-Ansicht" role="tab">Player</button>
+      <button class="view-btn" id="btn-view-list" aria-pressed="false" aria-label="Senderliste anzeigen" role="tab">Sender</button>
     </div>
   </div>
 
@@ -1319,21 +1385,11 @@ body.view-list-active .track-info-container {
   </div>
 
   <div class="viz-strip">
-    <div class="viz-underlay">
-      <!-- App Logo Underlay -->
-      <svg class="underlay-logo" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke="url(#underlay-logo-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <defs>
-          <linearGradient id="underlay-logo-grad" x1="6" y1="22" x2="38" y2="22" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#7000ff"/>
-            <stop offset="50%" stop-color="#0072ff"/>
-            <stop offset="100%" stop-color="#00f0ff"/>
-          </linearGradient>
-        </defs>
-      </svg>
-    </div>
-    <canvas id="visualizer" title="Visualizer wechseln (Linksklick) · Zurücksetzen (Rechtsklick)"></canvas>
-    <div class="viz-toast" id="viz-toast"></div>
+    <svg class="viz-logo-underlay" viewBox="0 0 44 44" fill="none" aria-hidden="true" focusable="false">
+      <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <canvas id="visualizer" role="img" aria-label="Audio-Visualizer, Modus: Bars" title="Linksklick = Modus wechseln · Rechtsklick = Menü"></canvas>
+    <div class="viz-toast" id="viz-toast" role="status" aria-live="polite" aria-atomic="true"></div>
   </div>
 
   <div class="track-info-container" id="track-info-container">
@@ -1366,7 +1422,7 @@ body.view-list-active .track-info-container {
         </svg>
       </button>
     </div>
-    <button class="ctrl-btn lg" id="btn-playstop" title="Play / Stop · Leertaste">
+    <button class="ctrl-btn lg" id="btn-playstop" aria-label="Play" aria-pressed="false" title="Leertaste">
       <svg id="main-icon" width="20" height="20" viewBox="0 0 18 18" fill="currentColor">
         <path d="M 3 2 L 15 9 L 3 16 L 3 2 Z"/>
       </svg>
@@ -1388,7 +1444,7 @@ body.view-list-active .track-info-container {
     </div>
   </div>
   <div class="vol-row">
-    <button class="vol-mute-btn" id="btn-mute" title="Stumm · M">
+    <button class="vol-mute-btn" id="btn-mute" aria-label="Stumm" aria-pressed="false" title="M">
       <svg id="mute-icon" width="16" height="16" viewBox="0 0 15 15" fill="currentColor">
         <path d="M2 5h3l4-3v11l-4-3H2V5z"/>
         <path d="M11 5.5a3 3 0 0 1 0 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
@@ -1409,20 +1465,20 @@ body.view-list-active .track-info-container {
         <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke="url(#mini-logo-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         <defs>
           <linearGradient id="mini-logo-grad" x1="6" y1="22" x2="38" y2="22" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#7000ff"/>
-            <stop offset="50%" stop-color="#0072ff"/>
-            <stop offset="100%" stop-color="#00f0ff"/>
+            <stop offset="0%" stop-color="#6652d9"/>
+            <stop offset="50%" stop-color="#2f7df6"/>
+            <stop offset="100%" stop-color="#5ee8ef"/>
           </linearGradient>
         </defs>
       </svg>
-      <img id="mini-station-icon" style="width: 100%; height: 100%; object-fit: contain; padding: 2px; display: none;">
+      <img id="mini-station-icon" alt="" style="width: 100%; height: 100%; object-fit: contain; padding: 2px; display: none;">
     </div>
     <div class="mini-info">
       <div class="mini-name" id="mini-station-name">Wavelength</div>
       <canvas class="mini-viz" id="mini-visualizer"></canvas>
     </div>
     <div class="mini-ctrls">
-      <button class="mini-btn play-btn" id="mini-playstop" title="Play / Stop · Leertaste" aria-label="Play / Stop">
+      <button class="mini-btn play-btn" id="mini-playstop" aria-label="Play" aria-pressed="false" title="Leertaste">
         <svg id="mini-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
           <polygon points="2,1 11,6 2,11"/>
         </svg>
@@ -1447,7 +1503,7 @@ body.view-list-active .track-info-container {
       <path d="M11 5.5a3 3 0 0 1 0 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
     </svg>
     <input type="range" id="mini-vol" min="0" max="100" value="80" title="Lautstärke" aria-label="Lautstärke">
-    <span style="font-size:11px;color:var(--text-dim);width:28px;text-align:right" id="mini-vol-val">80%</span>
+    <span class="mini-vol-val" id="mini-vol-val">80%</span>
   </div>
 </div>
 
@@ -1455,7 +1511,7 @@ body.view-list-active .track-info-container {
 <div id="viz-context-menu" class="context-menu" style="display: none;"></div>
 
 <!-- ── About Modal Overlay ─────────────────────────── -->
-<div id="about-modal" class="modal-overlay" style="display: none;">
+<div id="about-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="about-modal-title" style="display: none;">
   <div class="modal-content">
     <button class="modal-close" id="about-close-btn" title="Schließen" aria-label="Schließen">&times;</button>
     <div class="modal-logo-wrap">
@@ -1463,14 +1519,14 @@ body.view-list-active .track-info-container {
         <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke="url(#modal-logo-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         <defs>
           <linearGradient id="modal-logo-grad" x1="6" y1="22" x2="38" y2="22" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#7000ff"/>
-            <stop offset="50%" stop-color="#0072ff"/>
-            <stop offset="100%" stop-color="#00f0ff"/>
+            <stop offset="0%" stop-color="#6652d9"/>
+            <stop offset="50%" stop-color="#2f7df6"/>
+            <stop offset="100%" stop-color="#5ee8ef"/>
           </linearGradient>
         </defs>
       </svg>
     </div>
-    <h2 class="modal-title">Wavelength</h2>
+    <h2 class="modal-title" id="about-modal-title">Wavelength</h2>
     <p class="modal-subtitle" id="about-version">v1.0.0</p>
     
     <div class="modal-info-block">

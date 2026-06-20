@@ -10,6 +10,7 @@ let listenTimer = null;
 let lastListenAt = 0;
 let themeLevel = 0;
 let bassFilter = null;
+let stationGain = null;
 let bassBoostLevel = 0;   // index into BASS_GAINS; loaded from localStorage on init
 let appVersion = '';
 
@@ -57,6 +58,7 @@ const LS = {
 
 function stationTodayKey(id) { return `wl.listenTodayMs_${id}`; }
 function stationTotalKey(id) { return `wl.listenTotalMs_${id}`; }
+function stationGainKey(id) { return `wl.stationGainDb_${id}`; }
 
 function loadInt(key, fallback) {
   const v = parseInt(localStorage.getItem(key), 10);
@@ -102,6 +104,9 @@ let audioCtx = null;
 let analyser = null;
 const BASS_GAINS = [0, 6, 12];                  // lowshelf gain in dB per level
 const BASS_LABELS = ['aus', '+6 dB', '+12 dB'];
+const STATION_GAIN_MIN_DB = -9;
+const STATION_GAIN_MAX_DB = 9;
+const STATION_GAIN_STEP_DB = 1;
 const { formatListen, averageLevel, fakeBar } = utils;
 
 const visualizer = WavelengthVisualizer.create({
@@ -257,6 +262,9 @@ function initAudioCtx() {
   bassFilter.type = 'lowshelf';
   bassFilter.frequency.value = 200;
   bassFilter.gain.value = BASS_GAINS[bassBoostLevel];
+
+  stationGain = audioCtx.createGain();
+  applyStationGain();
   
   const limiter = audioCtx.createDynamicsCompressor();
   limiter.threshold.value = -1.5;
@@ -267,7 +275,8 @@ function initAudioCtx() {
   
   source.connect(bassFilter);
   bassFilter.connect(analyser);
-  analyser.connect(limiter);
+  analyser.connect(stationGain);
+  stationGain.connect(limiter);
   limiter.connect(audioCtx.destination);
 }
 
@@ -378,6 +387,17 @@ function updatePlayUI() {
       ? '<rect width="12" height="12" rx="2"/>'
       : '<polygon points="2,1 11,6 2,11"/>';
   }
+  // Update ARIA attributes
+  const mainBtn = document.getElementById('btn-playstop');
+  if (mainBtn) {
+    mainBtn.setAttribute('aria-label', playing ? 'Stop' : 'Play');
+    mainBtn.setAttribute('aria-pressed', String(playing));
+  }
+  const miniBtn = document.getElementById('mini-playstop');
+  if (miniBtn) {
+    miniBtn.setAttribute('aria-label', playing ? 'Stop' : 'Play');
+    miniBtn.setAttribute('aria-pressed', String(playing));
+  }
   updateItemEqualizer();
 }
 const MUTED_SVG = `
@@ -427,6 +447,45 @@ function updateVolSlider(val, persist = true) {
   document.getElementById('mute-icon').innerHTML = isMuteActive ? MUTED_SVG : speakerSVG(val);
 }
 
+function currentStationGainDb() {
+  if (!activeStation) return 0;
+  return Math.max(STATION_GAIN_MIN_DB, Math.min(STATION_GAIN_MAX_DB, loadInt(stationGainKey(activeStation.id), 0)));
+}
+
+function applyStationGain() {
+  const db = currentStationGainDb();
+  if (stationGain) {
+    stationGain.gain.value = Math.pow(10, db / 20);
+  }
+
+  const pill = document.getElementById('station-gain-pill');
+  const label = db === 0 ? '0 dB' : `${db > 0 ? '+' : ''}${db} dB`;
+  if (pill) {
+    pill.textContent = label;
+    pill.title = `Sender-Trim ${label} · Klick zum Zurücksetzen`;
+    pill.classList.toggle('show', db !== 0);
+  }
+}
+
+function adjustStationGain(deltaDb) {
+  if (!activeStation) return;
+  const next = Math.max(STATION_GAIN_MIN_DB, Math.min(STATION_GAIN_MAX_DB, currentStationGainDb() + deltaDb));
+  if (next === 0) {
+    localStorage.removeItem(stationGainKey(activeStation.id));
+  } else {
+    localStorage.setItem(stationGainKey(activeStation.id), String(next));
+  }
+  applyStationGain();
+  showToast(`Sender ${next > 0 ? '+' : ''}${next} dB`);
+}
+
+function resetStationGain() {
+  if (!activeStation) return;
+  localStorage.removeItem(stationGainKey(activeStation.id));
+  applyStationGain();
+  showToast('Sender 0 dB');
+}
+
 function setMini(on) {
   document.body.classList.toggle('mini-mode', on);
   document.body.classList.toggle('mini-idle', on);
@@ -450,6 +509,12 @@ function setMuted(on) {
   document.body.classList.toggle('muted-state', on);
   const vol = parseInt(document.getElementById('vol-slider').value, 10);
   document.getElementById('mute-icon').innerHTML = on ? MUTED_SVG : speakerSVG(vol);
+  // Update ARIA attributes
+  const muteBtn = document.getElementById('btn-mute');
+  if (muteBtn) {
+    muteBtn.setAttribute('aria-label', on ? 'Stumm aufheben' : 'Stumm');
+    muteBtn.setAttribute('aria-pressed', String(on));
+  }
   saveBool(LS.muted, on);
   reportConnectionState(playing ? (on ? 'muted' : 'live') : 'stopped');
 }
@@ -504,6 +569,7 @@ function resetLocalSettings() {
   for (const station of allStations) {
     localStorage.removeItem(stationTodayKey(station.id));
     localStorage.removeItem(stationTotalKey(station.id));
+    localStorage.removeItem(stationGainKey(station.id));
   }
   updateVolSlider(80);
   setMuted(false);
@@ -707,9 +773,11 @@ function renderStations() {
 
   // Helper to render a station item
   function renderStationItem(station) {
-    const item = document.createElement('div');
+    const item = document.createElement('button');
     item.className = 'station-item';
+    item.type = 'button';
     item.dataset.id = station.id;
+    item.setAttribute('aria-label', `${station.name}, ${station.genre}, ${station.country}`);
     if (activeStation && activeStation.id === station.id) {
       item.classList.add('active');
     }
@@ -773,8 +841,11 @@ function renderStations() {
     // Favorites Star Button
     const favBtn = document.createElement('button');
     favBtn.className = 'fav-star-btn';
+    favBtn.type = 'button';
     const isFav = favorites.includes(station.id);
     if (isFav) favBtn.classList.add('is-fav');
+    const favLabel = isFav ? `${station.name} aus Favoriten entfernen` : `${station.name} zu Favoriten hinzufügen`;
+    favBtn.setAttribute('aria-label', favLabel);
     favBtn.title = isFav ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen';
     favBtn.innerHTML = `
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -852,6 +923,7 @@ function selectStation(station) {
   const wasPlaying = playing;
   activeStation = station;
   streamUrl = station.streamUrl;
+  applyStationGain();
   
   // Add to recents
   addRecentStation(station.id);
@@ -919,6 +991,7 @@ safeAddListener('btn-hide', 'click', () => api.hideWindow());
 safeAddListener('mini-hide', 'click', () => api.hideWindow());
 safeAddListener('btn-sleep', 'click', () => api.cycleSleepTimer());
 safeAddListener('btn-bass', 'click', cycleBassBoost);
+safeAddListener('station-gain-pill', 'click', resetStationGain);
 safeAddListener('visualizer', 'click', () => visualizer.toggleMode());
 
 safeAddListener('btn-view-player', 'click', () => switchView('player'));
@@ -999,7 +1072,10 @@ safeQueryListener('.mini-logo', 'dblclick', (e) => {
 
 // ── About Modal Control ─────────────────────────
 const aboutModal = document.getElementById('about-modal');
+let previousFocus = null;
+
 const showAboutModal = () => {
+  previousFocus = document.activeElement;
   const ver = document.getElementById('about-version');
   if (ver) ver.textContent = `v${appVersion}`;
   const name = document.getElementById('about-station-name');
@@ -1008,10 +1084,21 @@ const showAboutModal = () => {
   if (url) url.textContent = streamUrl || '-';
   const web = document.getElementById('about-website-url');
   if (web) web.textContent = activeStation ? activeStation.website : '-';
-  if (aboutModal) aboutModal.style.display = 'flex';
+  if (aboutModal) {
+    aboutModal.style.display = 'flex';
+    setTimeout(() => {
+      const firstFocusable = aboutModal.querySelector('button');
+      if (firstFocusable) firstFocusable.focus();
+    }, 50);
+  }
 };
 const hideAboutModal = () => {
-  if (aboutModal) aboutModal.style.display = 'none';
+  if (aboutModal) {
+    aboutModal.style.display = 'none';
+    if (previousFocus && typeof previousFocus.focus === 'function') {
+      previousFocus.focus();
+    }
+  }
 };
 
 safeAddListener('about-close-btn', 'click', hideAboutModal);
@@ -1030,14 +1117,30 @@ if (aboutModal) {
 
 // ── Keyboard shortcuts (in-window) ───────────────
 document.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'INPUT') return; 
+  // Escape closes modal
+  if (e.code === 'Escape' && aboutModal && aboutModal.style.display === 'flex') {
+    e.preventDefault();
+    hideAboutModal();
+    return;
+  }
+
+  if (e.target.tagName === 'INPUT') return;
   const vol = () => parseInt(document.getElementById('vol-slider').value, 10);
   switch (e.code) {
     case 'Space':      e.preventDefault(); api.playPause(); break;
     case 'KeyM':       api.toggleMute(); break;
     case 'KeyB':       cycleBassBoost(); break;
-    case 'ArrowUp':    e.preventDefault(); updateVolSlider(Math.min(100, vol() + 5)); break;
-    case 'ArrowDown':  e.preventDefault(); updateVolSlider(Math.max(0,   vol() - 5)); break;
+    case 'KeyV':       visualizer.toggleMode(); break;
+    case 'ArrowUp':
+      e.preventDefault();
+      if (e.altKey) adjustStationGain(STATION_GAIN_STEP_DB);
+      else updateVolSlider(Math.min(100, vol() + 5));
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      if (e.altKey) adjustStationGain(-STATION_GAIN_STEP_DB);
+      else updateVolSlider(Math.max(0, vol() - 5));
+      break;
   }
 });
 
@@ -1155,12 +1258,14 @@ function displayTrackInfo(title) {
 function switchView(view) {
   const isList = view === 'list';
   document.body.classList.toggle('view-list-active', isList);
-  
+
   const btnPlayer = document.getElementById('btn-view-player');
   const btnList = document.getElementById('btn-view-list');
   if (btnPlayer && btnList) {
     btnPlayer.classList.toggle('active', !isList);
     btnList.classList.toggle('active', isList);
+    btnPlayer.setAttribute('aria-pressed', String(!isList));
+    btnList.setAttribute('aria-pressed', String(isList));
   }
 
   if (isList) {
@@ -1264,12 +1369,15 @@ function populateRecents() {
   list.innerHTML = '';
 
   activeRecents.forEach(station => {
-    const item = document.createElement('div');
+    const item = document.createElement('button');
     item.className = 'recent-item';
+    item.type = 'button';
+    item.setAttribute('aria-label', `Zuletzt: ${station.name}`);
     item.title = station.name;
 
     const img = document.createElement('img');
     img.src = station.iconUrl || '../assets/icon.png';
+    img.alt = '';
     img.onerror = () => { img.src = '../assets/icon.png'; };
 
     item.appendChild(img);
@@ -1361,6 +1469,7 @@ function updateItemEqualizer() {
   activeStation = loadedStation || state.activeStation || allStations[0];
   if (activeStation) {
     streamUrl = activeStation.streamUrl;
+    applyStationGain();
     api.selectStation(activeStation, true);
 
     document.getElementById('active-station-name').textContent = activeStation.name;

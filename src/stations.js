@@ -140,8 +140,8 @@ const DEFAULT_STATIONS = [
   {
     id: "ndr2-niedersachsen",
     name: "NDR 2",
-    streamUrl: "https://ndr-ndr2-niedersachsen.icecast.ndr.de/ndr/ndr2/niedersachsen/mp3/128/stream.mp3",
-    iconUrl: "https://upload.wikimedia.org/wikipedia/commons/d/d7/NDR_2_logo_2015.png",
+    streamUrl: "https://icecast.ndr.de/ndr/ndr2/niedersachsen/mp3/128/stream.mp3",
+    iconUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9e/NDR_2_Logo.svg",
     genre: "Pop / Rock",
     country: "DE",
     website: "https://www.ndr.de",
@@ -448,7 +448,7 @@ const HIGH_RES_ICONS = {
   '1live': 'https://upload.wikimedia.org/wikipedia/commons/f/fb/WDR_1LIVE_Logo_2016.svg',
   'n-joy': 'https://upload.wikimedia.org/wikipedia/commons/3/35/Njoy-logo.svg',
   'wdr 2': 'https://upload.wikimedia.org/wikipedia/commons/2/23/WDR_2_logo.svg',
-  'ndr 2': 'https://upload.wikimedia.org/wikipedia/commons/d/d7/NDR_2_logo_2015.png',
+  'ndr 2': 'https://upload.wikimedia.org/wikipedia/commons/9/9e/NDR_2_Logo.svg',
   'hr3': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Hr3_Logo_2015.svg/200px-Hr3_Logo_2015.svg.png',
   'jump': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/MDR_Jump_logo_2011.svg/200px-MDR_Jump_logo_2011.svg.png',
   'radioeins': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Radioeins_logo_2021.svg/200px-Radioeins_logo_2021.svg.png',
@@ -538,4 +538,3 @@ module.exports = {
   loadStations,
   DEFAULT_STATIONS
 };
-

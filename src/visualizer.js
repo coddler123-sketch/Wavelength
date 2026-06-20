@@ -88,16 +88,6 @@
       return Math.max(0, Math.min(1, (n + 0.62) * shape));
     }
 
-    function drawWatermark(W, H) {
-      canvasCtx.save();
-      canvasCtx.font = '700 48px Syne, Figtree, sans-serif';
-      canvasCtx.textAlign = 'center';
-      canvasCtx.textBaseline = 'middle';
-      canvasCtx.fillStyle = 'rgba(0, 240, 255, 0.045)'; // Cyberpunk Cyan
-      canvasCtx.fillText('W', W / 2, H / 2 + 2);
-      canvasCtx.restore();
-    }
-
     function drawMiniSignal(values) {
       if (!miniCanvas || !miniCanvasCtx) return;
       const dpr = window.devicePixelRatio || 1;
@@ -585,7 +575,6 @@
     }
 
     function drawMain(values, W, H) {
-      drawWatermark(W, H);
       if      (mode === 'mirror')       drawMirror(values, W, H);
       else if (mode === 'oscilloscope') drawOscilloscope(values, W, H);
       else if (mode === 'waterfall')    drawWaterfall(values, W, H);
@@ -680,6 +669,8 @@
       localStorage.setItem(storageKey, mode);
       showToast(VISUALIZER_LABELS[mode] || mode);
       wfallBuf = null; tunnelHistory = null; particles = [];
+      const label = VISUALIZER_LABELS[mode] || mode;
+      canvas.setAttribute('aria-label', `Audio-Visualizer, Modus: ${label}`);
       const state = getState();
       if (!state.playing || !running) drawIdle();
     }
@@ -688,6 +679,8 @@
       mode = 'bars';
       localStorage.setItem(storageKey, mode);
       wfallBuf = null; tunnelHistory = null; particles = [];
+      const label = VISUALIZER_LABELS[mode] || mode;
+      canvas.setAttribute('aria-label', `Audio-Visualizer, Modus: ${label}`);
       drawIdle();
     }
 
@@ -701,6 +694,8 @@
       localStorage.setItem(storageKey, mode);
       showToast(VISUALIZER_LABELS[mode] || mode);
       wfallBuf = null; tunnelHistory = null; particles = [];
+      const label = VISUALIZER_LABELS[mode] || mode;
+      canvas.setAttribute('aria-label', `Audio-Visualizer, Modus: ${label}`);
       const state = getState();
       if (!state.playing || !running) drawIdle();
     }

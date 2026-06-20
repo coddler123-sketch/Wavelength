@@ -33,6 +33,7 @@ for (const id of [
   'live-status',
   'listen-badge',
   'btn-bass',
+  'station-gain-pill',
   'station-search',
   'station-list',
 ]) {
@@ -58,6 +59,7 @@ for (const marker of [
   'showToast',
   "document.body.classList.toggle('window-hidden'",
   'BASS_GAINS',
+  'stationGain',
   'WavelengthVisualizer.create',
 ]) {
   assert(renderer.includes(marker), `renderer missing marker: ${marker}`);

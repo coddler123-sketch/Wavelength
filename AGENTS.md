@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Project Overview
 
@@ -245,7 +245,7 @@ App logs to `userData/logs/app.log` with 1 MB rotation. Timestamped. On startup,
 
 - `package.json` — app metadata, scripts, build config, versions
 - `package-lock.json` — locked dependency tree (commit this)
-- `.claude/settings.local.json` — Claude Code local settings
+- `.Codex/settings.local.json` — Codex local settings
 
 ## Related Projects
 
