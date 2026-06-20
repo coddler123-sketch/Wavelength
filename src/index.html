@@ -637,7 +637,13 @@ body.reconnecting #mini-playstop { animation: reconnect-pulse 1.5s ease-in-out i
 }
 .vol-row .vol-mute-btn { padding: 3px; }
 .vol-row input[type=range] { flex: 1; min-width: 60px; }
-.vol-row .vol-val { font-size: 10px; width: 24px; text-align: right; }
+.vol-row .vol-val {
+  font-size: 10px;
+  width: 24px;
+  text-align: right;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
 
 .ctrl-pill {
   display: flex;
@@ -675,7 +681,6 @@ input[type=range]::-webkit-slider-thumb {
   box-shadow: 0 0 0 3px rgba(47, 125, 246, 0.16);
   cursor: pointer;
 }
-.vol-val { font-size: 11px; color: var(--text-dim); width: 30px; text-align: right; flex-shrink: 0; }
 
 /* ── Action buttons ─────────────────────────────── */
 .action-btn {
