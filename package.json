@@ -8,6 +8,7 @@
     "start": "electron .",
     "smoke": "node scripts/smoke-check.js",
     "test": "node scripts/smoke-check.js && node scripts/test.js",
+    "build:icon": "node scripts/build-icon.js",
     "build": "electron-builder --win --x64",
     "dist:clean": "powershell -NoProfile -Command \"if (Test-Path dist) { Remove-Item -Recurse -Force dist }\"",
     "build:clean": "npm run dist:clean && npm run build"
@@ -45,6 +46,8 @@
   },
   "devDependencies": {
     "electron": "^33.0.0",
-    "electron-builder": "^25.0.0"
+    "electron-builder": "^25.0.0",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.35.2"
   }
 }

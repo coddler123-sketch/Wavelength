@@ -136,6 +136,31 @@ function setThemeLevel(level) {
   s.setProperty('--audio-border-glow', (themeLevel * 0.12).toFixed(3));
 }
 
+function setActiveStationName(name) {
+  const wrap = document.getElementById('active-station-name');
+  const inner = document.getElementById('active-station-name-inner');
+  if (!wrap || !inner) return;
+  inner.textContent = name;
+  wrap.setAttribute('title', name);
+  inner.classList.remove('marquee-active');
+  inner.style.removeProperty('--marquee-dist');
+  // Force reflow before measuring
+  void wrap.offsetWidth;
+  const diff = wrap.clientWidth - inner.scrollWidth;
+  if (diff < 0) {
+    inner.style.setProperty('--marquee-dist', `${diff - 16}px`);
+    inner.classList.add('marquee-active');
+  }
+}
+
+let stationNameResizeTimer = null;
+window.addEventListener('resize', () => {
+  if (stationNameResizeTimer) clearTimeout(stationNameResizeTimer);
+  stationNameResizeTimer = setTimeout(() => {
+    if (activeStation) setActiveStationName(activeStation.name);
+  }, 120);
+});
+
 function setLiveStatus(state) {
   const el = document.getElementById('live-status');
   if (!el) return;
@@ -935,9 +960,10 @@ function selectStation(station) {
   api.selectStation(station);
 
   // Update active state in UI elements
-  document.getElementById('active-station-name').textContent = station.name;
+  setActiveStationName(station.name);
   document.getElementById('active-station-subtitle').textContent = `${station.genre} · ${station.country}`;
   document.getElementById('mini-station-name').textContent = station.name;
+  document.getElementById('mini-station-name').title = station.name;
   updateMiniLogo(station);
   updatePlayerLogo(station);
 
@@ -994,8 +1020,10 @@ safeAddListener('btn-bass', 'click', cycleBassBoost);
 safeAddListener('station-gain-pill', 'click', resetStationGain);
 safeAddListener('visualizer', 'click', () => visualizer.toggleMode());
 
-safeAddListener('btn-view-player', 'click', () => switchView('player'));
-safeAddListener('btn-view-list', 'click', () => switchView('list'));
+safeAddListener('btn-view-toggle', 'click', () => {
+  const isList = document.body.classList.contains('view-list-active');
+  switchView(isList ? 'player' : 'list');
+});
 safeAddListener('player-fav-btn', 'click', () => {
   if (activeStation) toggleFavorite(activeStation.id);
 });
@@ -1259,14 +1287,15 @@ function switchView(view) {
   const isList = view === 'list';
   document.body.classList.toggle('view-list-active', isList);
 
-  const btnPlayer = document.getElementById('btn-view-player');
-  const btnList = document.getElementById('btn-view-list');
-  if (btnPlayer && btnList) {
-    btnPlayer.classList.toggle('active', !isList);
-    btnList.classList.toggle('active', isList);
-    btnPlayer.setAttribute('aria-pressed', String(!isList));
-    btnList.setAttribute('aria-pressed', String(isList));
+  const toggleBtn = document.getElementById('btn-view-toggle');
+  if (toggleBtn) {
+    toggleBtn.classList.toggle('active', isList);
+    toggleBtn.setAttribute('aria-pressed', String(isList));
+    toggleBtn.setAttribute('aria-label', isList ? 'Player-Ansicht' : 'Senderliste anzeigen');
+    toggleBtn.setAttribute('title', isList ? 'Player-Ansicht' : 'Senderliste anzeigen');
   }
+  // Re-evaluate marquee since the available width may have changed
+  if (activeStation) setActiveStationName(activeStation.name);
 
   if (isList) {
     setTimeout(() => {
@@ -1472,9 +1501,10 @@ function updateItemEqualizer() {
     applyStationGain();
     api.selectStation(activeStation, true);
 
-    document.getElementById('active-station-name').textContent = activeStation.name;
+    setActiveStationName(activeStation.name);
     document.getElementById('active-station-subtitle').textContent = `${activeStation.genre} · ${activeStation.country}`;
     document.getElementById('mini-station-name').textContent = activeStation.name;
+    document.getElementById('mini-station-name').title = activeStation.name;
     updateMiniLogo(activeStation);
     updatePlayerLogo(activeStation);
   }
