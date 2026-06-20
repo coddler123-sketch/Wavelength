@@ -258,6 +258,36 @@ body.sleep-active .listen-badge { display: none; }
   white-space: nowrap;
   flex-shrink: 0;
 }
+.fav-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: rgba(255,255,255,0.032);
+  border: 1px solid rgba(255,255,255,0.065);
+  color: rgba(240,236,228,0.5);
+  border-radius: 999px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  -webkit-app-region: no-drag;
+}
+.fav-badge-btn:hover {
+  background: rgba(255, 183, 0, 0.085);
+  border-color: rgba(255, 183, 0, 0.28);
+  color: #ffb700;
+}
+.fav-badge-btn.is-fav {
+  background: rgba(255, 183, 0, 0.1);
+  border-color: rgba(255, 183, 0, 0.3);
+  color: #ffb700;
+}
+.fav-badge-btn.is-fav svg {
+  fill: currentColor;
+}
 body.reconnecting .live-badge {
   background: rgba(47,125,246,0.13);
   border-color: rgba(47,125,246,0.28);
@@ -1333,17 +1363,17 @@ body.view-list-active .track-info-container {
         <div class="station-title-row">
           <div class="logo-name" id="active-station-name" title="Wavelength"><span class="logo-name-inner" id="active-station-name-inner">Wavelength</span></div>
           <button class="station-gain-pill" id="station-gain-pill" title="Sender-Trim zurücksetzen" aria-label="Sender-Trim zurücksetzen"></button>
-          <button class="fav-star-btn player-fav-btn" id="player-fav-btn" title="Zu Favoriten hinzufügen">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-            </svg>
-          </button>
         </div>
         <div class="logo-tagline" id="active-station-subtitle">Multi-Station Player</div>
         <div class="status-row">
           <div class="live-badge"><span class="live-wave" aria-hidden="true"><span></span><span></span><span></span></span><span id="live-status" aria-live="polite" aria-atomic="true">Stopped</span></div>
           <span class="listen-badge" id="listen-badge" aria-live="polite" aria-atomic="true">Heute 0 min</span>
           <span class="sleep-badge" id="sleep-badge" aria-live="polite" aria-atomic="true"></span>
+          <button class="fav-badge-btn" id="player-fav-btn" title="Zu Favoriten hinzufügen" aria-label="Zu Favoriten hinzufügen" aria-pressed="false">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </button>
         </div>
       </div>
     </div>

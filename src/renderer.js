@@ -1330,7 +1330,10 @@ function updatePlayerFavStar() {
   btn.style.display = 'inline-flex';
   const isFav = favorites.includes(activeStation.id);
   btn.classList.toggle('is-fav', isFav);
-  btn.title = isFav ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen';
+  const label = isFav ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen';
+  btn.title = label;
+  btn.setAttribute('aria-label', label);
+  btn.setAttribute('aria-pressed', String(isFav));
 }
 
 function updateMiniLogo(station) {
