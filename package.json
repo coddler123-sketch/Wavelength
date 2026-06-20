@@ -1,0 +1,50 @@
+{
+  "name": "wavelength",
+  "version": "1.0.0",
+  "description": "Wavelength – Multi-Station Radio Player for Windows",
+  "author": "Wavelength",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "node scripts/smoke-check.js",
+    "test": "node scripts/smoke-check.js && node scripts/test.js",
+    "build": "electron-builder --win --x64",
+    "dist:clean": "powershell -NoProfile -Command \"if (Test-Path dist) { Remove-Item -Recurse -Force dist }\"",
+    "build:clean": "npm run dist:clean && npm run build"
+  },
+  "build": {
+    "appId": "com.wavelength.player",
+    "productName": "Wavelength",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/",
+        "to": "assets/"
+      }
+    ]
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}
