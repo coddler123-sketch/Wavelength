@@ -34,9 +34,44 @@
     return Math.max(0, Math.min(1, (n + 0.62) * shape));
   }
 
-  exports.formatListen = formatListen;
-  exports.averageLevel = averageLevel;
-  exports.trayState    = trayState;
-  exports.fakeBar      = fakeBar;
+  function getStationCategory(genre) {
+    if (!genre) return 'Sonstige / Ambient';
+    const g = genre.toLowerCase();
+    if (g.includes('pop') || g.includes('top 40') || g.includes('hits')) return 'Pop & Charts';
+    if (g.includes('rock') || g.includes('metal') || g.includes('alternative') || g.includes('indie')) return 'Rock & Metal';
+    if (g.includes('electronic') || g.includes('edm') || g.includes('techno') || g.includes('house') || g.includes('dance') || g.includes('dnb') || g.includes('drum') || g.includes('lofi')) return 'Electronic & Dance';
+    if (g.includes('hip hop') || g.includes('hip-hop') || g.includes('rap') || g.includes('urban') || g.includes('r&b') || g.includes('soul') || g.includes('funk') || g.includes('reggae') || g.includes('ska') || g.includes('dancehall')) return 'Hip-Hop & R&B';
+    if (g.includes('classical') || g.includes('klassik') || g.includes('orchestral') || g.includes('symphony') || g.includes('opera') || g.includes('chamber') || g.includes('jazz') || g.includes('blues') || g.includes('swing')) return 'Klassik & Jazz';
+    if (g.includes('news') || g.includes('talk') || g.includes('speech') || g.includes('info') || g.includes('nachrichten')) return 'News & Talk';
+    return 'Sonstige / Ambient';
+  }
+
+  function filterStations(stations, { search = '', genre = '', lang = '', favorites = [], favFilterActive = false } = {}) {
+    const q = search.toLowerCase().trim();
+    return stations.filter(s => {
+      if (favFilterActive && !favorites.includes(s.id)) return false;
+      if (genre && getStationCategory(s.genre) !== genre) return false;
+      if (lang && s.language !== lang) return false;
+      if (q) {
+        return s.name.toLowerCase().includes(q) ||
+               (s.genre || '').toLowerCase().includes(q) ||
+               (s.country || '').toLowerCase().includes(q) ||
+               (s.language || '').toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }
+
+  function buildRecentsList(ids, newId, max = 5) {
+    return [newId, ...ids.filter(x => x !== newId)].slice(0, max);
+  }
+
+  exports.formatListen        = formatListen;
+  exports.averageLevel        = averageLevel;
+  exports.trayState           = trayState;
+  exports.fakeBar             = fakeBar;
+  exports.getStationCategory  = getStationCategory;
+  exports.filterStations      = filterStations;
+  exports.buildRecentsList    = buildRecentsList;
 // eslint-disable-next-line no-undef
 })(typeof module !== 'undefined' ? module.exports : (window.utils = {}));

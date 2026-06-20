@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Wavelength** is a Windows Electron tray-only radio player supporting multiple customizable stations. Similar architecture to Zucca Radio but designed for multiple stations with Firebase backend integration. The app runs minimally in the system tray with a 400×400 mini UI and expandable visualizer.
+**Wavelength** is a Windows Electron tray-only radio player supporting multiple customizable stations. Similar architecture to Zucca Radio but designed for multiple stations from curated local defaults plus Radio Browser integration. The app runs minimally in the system tray with a 400×400 mini UI and expandable visualizer.
 
 **Key characteristics:**
 - Single-instance Electron app with system tray integration
 - IPC-based main/renderer communication with strict contracts
 - Mini player window (400×400px) that can minimize to tray
 - Audio visualization with 9 modes
-- Station management via Firebase Realtime Database
+- Station management via curated local defaults, Radio Browser loading, and disk cache
 - Windows-only NSIS installer build
 
 ## Development Workflow
@@ -159,7 +159,7 @@ Output: `dist/Wavelength Setup 1.0.0.exe` (NSIS installer for x64 Windows)
 - Includes: `src/**/*` + `assets/**/*`
 
 ### Code Signing (Optional)
-Environment variables (`.env` or shell):
+See `SIGNING.md`. Environment variables (`.env` or shell):
 ```
 ELECTRON_BUILDER_SIGN_KEY=<path_to_key>
 WIN_CSC_LINK=<cert_path>
@@ -228,6 +228,11 @@ App logs to `userData/logs/app.log` with 1 MB rotation. Timestamped. On startup,
 2. Renderer requests the list via IPC `get-stations`
 3. Click station → emits IPC `select-station` with station object
 
+### Maintain Curated Stations
+1. Edit `assets/stations.json`
+2. Follow `STATIONS.md`
+3. Run `npm run stations:check` and `npm test`
+
 ## Dependencies
 
 **Runtime:**
@@ -237,7 +242,6 @@ App logs to `userData/logs/app.log` with 1 MB rotation. Timestamped. On startup,
 **No external npm dependencies** for app logic (intentional lightweight design).
 
 **Implied (system):**
-- Firebase Realtime Database (cloud, requires config)
 - Windows OS (target platform)
 - Node.js v18+ (dev environment)
 
@@ -251,13 +255,12 @@ App logs to `userData/logs/app.log` with 1 MB rotation. Timestamped. On startup,
 
 This project follows patterns from **Zucca Radio** (predecessor single-station player). Key differences:
 - Multiple stations (Wavelength) vs. single station (Zucca)
-- Firebase backend (Wavelength) vs. hardcoded stations (Zucca)
+- Multiple stations with Radio Browser fallback (Wavelength) vs. single station (Zucca)
 - Similar UI/UX, visualizer, tray integration
 
 ## Open Questions / TODO
 
 Refer to `TODO.md` for phase breakdown and known issues:
-- Firebase project config (Phase 2)
 - Station list maintenance strategy
 - Branding/color scheme finalization
 - Windows Media Session integration completeness

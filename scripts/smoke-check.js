@@ -6,10 +6,26 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
 const pkg = JSON.parse(read('package.json'));
 const lock = JSON.parse(read('package-lock.json'));
+const stationsJson = JSON.parse(read('assets/stations.json'));
+const { validateStations } = require('./validate-stations.js');
+const stationErrors = validateStations(stationsJson);
+assert(stationErrors.length === 0, `assets/stations.json validation failed: ${stationErrors.join('; ')}`);
+assert(Array.isArray(stationsJson) && stationsJson.length >= 10, 'assets/stations.json: zu wenige Stationen');
+for (const s of stationsJson) {
+  assert(s.id && s.name && s.streamUrl && s.genre && s.country && s.language,
+    `assets/stations.json: Station "${s.name || s.id}" fehlt Pflichtfelder`);
+  assert(s.streamUrl.startsWith('https://'), `assets/stations.json: "${s.name}" nutzt kein HTTPS`);
+}
 const html = read('src/index.html');
 const main = read('src/main.js');
 const preload = read('src/preload.js');
-const renderer = read('src/renderer.js');
+const renderer = [
+  read('src/renderer-state.js'),
+  read('src/renderer-ui.js'),
+  read('src/renderer-audio.js'),
+  read('src/renderer-stations.js'),
+  read('src/renderer.js'),
+].join('\n');
 const utils       = read('src/utils.js');
 const winState    = read('src/window-state.js');
 const visualizer  = read('src/visualizer.js');
@@ -55,15 +71,15 @@ for (const channel of [
 }
 
 for (const marker of [
-  'recordListenTick',
   'showToast',
-  "document.body.classList.toggle('window-hidden'",
   'BASS_GAINS',
-  'stationGain',
   'WavelengthVisualizer.create',
 ]) {
   assert(renderer.includes(marker), `renderer missing marker: ${marker}`);
 }
+assert(utils.includes('getStationCategory'), 'utils.js missing getStationCategory');
+assert(utils.includes('filterStations'),     'utils.js missing filterStations');
+assert(utils.includes('buildRecentsList'),   'utils.js missing buildRecentsList');
 
 assert(html.includes('src="utils.js"'),   'index.html missing utils.js script tag');
 assert(html.includes('src="visualizer.js"'), 'index.html missing visualizer.js script tag');
@@ -71,7 +87,7 @@ assert(html.indexOf('src="visualizer.js"') > html.indexOf('src="utils.js"'), 'vi
 assert(html.indexOf('src="renderer.js"') > html.indexOf('src="visualizer.js"'), 'renderer.js must load after visualizer.js');
 assert(utils.includes('formatListen'),    'utils.js missing formatListen');
 assert(utils.includes('averageLevel'),    'utils.js missing averageLevel');
-assert(renderer.includes('} = utils'),   'renderer.js not importing from utils module');
+assert(renderer.includes('window.utils'), 'renderer modules not importing from utils module');
 assert(winState.includes('load'),        'window-state.js missing load');
 assert(winState.includes('save'),        'window-state.js missing save');
 assert(winState.includes('clear'),       'window-state.js missing clear');

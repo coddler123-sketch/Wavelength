@@ -22,25 +22,25 @@ Current status after project review: the core app is implemented and tests pass,
 
 ## Before Release
 
-- [ ] Manually verify `npm start` on Windows with real streams
-- [ ] Verify external icons/streams still work with default Electron `webSecurity`
-- [ ] Run `npm run build` and install the generated NSIS package
-- [x] Remove committed `src/firebase-config.js` with the fixed database URL
-- [ ] Review Firebase database rules before publishing
-- [ ] Check app log rotation under `%APPDATA%\wavelength\logs\app.log`
-- [ ] Confirm tray behavior after suspend/resume and second-instance launch
-- [ ] Check Windows media controls on the target Windows version
+- [x] Manually verify `npm start` on Windows with real streams
+- [x] Verify external icons/streams still work with default Electron `webSecurity`
+- [x] Run `npm run build` and install the generated NSIS package
+- [x] Remove unused backend configuration and seed scripts
+- [x] Check app log rotation under `%APPDATA%\wavelength\logs\app.log`
+- [x] Confirm second-instance launch focuses/reuses the running app
+- [x] Confirm tray behavior after suspend/resume
+- [x] Check Windows media controls on the target Windows version
 
 ## Code Health
 
-- [ ] Split `src/renderer.js` into smaller modules once behavior is stable
-- [ ] Add behavior-level tests for station selection and reconnect state
-- [ ] Add station cache/fallback tests around `src/stations.js`
-- [ ] Replace brittle smoke markers with targeted assertions where practical
+- [x] Split `src/renderer.js` into smaller modules once behavior is stable
+- [x] Add behavior-level tests for station selection and reconnect state
+- [x] Add station cache/fallback tests around `src/stations.js`
+- [x] Replace brittle smoke markers with targeted assertions where practical
 - [ ] Consider returning unsubscribe functions from preload listener helpers if renderer reload/listener churn appears
 
 ## Nice To Have
 
-- [ ] Code signing for installer
-- [ ] Branding pass for icon and color system
-- [ ] Station maintenance workflow for curated defaults
+- [/] Code signing for installer (workflow prepared; requires certificate)
+- [x] Branding pass for icon and color system
+- [x] Station maintenance workflow for curated defaults

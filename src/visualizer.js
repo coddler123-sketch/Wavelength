@@ -663,6 +663,10 @@
       drawFrame();
     }
 
+    function stop() {
+      running = false;
+    }
+
     function toggleMode() {
       const index = VISUALIZER_MODES.indexOf(mode);
       mode = VISUALIZER_MODES[(index + 1) % VISUALIZER_MODES.length];
@@ -711,7 +715,7 @@
     window.addEventListener('resize', onWindowResize);
     resize();
 
-    return { start, drawIdle, toggleMode, resetMode, getMode, setMode, resize };
+    return { start, stop, drawIdle, toggleMode, resetMode, getMode, setMode, resize };
   }
 
   exports.create            = create;

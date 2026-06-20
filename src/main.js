@@ -1,7 +1,7 @@
 const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, nativeTheme,
         screen, globalShortcut, Notification, dialog, shell, powerMonitor, session } = require('electron');
 const { trayState: computeTrayState } = require('./utils.js');
-const { loadStations } = require('./stations.js');
+const { loadStations, DEFAULT_STATIONS } = require('./stations.js');
 const windowState = require('./window-state.js');
 const path = require('path');
 const fs   = require('fs');
@@ -170,7 +170,7 @@ function snapMiniToNearestEdge(force = false) {
   if (distances[0].edge === 'right') x = display.x + display.width - bounds.width;
   if (distances[0].edge === 'top') y = display.y;
   if (distances[0].edge === 'bottom') y = display.y + display.height - bounds.height;
-  if (x !== bounds.x || y !== bounds.y) mainWindow.setBounds({ x, y, width: bounds.width, height: bounds.height }, true);
+  if (x !== bounds.x || y !== bounds.y) mainWindow.setBounds({ x, y, width: bounds.width, height: bounds.height }, false);
 }
 
 function createWindow() {
@@ -429,6 +429,7 @@ function updateTrayTooltip() {
 }
 
 function updateTrayMenu() {
+  if (!tray || tray.isDestroyed()) return;
   const stationMenuItems = allStations.map(station => ({
     label: station.name,
     type: 'radio',
@@ -463,7 +464,7 @@ function updateTrayMenu() {
     { label: 'Pin (Always on Top)', type: 'checkbox', checked: isPinned, click: () => togglePin() },
     { label: isMini ? 'Vollansicht' : 'Mini Player', click: () => toggleMini() },
     { label: 'Mini an Bildschirmkante andocken', type: 'checkbox', checked: dockMini, click: () => toggleMiniDock() },
-    { label: mainWindow?.isVisible() ? 'Ausblenden' : 'Anzeigen', click: toggleWindow },
+    { label: mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() ? 'Ausblenden' : 'Anzeigen', click: toggleWindow },
     { type: 'separator' },
     { label: 'Autostart', type: 'checkbox', checked: getAutostart(), click: () => toggleAutostart() },
     { type: 'separator' },
@@ -543,9 +544,7 @@ function toggleMini() {
 
   if (isMini) {
     mainWindow.setMinimumSize(SIZES.mini.width, SIZES.mini.height);
-    mainWindow.setMaximumSize(SIZES.mini.width, SIZES.mini.height);
   } else {
-    mainWindow.setMinimumSize(SIZES.full.width, SIZES.full.height);
     mainWindow.setMaximumSize(SIZES.full.width, SIZES.full.height);
   }
 
@@ -568,7 +567,13 @@ function toggleMini() {
     }
   }
 
-  mainWindow.setBounds({ x: newX, y: newY, width: newW, height: newH }, true);
+  mainWindow.setBounds({ x: newX, y: newY, width: newW, height: newH }, false);
+
+  if (isMini) {
+    mainWindow.setMaximumSize(SIZES.mini.width, SIZES.mini.height);
+  } else {
+    mainWindow.setMinimumSize(SIZES.full.width, SIZES.full.height);
+  }
 
   mainWindow.setResizable(false);
   sendStateToRenderer();
@@ -640,7 +645,7 @@ function resetWindowPosition() {
   const display = screen.getPrimaryDisplay().workArea;
   const x = Math.round(display.x + (display.width - size.width) / 2);
   const y = Math.round(display.y + (display.height - size.height) / 2);
-  mainWindow.setBounds({ x, y, width: size.width, height: size.height }, true);
+  mainWindow.setBounds({ x, y, width: size.width, height: size.height }, false);
   saveWindowState();
 }
 
@@ -676,7 +681,7 @@ ipcMain.on('play-pause',        (_, forceState) => togglePlay(forceState));
 ipcMain.on('toggle-pin',        togglePin);
 ipcMain.on('toggle-mini',       toggleMini);
 ipcMain.on('toggle-mute',       toggleMute);
-ipcMain.on('hide-window',       () => mainWindow.hide());
+ipcMain.on('hide-window',       () => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide(); });
 ipcMain.on('quit-app',          quitApp);
 ipcMain.on('open-external',     (_, url) => {
   if (typeof url === 'string' && (url.startsWith('https://') || url.startsWith('http://'))) {
@@ -746,8 +751,12 @@ function checkSystemIdle() {
 
 // ── App lifecycle ─────────────────────────────────────────
 app.whenReady().then(async () => {
-  // CORS bypass header interceptor
+  // Let the WebAudio analyser read cross-origin stream data without weakening every response.
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    if (details.resourceType !== 'media') {
+      callback({});
+      return;
+    }
     const responseHeaders = {};
     for (const [key, value] of Object.entries(details.responseHeaders || {})) {
       if (key.toLowerCase() !== 'access-control-allow-origin') {

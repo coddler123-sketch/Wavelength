@@ -15,17 +15,18 @@ const SVG = Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
 <svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0f1424"/>
-      <stop offset="100%" stop-color="#090a10"/>
+      <stop offset="0%" stop-color="#162028"/>
+      <stop offset="58%" stop-color="#0b1117"/>
+      <stop offset="100%" stop-color="#07090d"/>
     </linearGradient>
     <linearGradient id="wave" x1="36" y1="128" x2="220" y2="128" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#6652d9"/>
-      <stop offset="50%" stop-color="#2f7df6"/>
-      <stop offset="100%" stop-color="#5ee8ef"/>
+      <stop offset="0%" stop-color="#ffbf69"/>
+      <stop offset="46%" stop-color="#34d6d0"/>
+      <stop offset="100%" stop-color="#4f7cff"/>
     </linearGradient>
     <radialGradient id="glow" cx="128" cy="128" r="110" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#5ee8ef" stop-opacity="0.22"/>
-      <stop offset="60%" stop-color="#2f7df6" stop-opacity="0.08"/>
+      <stop offset="0%" stop-color="#34d6d0" stop-opacity="0.24"/>
+      <stop offset="54%" stop-color="#ffbf69" stop-opacity="0.08"/>
       <stop offset="100%" stop-color="#000" stop-opacity="0"/>
     </radialGradient>
   </defs>
