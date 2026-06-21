@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.8
+## 1.1.9
 
 - Removed code signing from the release workflow because unsigned Windows builds are intentional for this project.
 - Added release-facing README documentation and guarded the changelog in the smoke check.
@@ -9,6 +9,7 @@
 - Updated external request user agents to use the current package version.
 - Hardened station logos by using HTTPS icon URLs and JavaScript error listeners instead of inline fallback handlers.
 - Moved tray station menu building into a directly tested module.
+- Moved ICY metadata parsing and reconnect handling into a dedicated main-process module.
 - Added direct tests for Windows media session title and artist parsing.
 - Added an Electron UI audit check that renders every visualizer mode and inspects canvas pixels.
 - Logged ICY request cleanup failures instead of silently swallowing them.

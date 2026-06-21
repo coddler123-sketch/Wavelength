@@ -4,8 +4,10 @@ const fs       = require('fs');
 const path     = require('path');
 const os       = require('os');
 const vm       = require('vm');
+const http     = require('http');
 
 const { formatListen, averageLevel, trayState, fakeBar, mediaSessionFields } = require('../src/utils.js');
+const { createIcyMetadataClient } = require('../src/icy-metadata-client.js');
 const { buildTrayStationMenuItems, stationSwitcherSubmenu, trayStationGroupLabel } = require('../src/tray-menu.js');
 const { validateStations } = require('./validate-stations.js');
 
@@ -13,6 +15,7 @@ const src  = (f) => fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8'
 const main    = src('main.js');
 const preload = src('preload.js');
 const stations = src('stations.js');
+const icyMetadataClient = src('icy-metadata-client.js');
 const html = src('index.html');
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
 const renderer = [
@@ -189,18 +192,69 @@ test('Main: Tray-Updates ignorieren bereits zerstoerte Objekte', () => {
 });
 
 test('Main: ICY-Metadatenclient ignoriert veraltete Reconnect-Events', () => {
-  assert.ok(main.includes('let icyClientToken = 0'), 'ICY-Client-Token fehlt');
-  assert.ok(main.includes('let currentIcyStreamUrl ='), 'aktuelle ICY-Stream-URL fehlt');
-  assert.ok(main.includes('function isCurrentIcyClient(token, streamUrl)'), 'ICY-Current-Guard fehlt');
-  assert.ok(main.includes('if (!isCurrentIcyClient(token, streamUrl)) return;'), 'veraltete ICY-Events werden nicht ignoriert');
-  assert.ok(main.includes('scheduleIcyReconnect(streamUrl, token)'), 'Reconnect nutzt keinen ICY-Token');
-  assert.ok(main.includes('if (isCurrentIcyClient(token, streamUrl)) startIcyMetadataClient(streamUrl);'), 'Reconnect-Timer prueft Token nicht erneut');
+  assert.ok(main.includes("require('./icy-metadata-client.js')"), 'main.js muss den ICY-Client importieren');
+  assert.ok(main.includes('const icyMetadataClient = createIcyMetadataClient'), 'main.js muss den ICY-Client initialisieren');
+  assert.ok(icyMetadataClient.includes('let clientToken = 0'), 'ICY-Client-Token fehlt');
+  assert.ok(icyMetadataClient.includes('let currentStreamUrl ='), 'aktuelle ICY-Stream-URL fehlt');
+  assert.ok(icyMetadataClient.includes('function isCurrentClient(token, streamUrl)'), 'ICY-Current-Guard fehlt');
+  assert.ok(icyMetadataClient.includes('if (!isCurrentClient(token, streamUrl)) return;'), 'veraltete ICY-Events werden nicht ignoriert');
+  assert.ok(icyMetadataClient.includes('scheduleReconnect(streamUrl, token)'), 'Reconnect nutzt keinen ICY-Token');
+  assert.ok(icyMetadataClient.includes('if (isCurrentClient(token, streamUrl)) start(streamUrl);'), 'Reconnect-Timer prueft Token nicht erneut');
 });
 
 test('Main: ICY-Request-Destroy-Fehler werden geloggt', () => {
-  assert.ok(main.includes('function destroyIcyRequest(reason)'), 'destroyIcyRequest Helper fehlt');
-  assert.ok(main.includes("log('[icy] Request destroy failed'"), 'Destroy-Fehler muessen geloggt werden');
-  assert.ok(!/currentIcyRequest\.destroy\(\);\s*}\s*catch \(_\) \{\}/.test(main), 'ICY-Destroy darf Fehler nicht still verschlucken');
+  assert.ok(icyMetadataClient.includes('function destroyRequest(reason)'), 'destroyRequest Helper fehlt');
+  assert.ok(icyMetadataClient.includes("log('[icy] Request destroy failed'"), 'Destroy-Fehler muessen geloggt werden');
+  assert.ok(!/currentRequest\.destroy\(\);\s*}\s*catch \(_\) \{\}/.test(icyMetadataClient), 'ICY-Destroy darf Fehler nicht still verschlucken');
+});
+
+test('ICY Metadata Client: parst StreamTitle aus lokalem Stream', async () => {
+  const title = 'Artist - Song';
+  const metadata = `StreamTitle='${title}';`;
+  const metadataBlocks = Math.ceil(Buffer.byteLength(metadata) / 16);
+  const metadataBuffer = Buffer.alloc(metadataBlocks * 16);
+  metadataBuffer.write(metadata);
+  const chunk = Buffer.concat([
+    Buffer.alloc(5),
+    Buffer.from([metadataBlocks]),
+    metadataBuffer,
+  ]);
+
+  const server = http.createServer((_, res) => {
+    res.writeHead(200, { 'icy-metaint': '5' });
+    res.end(chunk);
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+
+  const seen = [];
+  const client = createIcyMetadataClient({
+    userAgent: 'WavelengthRadioPlayer/test',
+    log: () => {},
+    isPlaying: () => true,
+    onTrackTitle: value => seen.push(value),
+  });
+  let currentTitleBeforeStop = '';
+
+  try {
+    client.start(`http://127.0.0.1:${server.address().port}/stream`);
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('timed out waiting for ICY metadata')), 1000);
+      const poll = setInterval(() => {
+        if (seen.length > 0) {
+          clearTimeout(timer);
+          clearInterval(poll);
+          resolve();
+        }
+      }, 10);
+    });
+    currentTitleBeforeStop = client.getCurrentTrackTitle();
+  } finally {
+    client.stop();
+    await new Promise(resolve => server.close(resolve));
+  }
+
+  assert.deepEqual(seen, [title]);
+  assert.equal(currentTitleBeforeStop, title);
 });
 
 test('Main: Logger macht Rotationsfehler sichtbar', () => {

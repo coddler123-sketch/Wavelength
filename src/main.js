@@ -3,12 +3,10 @@ const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, nativeTheme,
 const { trayState: computeTrayState } = require('./utils.js');
 const { loadStations, DEFAULT_STATIONS } = require('./stations.js');
 const { buildTrayStationMenuItems, stationSwitcherSubmenu } = require('./tray-menu.js');
+const { createIcyMetadataClient } = require('./icy-metadata-client.js');
 const windowState = require('./window-state.js');
 const path = require('path');
 const fs   = require('fs');
-const http = require('http');
-const https = require('https');
-const { URL } = require('url');
 
 // ── Single-instance lock ──────────────────────────────────
 if (!app.requestSingleInstanceLock()) { app.exit(0); }
@@ -253,198 +251,27 @@ function createTray() {
   updateTrayMenu();
 }
 
-let currentIcyRequest = null;
 let currentTrackTitle = '';
-let icyReconnectTimer = null;
-let icyClientToken = 0;
-let currentIcyStreamUrl = '';
-
-function isCurrentIcyClient(token, streamUrl) {
-  return token === icyClientToken && streamUrl === currentIcyStreamUrl;
-}
-
-function destroyIcyRequest(reason) {
-  if (!currentIcyRequest) return;
-  try {
-    currentIcyRequest.destroy();
-  } catch (err) {
-    log('[icy] Request destroy failed', `${reason}: ${err.message || String(err)}`);
-  }
-  currentIcyRequest = null;
-}
+const icyMetadataClient = createIcyMetadataClient({
+  userAgent: APP_USER_AGENT,
+  log,
+  isPlaying: () => isPlaying,
+  onTrackTitle: (title) => {
+    currentTrackTitle = title;
+    if (mainWindow && !mainWindow.isDestroyed() && rendererReady) {
+      mainWindow.webContents.send('track-info', title);
+    }
+    updateTrayTooltip();
+  },
+});
 
 function stopIcyMetadataClient() {
-  icyClientToken++;
-  currentIcyStreamUrl = '';
-  if (icyReconnectTimer) {
-    clearTimeout(icyReconnectTimer);
-    icyReconnectTimer = null;
-  }
-  destroyIcyRequest('stop');
+  icyMetadataClient.stop();
   currentTrackTitle = '';
 }
 
-function startIcyMetadataClient(streamUrl, redirectCount = 0, token = null) {
-  if (token === null) {
-    stopIcyMetadataClient();
-    token = ++icyClientToken;
-  }
-  if (!isPlaying || !streamUrl) return;
-  currentIcyStreamUrl = streamUrl;
-
-  if (redirectCount > 5) {
-    log('[icy] Too many redirects for url: ' + streamUrl);
-    return;
-  }
-
-  try {
-    const parsedUrl = new URL(streamUrl);
-    const client = parsedUrl.protocol === 'https:' ? https : http;
-
-    const req = client.get(streamUrl, {
-      headers: {
-        'Icy-MetaData': '1',
-        'User-Agent': APP_USER_AGENT
-      }
-    }, (res) => {
-      if (!isCurrentIcyClient(token, streamUrl)) {
-        res.destroy();
-        return;
-      }
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        req.destroy();
-        startIcyMetadataClient(res.headers.location, redirectCount + 1, token);
-        return;
-      }
-
-      if (res.statusCode !== 200) {
-        log(`[icy] HTTP Status: ${res.statusCode} for ${streamUrl}`);
-        req.destroy();
-        scheduleIcyReconnect(streamUrl, token);
-        return;
-      }
-
-      const metaint = parseInt(res.headers['icy-metaint'], 10);
-      if (!metaint || isNaN(metaint)) {
-        return;
-      }
-
-      let bytesRead = 0;
-      let nextMeta = metaint;
-      let metaBuffer = null;
-      let metaLength = 0;
-      let readingMeta = false;
-
-      res.on('data', (chunk) => {
-        if (!isCurrentIcyClient(token, streamUrl)) return;
-        let offset = 0;
-        while (offset < chunk.length) {
-          if (!readingMeta) {
-            const bytesNeeded = nextMeta - bytesRead;
-            const bytesAvailable = chunk.length - offset;
-            const toRead = Math.min(bytesNeeded, bytesAvailable);
-            
-            bytesRead += toRead;
-            offset += toRead;
-
-            if (bytesRead === nextMeta) {
-              readingMeta = true;
-              bytesRead = 0;
-              if (offset < chunk.length) {
-                const lenByte = chunk[offset];
-                offset++;
-                metaLength = lenByte * 16;
-                if (metaLength > 0) {
-                  metaBuffer = Buffer.alloc(metaLength);
-                } else {
-                  readingMeta = false;
-                  nextMeta = metaint;
-                }
-              } else {
-                metaLength = -1;
-              }
-            }
-          } else {
-            if (metaLength === -1) {
-              const lenByte = chunk[offset];
-              offset++;
-              metaLength = lenByte * 16;
-              if (metaLength > 0) {
-                metaBuffer = Buffer.alloc(metaLength);
-              } else {
-                readingMeta = false;
-                nextMeta = metaint;
-              }
-              continue;
-            }
-
-            const bytesNeeded = metaLength - bytesRead;
-            const bytesAvailable = chunk.length - offset;
-            const toRead = Math.min(bytesNeeded, bytesAvailable);
-
-            if (metaBuffer) {
-              chunk.copy(metaBuffer, bytesRead, offset, offset + toRead);
-            }
-            bytesRead += toRead;
-            offset += toRead;
-
-            if (bytesRead === metaLength) {
-              const rawMeta = metaBuffer ? metaBuffer.toString('utf8') : '';
-              const match = rawMeta.match(/StreamTitle='([^']*)'/);
-              if (match && match[1]) {
-                const title = match[1].trim();
-                if (title && title !== currentTrackTitle) {
-                  currentTrackTitle = title;
-                  if (mainWindow && !mainWindow.isDestroyed() && rendererReady) {
-                    mainWindow.webContents.send('track-info', title);
-                  }
-                  updateTrayTooltip();
-                }
-              }
-              readingMeta = false;
-              bytesRead = 0;
-              nextMeta = metaint;
-            }
-          }
-        }
-      });
-
-      res.on('end', () => {
-        scheduleIcyReconnect(streamUrl, token);
-      });
-
-      res.on('error', (err) => {
-        if (!isCurrentIcyClient(token, streamUrl)) return;
-        log('[icy] Response error: ' + err.message);
-        scheduleIcyReconnect(streamUrl, token);
-      });
-    });
-
-    req.on('error', (err) => {
-      if (!isCurrentIcyClient(token, streamUrl)) return;
-      log('[icy] Request error: ' + err.message);
-      scheduleIcyReconnect(streamUrl, token);
-    });
-
-    currentIcyRequest = req;
-  } catch (err) {
-    log('[icy] Connection setup failed: ' + err.message);
-    scheduleIcyReconnect(streamUrl, token);
-  }
-}
-
-function scheduleIcyReconnect(streamUrl, token = icyClientToken) {
-  if (!isCurrentIcyClient(token, streamUrl)) return;
-  destroyIcyRequest('reconnect');
-  if (icyReconnectTimer) {
-    clearTimeout(icyReconnectTimer);
-    icyReconnectTimer = null;
-  }
-  if (isPlaying && streamUrl && isCurrentIcyClient(token, streamUrl)) {
-    icyReconnectTimer = setTimeout(() => {
-      if (isCurrentIcyClient(token, streamUrl)) startIcyMetadataClient(streamUrl);
-    }, 5000);
-  }
+function startIcyMetadataClient(streamUrl) {
+  icyMetadataClient.start(streamUrl);
 }
 
 function updateTrayTooltip() {

@@ -81,10 +81,12 @@ Tests verify:
 | File | Purpose |
 |------|---------|
 | `src/main.js` | App lifecycle, window, tray, IPC handlers, connection state |
+| `src/icy-metadata-client.js` | ICY metadata parsing, stale-client guards, and reconnect handling |
 | `src/preload.js` | Secure IPC bridge to renderer (`electronAPI` API) |
 | `src/renderer.js` | UI logic, DOM updates, audio element control |
 | `src/index.html` | UI markup (status, volume, station picker, visualizer canvas) |
 | `src/stations.js` | Curated stations + Radio Browser loading with disk cache |
+| `src/tray-menu.js` | Pure tray station menu builders |
 | `src/utils.js` | Shared UMD utilities (formatListen, averageLevel, trayState, fakeBar) |
 | `src/visualizer.js` | Canvas-based audio visualization (9 modes: bars, mirror, oscilloscope, waterfall, wave, dna, particles, tunnel, scanner) |
 | `src/window-state.js` | Window position/size persistence (localStorage) |

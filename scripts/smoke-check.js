@@ -21,6 +21,7 @@ for (const s of stationsJson) {
 const html = read('src/index.html');
 const changelog = read('CHANGELOG.md');
 const main = read('src/main.js');
+const icyMetadataClient = read('src/icy-metadata-client.js');
 const preload = read('src/preload.js');
 const renderer = [
   read('src/renderer-state.js'),
@@ -105,6 +106,9 @@ assert(winState.includes('load'),        'window-state.js missing load');
 assert(winState.includes('save'),        'window-state.js missing save');
 assert(winState.includes('clear'),       'window-state.js missing clear');
 assert(main.includes("require('./window-state.js')"), 'main.js not importing window-state');
+assert(main.includes("require('./icy-metadata-client.js')"), 'main.js not importing icy metadata client');
+assert(icyMetadataClient.includes('createIcyMetadataClient'), 'icy-metadata-client.js missing factory');
+assert(icyMetadataClient.includes('StreamTitle'), 'icy-metadata-client.js missing ICY StreamTitle parser');
 assert(visualizer.includes('VISUALIZER_MODES'), 'visualizer.js missing visualizer modes');
 assert(visualizer.includes('function create'),  'visualizer.js missing create function');
 assert(visualizer.includes('drawMiniSignal'),   'visualizer.js missing mini signal renderer');
