@@ -17,6 +17,7 @@ const state = {
   stationSelections: [],
 };
 
+app.disableHardwareAcceleration();
 app.setPath('userData', path.join(os.tmpdir(), `wavelength-ui-audit-${Date.now()}`));
 
 function send(win, channel, value) {
@@ -253,6 +254,71 @@ async function auditPlayTooltip(win) {
   };
 }
 
+async function auditVisualizerModes(win) {
+  return win.webContents.executeJavaScript(`
+    (async () => {
+      const sleepFrame = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const countLitPixels = (canvas) => {
+        if (!canvas || canvas.width <= 0 || canvas.height <= 0) return 0;
+        const ctx = canvas.getContext('2d');
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        let lit = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3] > 0 && data[i] + data[i + 1] + data[i + 2] > 12) lit++;
+        }
+        return lit;
+      };
+
+      const modes = window.WavelengthVisualizer?.VISUALIZER_MODES || [];
+      const mainCanvas = document.createElement('canvas');
+      const miniCanvas = document.createElement('canvas');
+      const issues = [];
+      const results = [];
+      mainCanvas.style.cssText = 'position:fixed;left:-1000px;top:-1000px;width:320px;height:120px;';
+      miniCanvas.style.cssText = 'position:fixed;left:-1000px;top:-850px;width:120px;height:28px;';
+      document.body.append(mainCanvas, miniCanvas);
+      const auditVisualizer = window.WavelengthVisualizer.create({
+        canvas: mainCanvas,
+        miniCanvas,
+        storageKey: 'wl.auditVisualizerMode',
+        averageLevel: window.utils.averageLevel,
+        getAnalyser: () => null,
+        getState: () => ({ playing: false, windowVisible: true, muted: false }),
+        onLevel: () => {},
+        showToast: () => {},
+      });
+
+      auditVisualizer.resize();
+      for (const mode of modes) {
+        auditVisualizer.setMode(mode);
+        auditVisualizer.drawIdle();
+        await sleepFrame();
+        const litPixels = countLitPixels(mainCanvas);
+        const aria = mainCanvas?.getAttribute('aria-label') || '';
+        results.push({ mode, litPixels, aria });
+        if (litPixels < 20) issues.push(mode + ' rendered only ' + litPixels + ' lit pixels');
+        if (!aria || !aria.toLowerCase().includes('modus')) issues.push(mode + ' did not update visualizer aria label');
+      }
+
+      auditVisualizer.drawIdle();
+      await sleepFrame();
+      const miniLitPixels = countLitPixels(miniCanvas);
+      if (miniLitPixels < 8) issues.push('mini visualizer rendered only ' + miniLitPixels + ' lit pixels');
+      mainCanvas.remove();
+      miniCanvas.remove();
+
+      return {
+        label: 'visualizer-modes',
+        modes,
+        modeCount: modes.length,
+        results,
+        miniLitPixels,
+        interactionIssues: issues,
+      };
+    })()
+  `);
+}
+
 async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const win = new BrowserWindow({
@@ -280,6 +346,7 @@ async function main() {
   full.meta = await viewMeta(win);
   results.push(full);
   results.push(await auditPlayTooltip(win));
+  results.push(await auditVisualizerModes(win));
   await win.webContents.executeJavaScript(`
     document.body.classList.add('view-list-active');
     const toggleBtn = document.getElementById('btn-view-toggle');

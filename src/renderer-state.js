@@ -2,16 +2,19 @@
 // Import this module and mutate state.X directly.
 export const audio = document.getElementById('audio');
 
-let _favorites = [];
-let _recentStations = [];
-try {
-  _favorites = JSON.parse(localStorage.getItem('wl.favorites')) || [];
-  if (!Array.isArray(_favorites)) _favorites = [];
-} catch (_) {}
-try {
-  _recentStations = JSON.parse(localStorage.getItem('wl.recentStations')) || [];
-  if (!Array.isArray(_recentStations)) _recentStations = [];
-} catch (_) {}
+function loadStoredArray(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key)) || [];
+    return Array.isArray(value) ? value : [];
+  } catch (err) {
+    void err;
+    localStorage.removeItem(key);
+    return [];
+  }
+}
+
+let _favorites = loadStoredArray('wl.favorites');
+let _recentStations = loadStoredArray('wl.recentStations');
 
 export const state = {
   // Audio playback

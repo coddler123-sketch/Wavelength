@@ -1,6 +1,6 @@
 # Wavelength TODO
 
-Current status after project review: the core app is implemented and tests pass, but the release surface still needs hardening.
+Current status after project review: the core app is implemented and tests pass. Code signing is intentionally out of scope for this project.
 
 ## Done
 
@@ -13,7 +13,7 @@ Current status after project review: the core app is implemented and tests pass,
 - [x] Window state persistence
 - [x] Smoke check and Node test suite
 - [x] Electron UI audit for full, station-list, and mini layouts
-- [x] Non-build `npm run verify` gate for stations, UI audit, and tests
+- [x] Non-build `npm.cmd run verify` gate for stations, UI audit, and tests
 - [x] Station loading with curated defaults, Radio Browser fallback, and disk cache
 - [x] `get-stations` and `select-station` IPC flow
 - [x] Playback controls, volume, mute, keyboard shortcuts, and scroll-wheel volume
@@ -24,9 +24,9 @@ Current status after project review: the core app is implemented and tests pass,
 
 ## Before Release
 
-- [x] Manually verify `npm start` on Windows with real streams
+- [x] Manually verify `npm.cmd start` on Windows with real streams
 - [x] Verify external icons/streams still work with default Electron `webSecurity`
-- [x] Run `npm run build` and install the generated NSIS package
+- [x] Run `npm.cmd run build` and install the generated NSIS package
 - [x] Remove unused backend configuration and seed scripts
 - [x] Check app log rotation under `%APPDATA%\wavelength\logs\app.log`
 - [x] Confirm second-instance launch focuses/reuses the running app
@@ -43,6 +43,5 @@ Current status after project review: the core app is implemented and tests pass,
 
 ## Nice To Have
 
-- [/] Code signing for installer (workflow prepared; requires certificate)
 - [x] Branding pass for icon and color system
 - [x] Station maintenance workflow for curated defaults

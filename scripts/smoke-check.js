@@ -6,6 +6,8 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
 const pkg = JSON.parse(read('package.json'));
 const lock = JSON.parse(read('package-lock.json'));
+const readme = read('README.md');
+const releaseChecklist = read('RELEASE_CHECKLIST.md');
 const stationsJson = JSON.parse(read('assets/stations.json'));
 const { validateStations } = require('./validate-stations.js');
 const stationErrors = validateStations(stationsJson);
@@ -17,6 +19,7 @@ for (const s of stationsJson) {
   assert(s.streamUrl.startsWith('https://'), `assets/stations.json: "${s.name}" nutzt kein HTTPS`);
 }
 const html = read('src/index.html');
+const changelog = read('CHANGELOG.md');
 const main = read('src/main.js');
 const preload = read('src/preload.js');
 const renderer = [
@@ -29,6 +32,7 @@ const renderer = [
 const utils       = read('src/utils.js');
 const winState    = read('src/window-state.js');
 const visualizer  = read('src/visualizer.js');
+const uiAudit     = read('scripts/ui-audit.js');
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -36,6 +40,15 @@ function assert(condition, message) {
 
 assert(pkg.version === lock.version, 'package-lock version mismatch');
 assert(pkg.version === lock.packages[''].version, 'package-lock root version mismatch');
+assert(changelog.includes(`## ${pkg.version}`), `CHANGELOG.md missing entry for v${pkg.version}`);
+assert(readme.includes(`Current version: \`${pkg.version}\``), `README.md missing current version ${pkg.version}`);
+assert(readme.includes('npm.cmd run verify'), 'README.md missing verify command');
+assert(readme.includes('npm.cmd run build'), 'README.md missing build command');
+assert(readme.includes('intentionally unsigned'), 'README.md missing unsigned installer note');
+assert(readme.includes('RELEASE_CHECKLIST.md'), 'README.md missing release checklist link');
+assert(releaseChecklist.includes('npm.cmd run verify'), 'RELEASE_CHECKLIST.md missing verify step');
+assert(releaseChecklist.includes('Ask before building'), 'RELEASE_CHECKLIST.md missing build approval step');
+assert(releaseChecklist.includes('%APPDATA%\\wavelength\\logs\\app.log'), 'RELEASE_CHECKLIST.md missing log check');
 
 const ids = [...html.matchAll(/id="([^"]+)"/g)].map((m) => m[1]);
 const duplicateIds = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
@@ -95,5 +108,7 @@ assert(main.includes("require('./window-state.js')"), 'main.js not importing win
 assert(visualizer.includes('VISUALIZER_MODES'), 'visualizer.js missing visualizer modes');
 assert(visualizer.includes('function create'),  'visualizer.js missing create function');
 assert(visualizer.includes('drawMiniSignal'),   'visualizer.js missing mini signal renderer');
+assert(uiAudit.includes('auditVisualizerModes'), 'ui-audit.js missing visualizer mode render audit');
+assert(uiAudit.includes('getImageData'), 'ui-audit.js must inspect canvas pixels');
 
 console.log(`smoke-check ok v${pkg.version}`);

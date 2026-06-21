@@ -3,8 +3,10 @@ const assert   = require('node:assert/strict');
 const fs       = require('fs');
 const path     = require('path');
 const os       = require('os');
+const vm       = require('vm');
 
-const { formatListen, averageLevel, trayState, fakeBar } = require('../src/utils.js');
+const { formatListen, averageLevel, trayState, fakeBar, mediaSessionFields } = require('../src/utils.js');
+const { buildTrayStationMenuItems, stationSwitcherSubmenu, trayStationGroupLabel } = require('../src/tray-menu.js');
 const { validateStations } = require('./validate-stations.js');
 
 const src  = (f) => fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8');
@@ -74,6 +76,38 @@ test('fakeBar: Bell-Kurve — Mitte höher als Rand bei t=0', () => {
 });
 test('fakeBar: Randbalken = 0 (shape ist 0 am Rand)', () => {
   assert.equal(fakeBar(99, 0, 44), 0);
+});
+
+test('mediaSessionFields: Stationsname wenn keine Trackinfo vorhanden ist', () => {
+  assert.deepEqual(mediaSessionFields('', 'Deutschlandfunk'), {
+    title: 'Deutschlandfunk',
+    artist: 'Wavelength',
+  });
+});
+
+test('mediaSessionFields: trennt Artist und Titel aus ICY-Trackinfo', () => {
+  assert.deepEqual(mediaSessionFields('Artist - Titel', 'Radio Eins'), {
+    title: 'Titel',
+    artist: 'Artist',
+  });
+});
+
+test('mediaSessionFields: erhaelt Bindestriche im Titel', () => {
+  assert.deepEqual(mediaSessionFields('Artist - Titel - Remix', 'Radio Eins'), {
+    title: 'Titel - Remix',
+    artist: 'Artist',
+  });
+});
+
+test('mediaSessionFields: faellt bei unvollstaendiger Trackinfo sauber zurueck', () => {
+  assert.deepEqual(mediaSessionFields('Artist - ', 'Radio Eins'), {
+    title: 'Artist -',
+    artist: 'Radio Eins',
+  });
+  assert.deepEqual(mediaSessionFields('  ', ''), {
+    title: 'Wavelength',
+    artist: 'Wavelength',
+  });
 });
 
 // ── IPC-Contract ─────────────────────────────────────────────
@@ -163,6 +197,17 @@ test('Main: ICY-Metadatenclient ignoriert veraltete Reconnect-Events', () => {
   assert.ok(main.includes('if (isCurrentIcyClient(token, streamUrl)) startIcyMetadataClient(streamUrl);'), 'Reconnect-Timer prueft Token nicht erneut');
 });
 
+test('Main: ICY-Request-Destroy-Fehler werden geloggt', () => {
+  assert.ok(main.includes('function destroyIcyRequest(reason)'), 'destroyIcyRequest Helper fehlt');
+  assert.ok(main.includes("log('[icy] Request destroy failed'"), 'Destroy-Fehler muessen geloggt werden');
+  assert.ok(!/currentIcyRequest\.destroy\(\);\s*}\s*catch \(_\) \{\}/.test(main), 'ICY-Destroy darf Fehler nicht still verschlucken');
+});
+
+test('Main: Logger macht Rotationsfehler sichtbar', () => {
+  assert.ok(main.includes('[logger] Rotation check failed'), 'Logger-Rotationsfehler muessen sichtbar werden');
+  assert.ok(main.includes("err?.code !== 'ENOENT'"), 'fehlende Logdatei darf kein Rotationsfehler sein');
+});
+
 test('Main: Tray-Texte sind deutsch lokalisiert', () => {
   assert.ok(main.includes("connecting: 'Verbinden'"), 'Tray-Status connecting ist nicht deutsch');
   assert.ok(main.includes("reconnecting: 'Erneut verbinden'"), 'Tray-Status reconnecting ist nicht deutsch');
@@ -175,15 +220,45 @@ test('Main: Tray-Texte sind deutsch lokalisiert', () => {
 });
 
 test('Main: Tray-Stationsmenue ist alphabetisch sortiert', () => {
-  assert.ok(main.includes('const trayStations = [...allStations].sort'), 'Tray-Menue muss eine sortierte Kopie der Sender nutzen');
-  assert.ok(main.includes("a.name.localeCompare(b.name, 'de', { sensitivity: 'base' })"), 'Tray-Menue muss deutsch alphabetisch nach Sendername sortieren');
-  assert.ok(main.includes('if (trayStations.length <= 40) return trayStations.map(stationMenuItem)'), 'Tray-Menue muss kleine Listen flach sortiert rendern');
-  assert.ok(main.includes('function trayStationGroupLabel(station)'), 'Tray-Menue muss große Listen alphabetisch gruppieren');
-  assert.ok(main.includes('const hasActiveStation = stations.some'), 'Tray-Menue muss die aktive Buchstabengruppe markieren');
-  assert.ok(main.includes('label: hasActiveStation ? `• ${label}` : label'), 'Aktive Tray-Gruppe muss sichtbar markiert sein');
-  assert.ok(main.includes('function stationSwitcherSubmenu(stationMenuItems)'), 'Tray-Menue muss eine Station-Wechsel-Untermenue-Struktur kapseln');
-  assert.ok(main.includes('label: `Aktuell: ${activeStation.name}`'), 'Tray-Menue muss die aktuelle Station oben anzeigen');
-  assert.ok(main.includes('submenu: stations.map(stationMenuItem)'), 'Tray-Gruppen muessen Sender-Menueintraege enthalten');
+  const selected = [];
+  const stationsForTray = [
+    { id: 'z', name: 'Zebra FM' },
+    { id: 'a', name: 'Äther Radio' },
+    { id: 'b', name: 'alpha Radio' },
+  ];
+  const items = buildTrayStationMenuItems(stationsForTray, stationsForTray[2], station => selected.push(station.id));
+
+  assert.deepEqual(items.map(item => item.label), ['alpha Radio', 'Äther Radio', 'Zebra FM']);
+  assert.equal(items[0].checked, true);
+  assert.equal(items[1].checked, false);
+  items[1].click();
+  assert.deepEqual(selected, ['a']);
+});
+
+test('Main: Tray-Stationsmenue gruppiert große Listen alphabetisch', () => {
+  const stationsForTray = [
+    { id: '1', name: '1 Radio' },
+    { id: 'a', name: 'Alpha' },
+    { id: 'b', name: 'Beta' },
+    { id: 'ä', name: 'Äther' },
+  ];
+  const groups = buildTrayStationMenuItems(stationsForTray, stationsForTray[2], () => {}, 2);
+
+  assert.equal(trayStationGroupLabel({ name: '1 Radio' }), '0-9');
+  assert.deepEqual(groups.map(group => group.label), ['0-9', 'A', 'Ä', '• B']);
+  assert.deepEqual(groups[3].submenu.map(item => item.label), ['Beta']);
+  assert.equal(groups[3].submenu[0].checked, true);
+});
+
+test('Main: Tray-Stationswechsler zeigt aktuelle Station und Ladezustand', () => {
+  const menuItems = [{ label: 'Alpha' }];
+  assert.deepEqual(stationSwitcherSubmenu([], null), [{ label: 'Lade Stationen...', enabled: false }]);
+  assert.deepEqual(stationSwitcherSubmenu(menuItems, null), menuItems);
+  assert.deepEqual(stationSwitcherSubmenu(menuItems, { name: 'Beta' }), [
+    { label: 'Aktuell: Beta', enabled: false },
+    { type: 'separator' },
+    ...menuItems,
+  ]);
 });
 
 test('UI: sichtbare Status- und Tooltexte sind deutsch lokalisiert', () => {
@@ -195,6 +270,7 @@ test('UI: sichtbare Status- und Tooltexte sind deutsch lokalisiert', () => {
   assert.ok(renderer.includes('Bassverstärkung:'), 'Bass-Tooltip ist nicht deutsch');
   assert.ok(renderer.includes("title:  'Livestream'"), 'MediaSession-Fallback-Titel ist nicht deutsch');
   assert.ok(html.includes('Multi-Sender-Radio'), 'HTML-Default-Subtitle ist nicht deutsch');
+  assert.ok(html.includes(`<p class="modal-subtitle" id="about-version">v${pkg.version}</p>`), 'About-Fallback-Version muss zur package.json passen');
   assert.ok(html.includes('aria-label="Abspielen"'), 'Play-Button aria-label ist nicht deutsch');
   assert.ok(html.includes('id="btn-playstop" aria-label="Abspielen" aria-pressed="false" title="Abspielen"'), 'Play-Button Tooltip ist nicht die Aktion');
   assert.ok(html.includes('id="mini-playstop" aria-label="Abspielen" aria-pressed="false" title="Abspielen"'), 'Mini-Play-Button Tooltip ist nicht die Aktion');
@@ -209,6 +285,21 @@ test('UI: sichtbare Status- und Tooltexte sind deutsch lokalisiert', () => {
   }
 });
 
+test('Release: User-Agent nutzt aktuelle Paketversion', () => {
+  assert.ok(main.includes('const APP_VERSION = app.getVersion()'), 'main.js muss app.getVersion() nutzen');
+  assert.ok(stations.includes('const APP_VERSION = app.getVersion()'), 'stations.js muss app.getVersion() nutzen');
+  assert.ok(main.includes('const APP_USER_AGENT = `WavelengthRadioPlayer/${APP_VERSION} (Windows Electron App)`'), 'main.js User-Agent muss dynamisch sein');
+  assert.ok(stations.includes('const APP_USER_AGENT = `WavelengthRadioPlayer/${APP_VERSION} (Windows Electron App)`'), 'stations.js User-Agent muss dynamisch sein');
+  assert.ok(!main.includes('WavelengthRadioPlayer/1.0.0'), 'main.js enthaelt noch alten User-Agent');
+  assert.ok(!stations.includes('WavelengthRadioPlayer/1.0.0'), 'stations.js enthaelt noch alten User-Agent');
+});
+
+test('Windows: App User Model ID passt zur Build-App-ID', () => {
+  assert.equal(pkg.build.appId, 'com.wavelength.player', 'package.json appId unerwartet');
+  assert.ok(main.includes("const APP_ID = 'com.wavelength.player'"), 'main.js muss die Windows App-ID zentral definieren');
+  assert.ok(main.includes('app.setAppUserModelId(APP_ID)'), 'Windows App User Model ID wird nicht gesetzt');
+});
+
 test('Windows Media Controls: MediaSession und Hardware-Tasten sind verdrahtet', () => {
   assert.ok(renderer.includes('navigator.mediaSession.metadata = new MediaMetadata'), 'MediaSession-Metadaten fehlen');
   assert.ok(renderer.includes("navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'"), 'MediaSession playbackState fehlt');
@@ -219,11 +310,12 @@ test('Windows Media Controls: MediaSession und Hardware-Tasten sind verdrahtet',
   assert.ok(main.includes("globalShortcut.register('MediaStop'"), 'MediaStop Shortcut fehlt');
 });
 
-test('Signing: signierter Build hat Guard-Script und Dokumentation', () => {
-  assert.ok(pkg.scripts['signing:check'], 'signing:check Script fehlt');
-  assert.ok(pkg.scripts['build:signed'] && pkg.scripts['build:signed'].includes('signing:check'), 'build:signed muss signing:check ausfuehren');
-  assert.ok(fs.existsSync(path.join(__dirname, '..', 'SIGNING.md')), 'SIGNING.md fehlt');
-  assert.ok(fs.existsSync(path.join(__dirname, 'check-signing.js')), 'check-signing.js fehlt');
+test('Release: Build-Skripte bleiben unsigned und einfach', () => {
+  assert.ok(pkg.scripts.build && pkg.scripts.build.includes('electron-builder'), 'build Script fehlt');
+  assert.ok(!pkg.scripts['signing:check'], 'signing:check soll nicht mehr Teil des Release-Flows sein');
+  assert.ok(!pkg.scripts['build:signed'], 'build:signed soll nicht mehr Teil des Release-Flows sein');
+  assert.ok(!fs.existsSync(path.join(__dirname, '..', 'SIGNING.md')), 'SIGNING.md soll entfernt bleiben');
+  assert.ok(!fs.existsSync(path.join(__dirname, 'check-signing.js')), 'check-signing.js soll entfernt bleiben');
 });
 
 test('Verify: Release-Check laeuft ohne Build-Schritt', () => {
@@ -233,6 +325,19 @@ test('Verify: Release-Check laeuft ohne Build-Schritt', () => {
   assert.ok(pkg.scripts.verify.includes('npm test'), 'verify muss npm test ausfuehren');
   assert.ok(!pkg.scripts.verify.includes('npm run build'), 'verify darf keinen Build ausfuehren');
   assert.ok(!pkg.scripts.verify.includes('electron-builder'), 'verify darf electron-builder nicht direkt ausfuehren');
+});
+
+test('UI Audit: laeuft ohne GPU-Hardwarebeschleunigung', () => {
+  const audit = fs.readFileSync(path.join(__dirname, 'ui-audit.js'), 'utf8');
+  assert.ok(audit.includes('app.disableHardwareAcceleration()'), 'ui-audit sollte GPU-Flakes vermeiden');
+});
+
+test('UI Audit: prueft alle Visualizer-Modi per Canvas-Pixel', () => {
+  const audit = fs.readFileSync(path.join(__dirname, 'ui-audit.js'), 'utf8');
+  assert.ok(audit.includes('async function auditVisualizerModes(win)'), 'Visualizer-Audit fehlt');
+  assert.ok(audit.includes('window.WavelengthVisualizer?.VISUALIZER_MODES'), 'Visualizer-Audit muss die echte Modusliste nutzen');
+  assert.ok(audit.includes('ctx.getImageData'), 'Visualizer-Audit muss Canvas-Pixel auswerten');
+  assert.ok(audit.includes('miniLitPixels'), 'Mini-Visualizer muss mitgeprueft werden');
 });
 
 test('Window: Hauptfenster bleibt feste 460x480 UI', () => {
@@ -300,8 +405,10 @@ test('Renderer: externe Stationsdaten werden vor Template-Rendering escaped', ()
   assert.ok(renderer.includes('const stationCountry = escapeHtml(station.country'), 'Country wird nicht escaped');
   assert.ok(renderer.includes('const stationId = escapeHtml(station.id)'), 'Station-ID wird nicht escaped');
   assert.ok(renderer.includes('const iconUrl = safeHttpUrl(station.iconUrl)'), 'Icon-URL wird nicht validiert');
+  assert.ok(renderer.includes("stationIcon.addEventListener('error'"), 'Logo-Fallback sollte per Event Listener laufen');
   assert.ok(!renderer.includes('${station.name}</span>'), 'Stationsname darf nicht roh in innerHTML interpoliert werden');
   assert.ok(!renderer.includes('src="${station.iconUrl}"'), 'Icon-URL darf nicht roh in innerHTML interpoliert werden');
+  assert.ok(!renderer.includes('onerror='), 'Inline-Event-Handler im Stations-Markup sind nicht erlaubt');
 });
 
 test('Renderer: reconnect meldet reconnecting und setzt bei Erfolg wieder live/stopped', () => {
@@ -337,6 +444,30 @@ test('Renderer: Sender-Trim ist pro Station bedienbar und persistiert', () => {
   assert.ok(renderer.includes("case 'ArrowUp'") && renderer.includes("case 'ArrowDown'"), 'Pfeiltasten-Handling fehlt');
   assert.ok(renderer.includes('if (e.altKey) adjustStationGain(STATION_GAIN_STEP_DB)'), 'Alt+Pfeil hoch für Sender lauter fehlt');
   assert.ok(renderer.includes('if (e.altKey) adjustStationGain(-STATION_GAIN_STEP_DB)'), 'Alt+Pfeil runter für Sender leiser fehlt');
+});
+
+test('Renderer State: kaputte gespeicherte Listen werden bereinigt', () => {
+  const removed = [];
+  const storage = new Map([
+    ['wl.favorites', '{bad json'],
+    ['wl.recentStations', '["one","two"]'],
+  ]);
+  const code = src('renderer-state.js')
+    .replace("export const audio = document.getElementById('audio');", "const audio = document.getElementById('audio');")
+    .replace('export const state = {', 'globalThis.__state = {');
+  const context = {
+    document: { getElementById: () => ({}) },
+    localStorage: {
+      getItem: key => storage.get(key) ?? null,
+      removeItem: key => removed.push(key),
+    },
+  };
+
+  vm.runInNewContext(code, context);
+
+  assert.deepEqual(removed, ['wl.favorites']);
+  assert.deepEqual(Array.from(context.__state.favorites), []);
+  assert.deepEqual(Array.from(context.__state.recentStations), ['one', 'two']);
 });
 
 test('UI: Status-Badges bleiben einzeilig', () => {
@@ -442,10 +573,10 @@ const stationsTmpDir = path.join(os.tmpdir(), `wl-stations-test-${Date.now()}`);
 fs.mkdirSync(stationsTmpDir, { recursive: true });
 const _origLoad = Module._load;
 Module._load = function (req, ...args) {
-  if (req === 'electron') return { app: { getPath: () => stationsTmpDir } };
+  if (req === 'electron') return { app: { getPath: () => stationsTmpDir, getVersion: () => pkg.version } };
   return _origLoad.call(this, req, ...args);
 };
-const { mapStation, mergeStations, DEFAULT_STATIONS, homepageFavicon, localizeLanguageLabel } = require('../src/stations.js');
+const { mapStation, mergeStations, DEFAULT_STATIONS, homepageFavicon, localizeGenreLabel, localizeLanguageLabel } = require('../src/stations.js');
 Module._load = _origLoad;
 
 const minimalDto = {
@@ -504,6 +635,34 @@ test('mapStation: englische Radio-Browser-Genres werden eingedeutscht', () => {
   assert.equal(mapStation({ ...minimalDto, tags: 'chillout+lounge,ambient' }).genre, 'Chillout / Lounge');
   assert.equal(mapStation({ ...minimalDto, tags: 'easy listening,relax' }).genre, 'Leichte Musik');
   assert.equal(mapStation({ ...minimalDto, tags: '1980s,oldies' }).genre, '80er');
+});
+
+test('localizeGenreLabel: Radio-Browser-Tags werden direkt lokalisiert', () => {
+  assert.equal(localizeGenreLabel('news'), 'Nachrichten');
+  assert.equal(localizeGenreLabel('culture'), 'Kultur');
+  assert.equal(localizeGenreLabel('electronic'), 'Elektronik');
+  assert.equal(localizeGenreLabel('classic rock'), 'Rock Klassiker');
+  assert.equal(localizeGenreLabel('easy listening'), 'Leichte Musik');
+  assert.equal(localizeGenreLabel('1980s'), '80er');
+});
+
+test('localizeGenreLabel: zusammengesetzte Genres bleiben dedupliziert und lokalisiert', () => {
+  assert.equal(localizeGenreLabel('culture / news'), 'Kultur / Nachrichten');
+  assert.equal(localizeGenreLabel('wissen / pop'), 'Wissen / Pop');
+  assert.equal(localizeGenreLabel('chillout / lounge'), 'Chillout / Lounge');
+  assert.equal(localizeGenreLabel('pop / pop'), 'Pop');
+});
+
+test('localizeGenreLabel: deutsche Zielwerte bleiben idempotent', () => {
+  assert.equal(localizeGenreLabel('Rock Klassiker'), 'Rock Klassiker');
+  assert.equal(localizeGenreLabel('Leichte Musik'), 'Leichte Musik');
+  assert.equal(localizeGenreLabel('Nachrichten'), 'Nachrichten');
+});
+
+test('localizeGenreLabel: unbekannte Tags werden lesbar kapitalisiert', () => {
+  assert.equal(localizeGenreLabel('deep cuts'), 'Deep cuts');
+  assert.equal(localizeGenreLabel(''), '');
+  assert.equal(localizeGenreLabel(null), '');
 });
 
 test('mapStation: schwache Radio-Browser-Tags werden uebersprungen', () => {
@@ -659,7 +818,7 @@ test('stations: alte Cache-Genres werden vor Rueckgabe normalisiert', async () =
 
   delete require.cache[require.resolve('../src/stations.js')];
   Module._load = function (req, ...args) {
-    if (req === 'electron') return { app: { getPath: () => stationsTmpDir } };
+    if (req === 'electron') return { app: { getPath: () => stationsTmpDir, getVersion: () => pkg.version } };
     return _origLoad.call(this, req, ...args);
   };
   const { loadStations: loadFresh } = require('../src/stations.js');
@@ -688,7 +847,12 @@ test('DEFAULT_STATIONS: alle Einträge haben Pflichtfelder', () => {
     assert.ok(s.genre,     `Station ohne genre: ${s.name}`);
     assert.ok(s.country,   `Station ohne country: ${s.name}`);
     assert.ok(s.streamUrl.startsWith('https://'), `streamUrl nicht HTTPS: ${s.name}`);
+    assert.ok(!s.iconUrl || s.iconUrl.startsWith('https://'), `iconUrl nicht HTTPS: ${s.name}`);
   }
+});
+
+test('Stations: High-Res-Icon-Overrides verwenden HTTPS', () => {
+  assert.ok(!stations.includes("'http://"), 'High-Res-Icon-Overrides duerfen kein http:// verwenden');
 });
 
 test('DEFAULT_STATIONS: Sprachlabels sind deutsch lokalisiert', () => {

@@ -17,7 +17,8 @@ function validateUrl(value, field, stationName, errors) {
     if (url.protocol !== 'https:' && url.protocol !== 'http:') {
       errors.push(`${stationName}: ${field} must use http(s)`);
     }
-  } catch (_) {
+  } catch (err) {
+    void err;
     errors.push(`${stationName}: ${field} is not a valid URL`);
   }
 }

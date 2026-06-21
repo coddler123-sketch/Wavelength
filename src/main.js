@@ -2,6 +2,7 @@ const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, nativeTheme,
         screen, globalShortcut, Notification, dialog, shell, powerMonitor, session } = require('electron');
 const { trayState: computeTrayState } = require('./utils.js');
 const { loadStations, DEFAULT_STATIONS } = require('./stations.js');
+const { buildTrayStationMenuItems, stationSwitcherSubmenu } = require('./tray-menu.js');
 const windowState = require('./window-state.js');
 const path = require('path');
 const fs   = require('fs');
@@ -31,7 +32,9 @@ let dockMini = true;
 const trayIconImages = new Map();   // state → colored PNG icon rendered by the renderer
 const TRAY_ICON_STATES = new Set(['playing', 'reconnecting', 'muted', 'stopped']);
 let fallbackTrayIcon = null;        // static icon.ico
+const APP_ID = 'com.wavelength.player';
 const APP_VERSION = app.getVersion();
+const APP_USER_AGENT = `WavelengthRadioPlayer/${APP_VERSION} (Windows Electron App)`;
 const FIRST_RUN_FILE = path.join(app.getPath('userData'), 'first-run-seen');
 const LOG_FILE = path.join(app.getPath('userData'), 'logs', 'app.log');
 
@@ -41,7 +44,7 @@ let fullWidth = 460;
 let fullHeight = 480;
 
 function log(message, extra = '') {
-  const line = `[${new Date().toISOString()}] ${message}${extra ? ` ${extra}` : ''}\n`;
+  let line = `[${new Date().toISOString()}] ${message}${extra ? ` ${extra}` : ''}\n`;
   try {
     fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
     try {
@@ -49,9 +52,16 @@ function log(message, extra = '') {
       if (stats.size > 1 * 1024 * 1024) { // 1 MB limit
         fs.renameSync(LOG_FILE, LOG_FILE + '.old');
       }
-    } catch (_) {}
+    } catch (err) {
+      if (err?.code !== 'ENOENT') {
+        line += `[${new Date().toISOString()}] [logger] Rotation check failed ${err.message || String(err)}\n`;
+      }
+    }
     fs.appendFileSync(LOG_FILE, line);
-  } catch (_) {}
+  } catch (err) {
+    // Last-resort logger: if app.log itself cannot be written, there is no safer local sink.
+    void err;
+  }
 }
 
 process.on('uncaughtException', (err) => log('uncaughtException', err.stack || String(err)));
@@ -253,6 +263,16 @@ function isCurrentIcyClient(token, streamUrl) {
   return token === icyClientToken && streamUrl === currentIcyStreamUrl;
 }
 
+function destroyIcyRequest(reason) {
+  if (!currentIcyRequest) return;
+  try {
+    currentIcyRequest.destroy();
+  } catch (err) {
+    log('[icy] Request destroy failed', `${reason}: ${err.message || String(err)}`);
+  }
+  currentIcyRequest = null;
+}
+
 function stopIcyMetadataClient() {
   icyClientToken++;
   currentIcyStreamUrl = '';
@@ -260,12 +280,7 @@ function stopIcyMetadataClient() {
     clearTimeout(icyReconnectTimer);
     icyReconnectTimer = null;
   }
-  if (currentIcyRequest) {
-    try {
-      currentIcyRequest.destroy();
-    } catch (_) {}
-    currentIcyRequest = null;
-  }
+  destroyIcyRequest('stop');
   currentTrackTitle = '';
 }
 
@@ -289,7 +304,7 @@ function startIcyMetadataClient(streamUrl, redirectCount = 0, token = null) {
     const req = client.get(streamUrl, {
       headers: {
         'Icy-MetaData': '1',
-        'User-Agent': 'WavelengthRadioPlayer/1.0.0 (Windows Electron App)'
+        'User-Agent': APP_USER_AGENT
       }
     }, (res) => {
       if (!isCurrentIcyClient(token, streamUrl)) {
@@ -420,12 +435,7 @@ function startIcyMetadataClient(streamUrl, redirectCount = 0, token = null) {
 
 function scheduleIcyReconnect(streamUrl, token = icyClientToken) {
   if (!isCurrentIcyClient(token, streamUrl)) return;
-  if (currentIcyRequest) {
-    try {
-      currentIcyRequest.destroy();
-    } catch (_) {}
-    currentIcyRequest = null;
-  }
+  destroyIcyRequest('reconnect');
   if (icyReconnectTimer) {
     clearTimeout(icyReconnectTimer);
     icyReconnectTimer = null;
@@ -457,57 +467,9 @@ function updateTrayTooltip() {
   tray.setToolTip(tooltip);
 }
 
-function stationMenuItem(station) {
-  return {
-    label: station.name,
-    type: 'radio',
-    checked: activeStation && activeStation.id === station.id,
-    click: () => {
-      selectStationInternal(station);
-    }
-  };
-}
-
-function trayStationGroupLabel(station) {
-  const first = String(station.name || '').trim().charAt(0).toLocaleUpperCase('de');
-  return /^[A-ZÄÖÜ]$/.test(first) ? first : '0-9';
-}
-
-function buildTrayStationMenuItems() {
-  const trayStations = [...allStations].sort((a, b) =>
-    a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
-
-  if (trayStations.length <= 40) return trayStations.map(stationMenuItem);
-
-  const groups = new Map();
-  for (const station of trayStations) {
-    const label = trayStationGroupLabel(station);
-    if (!groups.has(label)) groups.set(label, []);
-    groups.get(label).push(station);
-  }
-
-  return Array.from(groups, ([label, stations]) => {
-    const hasActiveStation = stations.some(station => activeStation && station.id === activeStation.id);
-    return {
-      label: hasActiveStation ? `• ${label}` : label,
-      submenu: stations.map(stationMenuItem),
-    };
-  });
-}
-
-function stationSwitcherSubmenu(stationMenuItems) {
-  if (stationMenuItems.length === 0) return [{ label: 'Lade Stationen...', enabled: false }];
-  if (!activeStation) return stationMenuItems;
-  return [
-    { label: `Aktuell: ${activeStation.name}`, enabled: false },
-    { type: 'separator' },
-    ...stationMenuItems,
-  ];
-}
-
 function updateTrayMenu() {
   if (!tray || tray.isDestroyed()) return;
-  const stationMenuItems = buildTrayStationMenuItems();
+  const stationMenuItems = buildTrayStationMenuItems(allStations, activeStation, selectStationInternal);
 
   const menu = Menu.buildFromTemplate([
     { label: `Wavelength v${APP_VERSION}`, enabled: false, icon: getTrayIcon() },
@@ -515,7 +477,7 @@ function updateTrayMenu() {
     { label: isPlaying ? '⏹  Stoppen' : '▶  Abspielen', click: () => togglePlay() },
     {
       label: 'Station wechseln',
-      submenu: stationSwitcherSubmenu(stationMenuItems)
+      submenu: stationSwitcherSubmenu(stationMenuItems, activeStation)
     },
     { type: 'separator' },
     {
@@ -821,6 +783,8 @@ function checkSystemIdle() {
 
 // ── App lifecycle ─────────────────────────────────────────
 app.whenReady().then(async () => {
+  app.setAppUserModelId(APP_ID);
+
   // Let the WebAudio analyser read cross-origin stream data without weakening every response.
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     if (details.resourceType !== 'media') {

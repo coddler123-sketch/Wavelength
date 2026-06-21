@@ -99,6 +99,21 @@
     return [newId, ...ids.filter(x => x !== newId)].slice(0, max);
   }
 
+  function mediaSessionFields(trackInfo, stationName) {
+    const station = String(stationName || 'Wavelength').trim() || 'Wavelength';
+    const track = String(trackInfo || '').trim();
+    if (!track) return { title: station, artist: 'Wavelength' };
+
+    if (track.includes(' - ')) {
+      const parts = track.split(' - ');
+      const artist = parts[0].trim();
+      const title = parts.slice(1).join(' - ').trim();
+      if (artist && title) return { title, artist };
+    }
+
+    return { title: track, artist: station };
+  }
+
   exports.formatListen        = formatListen;
   exports.averageLevel        = averageLevel;
   exports.trayState           = trayState;
@@ -107,5 +122,6 @@
   exports.getLanguageLabel    = getLanguageLabel;
   exports.filterStations      = filterStations;
   exports.buildRecentsList    = buildRecentsList;
+  exports.mediaSessionFields  = mediaSessionFields;
 // eslint-disable-next-line no-undef
 })(typeof module !== 'undefined' ? module.exports : (window.utils = {}));

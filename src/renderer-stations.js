@@ -29,7 +29,8 @@ function safeHttpUrl(value) {
   try {
     const parsed = new URL(String(value));
     return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.href : '';
-  } catch (_) {
+  } catch (err) {
+    void err;
     return '';
   }
 }
@@ -108,7 +109,7 @@ export function renderStations() {
     item.innerHTML = `
       <div class="station-icon-wrap">
         ${iconUrl
-          ? `<img class="station-icon" src="${iconUrl}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          ? `<img class="station-icon" src="${iconUrl}" alt="" loading="lazy">`
           : ''
         }
         <svg class="station-icon" ${iconUrl ? 'style="display:none"' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -144,6 +145,15 @@ export function renderStations() {
         </button>
       </div>
     `;
+
+    const stationIcon = item.querySelector('.station-icon-wrap img.station-icon');
+    const fallbackIcon = item.querySelector('.station-icon-wrap svg.station-icon');
+    if (stationIcon && fallbackIcon) {
+      stationIcon.addEventListener('error', () => {
+        stationIcon.style.display = 'none';
+        fallbackIcon.style.display = 'flex';
+      });
+    }
 
     item.addEventListener('click', (e) => {
       if (state.hasDraggedSignificant) return;

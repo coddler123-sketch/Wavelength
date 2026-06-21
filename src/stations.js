@@ -10,6 +10,8 @@ const CACHE_FILE = path.join(app.getPath('userData'), 'stations-cache.json');
 const CACHE_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 const STATIONS_FILE = path.join(__dirname, '..', 'assets', 'stations.json');
+const APP_VERSION = app.getVersion();
+const APP_USER_AGENT = `WavelengthRadioPlayer/${APP_VERSION} (Windows Electron App)`;
 const DEFAULT_STATIONS = JSON.parse(fs.readFileSync(STATIONS_FILE, 'utf8')).map(normalizeStationLanguage);
 
 function debugStations(message) {
@@ -72,7 +74,8 @@ function homepageFavicon(homepage) {
     const url = new URL(homepage);
     if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
     return `${url.origin}/favicon.ico`;
-  } catch (_) {
+  } catch (err) {
+    void err;
     return '';
   }
 }
@@ -287,7 +290,7 @@ async function fetchFromRadioBrowser() {
       debugStations(`[stations] Fetching stations from mirror: ${mirror}`);
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'WavelengthRadioPlayer/1.0.0 (Windows Electron App)'
+          'User-Agent': APP_USER_AGENT
         },
         signal: AbortSignal.timeout(5000)
       });
@@ -329,7 +332,7 @@ const HIGH_RES_ICONS = {
   'jump': 'https://images.mdr.de/image/b9fe3a54-ad0c-4f20-8ac3-9dca0c95f705/AAABnXRUSRI/AAABnR8VW9w/original/logo-green-100.jpg',
   'radioeins': 'https://www.radioeins.de/content/dam/rbb/rad/layout/r1-logo.svg.svg/img.svg',
   'fritz': 'https://www.fritz.de/content/dam/rbb/rbb/logos/touch/fritz-128.png',
-  'antenne bayern': 'http://www.antenne.de/logos/station-antenne-bayern/apple-touch-icon.png',
+  'antenne bayern': 'https://www.antenne.de/logos/station-antenne-bayern/apple-touch-icon.png',
   'radio nrw': 'https://radionrw.de/apple-touch-icon.png',
   'radio hamburg': 'https://www.radiohamburg.de/assets/icons/apple-touch-icon.png',
   '104.6 rtl': 'https://www.104.6rtl.com/assets/icons/icon-152x152.png',
@@ -374,7 +377,8 @@ function normalizeStreamUrl(streamUrl) {
   try {
     const url = new URL(streamUrl);
     return `${url.hostname}${url.pathname}`.toLowerCase().replace(/\/+$/, '');
-  } catch (_) {
+  } catch (err) {
+    void err;
     return String(streamUrl || '').toLowerCase().replace(/[?#].*$/, '').replace(/^https?:\/\//, '').replace(/\/+$/, '');
   }
 }
@@ -437,5 +441,6 @@ module.exports = {
   mapStation,
   mergeStations,
   homepageFavicon,
+  localizeGenreLabel,
   localizeLanguageLabel,
 };

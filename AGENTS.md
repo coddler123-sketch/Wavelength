@@ -20,20 +20,22 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ```bash
 # Start development
-npm start
+npm.cmd start
 
-# Run all tests (smoke-check + unit tests)
-npm test
+# Run the non-build verification gate
+npm.cmd run verify
 
 # Run only smoke check (quick file validation)
-npm run smoke
+npm.cmd run smoke
 
 # Build Windows NSIS installer
-npm run build
+npm.cmd run build
 
 # Clean and rebuild
-npm run build:clean
+npm.cmd run build:clean
 ```
+
+Ask the maintainer before running a build. `npm.cmd run verify` is safe to run without build approval.
 
 ### Running Single Tests
 
@@ -48,6 +50,7 @@ Tests verify:
 - **Utility functions** (formatListen, averageLevel, trayState, fakeBar) with comprehensive edge cases
 - **IPC contract** between preload and main process (send/on/invoke channels must be symmetrical)
 - **File integrity** (smoke-check validates required functions/exports exist)
+- **Electron UI audit** for layout, station switching, play/stop state, and visualizer rendering
 
 ## Architecture
 
@@ -116,7 +119,7 @@ renderer controls <audio> play/pause/volume
 - fakeBar algorithm (ensures values stay [0,1], varies over time for fake audio)
 - IPC channel symmetry (strict bidirectional contract verification)
 
-Run: `npm test`
+Run: `npm.cmd test`
 
 ### 2. **Smoke Check** (`scripts/smoke-check.js`)
 - Validates package.json + package-lock.json match
@@ -124,10 +127,14 @@ Run: `npm test`
 - Verifies all required functions exported from utils.js, stations.js, visualizer.js
 - File structure validation (main.js, preload.js, renderer.js exist)
 
-Run: `npm run smoke`
+Run: `npm.cmd run smoke`
 
-### 3. **Manual Testing Checklist**
-- [ ] `npm start` opens window, tray icon appears
+### 3. **Release Checklist**
+
+Use `RELEASE_CHECKLIST.md` for manual Windows release checks after `npm.cmd run verify` is green. It covers installer install/uninstall, tray behavior, playback, media controls, and logs.
+
+### 4. **Manual Development Checklist**
+- [ ] `npm.cmd start` opens window, tray icon appears
 - [ ] Window persists size/position between launches
 - [ ] Minimize → tray, click tray → restore window
 - [ ] Station selection updates metadata, initiates connection
@@ -135,7 +142,7 @@ Run: `npm run smoke`
 - [ ] Space key plays/pauses, M key mutes, ↑↓ adjusts volume
 - [ ] Scroll wheel on window adjusts volume
 - [ ] Keyboard shortcut B cycles bass boost (0/6/12 dB)
-- [ ] Visualizer cycles modes on click; mini-visualizer shows bars
+- [ ] Visualizer cycles modes on click; automated UI audit checks all visualizer modes render non-empty canvas output
 - [ ] Auto-reconnect triggers after stream interruption (backoff: 1s, 2s, 4s, 8s, 16s, 30s)
 - [ ] Second app instance brings main window to front
 - [ ] Power suspend/resume handled gracefully
@@ -146,10 +153,10 @@ Run: `npm run smoke`
 ### Building the Installer
 
 ```bash
-npm run build
+npm.cmd run build
 ```
 
-Output: `dist/Wavelength Setup 1.0.0.exe` (NSIS installer for x64 Windows)
+Output: `dist/Wavelength Setup <version>.exe` (NSIS installer for x64 Windows)
 
 **Build config** (`package.json` > `.build`):
 - App ID: `com.wavelength.player`
@@ -158,13 +165,8 @@ Output: `dist/Wavelength Setup 1.0.0.exe` (NSIS installer for x64 Windows)
 - NSIS: one-click disabled (user can choose install dir), creates Start Menu + Desktop shortcuts
 - Includes: `src/**/*` + `assets/**/*`
 
-### Code Signing (Optional)
-See `SIGNING.md`. Environment variables (`.env` or shell):
-```
-ELECTRON_BUILDER_SIGN_KEY=<path_to_key>
-WIN_CSC_LINK=<cert_path>
-WIN_CSC_KEY_PASSWORD=<password>
-```
+### Unsigned Installer
+The Windows installer is intentionally unsigned. Code signing certificates are out of scope for this project.
 
 ## Key Patterns & Conventions
 
@@ -206,13 +208,13 @@ App logs to `userData/logs/app.log` with 1 MB rotation. Timestamped. On startup,
 ### Add a New Utility Function
 1. Add to `src/utils.js` with UMD export
 2. Add test case(s) to `scripts/test.js`
-3. Run `npm test` to verify
+3. Run `npm.cmd test` to verify
 4. Use in main or renderer via `require()` or `window.electronAPI`
 
 ### Add an IPC Channel
 1. Add `ipcRenderer.send/on/invoke()` call in `src/preload.js`
 2. Add corresponding `ipcMain.on/handle()` handler in `src/main.js`
-3. Verify with `npm test` (IPC contract tests run)
+3. Verify with `npm.cmd test` (IPC contract tests run)
 4. Update JSDoc if adding new electronAPI method
 
 ### Modify Visualizer
@@ -221,7 +223,7 @@ App logs to `userData/logs/app.log` with 1 MB rotation. Timestamped. On startup,
 3. `create()` function initializes canvas context + animation state
 4. `drawFrame()` called on animationFrame
 5. Mini visualizer: `drawMiniSignal()` with fewer bars
-6. Test with `npm start`, cycle modes with click on canvas
+6. Test with `npm.cmd start`, cycle modes with click on canvas
 
 ### Station List Integration
 1. `src/stations.js` loads curated stations plus Radio Browser results on app start
@@ -231,7 +233,7 @@ App logs to `userData/logs/app.log` with 1 MB rotation. Timestamped. On startup,
 ### Maintain Curated Stations
 1. Edit `assets/stations.json`
 2. Follow `STATIONS.md`
-3. Run `npm run stations:check` and `npm test`
+3. Run `npm.cmd run stations:check` and `npm.cmd test`
 
 ## Dependencies
 
@@ -260,7 +262,4 @@ This project follows patterns from **Zucca Radio** (predecessor single-station p
 
 ## Open Questions / TODO
 
-Refer to `TODO.md` for phase breakdown and known issues:
-- Station list maintenance strategy
-- Branding/color scheme finalization
-- Windows Media Session integration completeness
+Refer to `TODO.md` for phase breakdown. There are no known release-blocking TODOs at the moment; code signing is intentionally out of scope.

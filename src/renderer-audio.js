@@ -6,6 +6,7 @@ import {
 } from './renderer-ui.js';
 
 const api = window.electronAPI;
+const { mediaSessionFields } = window.utils;
 
 // ── Bass Boost ───────────────────────────────────
 export const BASS_GAINS  = [0, 6, 12];
@@ -95,13 +96,7 @@ export function cancelReconnect() {
 export function updateMediaSession(isPlaying) {
   if (!('mediaSession' in navigator)) return;
   if (state.activeStation) {
-    let title  = state.currentTrackInfoText || state.activeStation.name;
-    let artist = state.currentTrackInfoText ? state.activeStation.name : 'Wavelength';
-    if (state.currentTrackInfoText && state.currentTrackInfoText.includes(' - ')) {
-      const parts = state.currentTrackInfoText.split(' - ');
-      artist = parts[0].trim();
-      title  = parts.slice(1).join(' - ').trim();
-    }
+    const { title, artist } = mediaSessionFields(state.currentTrackInfoText, state.activeStation.name);
     navigator.mediaSession.metadata = new MediaMetadata({
       title,
       artist,
