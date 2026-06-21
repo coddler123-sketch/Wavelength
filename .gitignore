@@ -55,6 +55,7 @@ node_modules/
 
 # Temporary files
 dist/
+tmp/
 electron-log.txt
 part1.txt
 part2.txt

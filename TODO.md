@@ -12,6 +12,8 @@ Current status after project review: the core app is implemented and tests pass,
 - [x] Shared utility module with UMD-style exports
 - [x] Window state persistence
 - [x] Smoke check and Node test suite
+- [x] Electron UI audit for full, station-list, and mini layouts
+- [x] Non-build `npm run verify` gate for stations, UI audit, and tests
 - [x] Station loading with curated defaults, Radio Browser fallback, and disk cache
 - [x] `get-stations` and `select-station` IPC flow
 - [x] Playback controls, volume, mute, keyboard shortcuts, and scroll-wheel volume
@@ -37,7 +39,7 @@ Current status after project review: the core app is implemented and tests pass,
 - [x] Add behavior-level tests for station selection and reconnect state
 - [x] Add station cache/fallback tests around `src/stations.js`
 - [x] Replace brittle smoke markers with targeted assertions where practical
-- [ ] Consider returning unsubscribe functions from preload listener helpers if renderer reload/listener churn appears
+- [x] Return unsubscribe functions from preload listener helpers
 
 ## Nice To Have
 

@@ -10,7 +10,13 @@ const CACHE_FILE = path.join(app.getPath('userData'), 'stations-cache.json');
 const CACHE_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 const STATIONS_FILE = path.join(__dirname, '..', 'assets', 'stations.json');
-const DEFAULT_STATIONS = JSON.parse(fs.readFileSync(STATIONS_FILE, 'utf8'));
+const DEFAULT_STATIONS = JSON.parse(fs.readFileSync(STATIONS_FILE, 'utf8')).map(normalizeStationLanguage);
+
+function debugStations(message) {
+  if (process.env.WAVELENGTH_DEBUG_STATIONS === '1') {
+    process.stdout.write(`${message}\n`);
+  }
+}
 
 const FALLBACK_MIRRORS = [
   'https://de1.api.radio-browser.info',
@@ -60,39 +66,195 @@ async function getMirrors() {
   return [...FALLBACK_MIRRORS].sort(() => Math.random() - 0.5);
 }
 
+function homepageFavicon(homepage) {
+  if (!homepage || typeof homepage !== 'string') return '';
+  try {
+    const url = new URL(homepage);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
+    return `${url.origin}/favicon.ico`;
+  } catch (_) {
+    return '';
+  }
+}
+
+function normalizeGenreTag(tag) {
+  return String(tag || '').trim().replace(/^#+/, '').toLowerCase();
+}
+
+function localizeGenreLabel(tag) {
+  const normalized = normalizeGenreTag(tag);
+  const labels = {
+    '60s': '60er',
+    '1960s': '60er',
+    '70s': '70er',
+    '1970s': '70er',
+    '80s': '80er',
+    '1980s': '80er',
+    '90s': '90er',
+    '1990s': '90er',
+    '00er': '2000er',
+    '00s': '2000er',
+    '2000er': '2000er',
+    '2000s': '2000er',
+    ard: 'Nachrichten',
+    'public radio': 'Nachrichten',
+    music: 'Variety',
+    news: 'Nachrichten',
+    culture: 'Kultur',
+    knowledge: 'Wissen',
+    science: 'Wissen',
+    information: 'Nachrichten',
+    electronic: 'Elektronik',
+    electro: 'Elektronik',
+    edm: 'Elektronik',
+    trance: 'Trance',
+    ambient: 'Ambient',
+    chill: 'Chillout',
+    chillout: 'Chillout',
+    'chillout+lounge': 'Chillout / Lounge',
+    'chillout / lounge': 'Chillout / Lounge',
+    lounge: 'Lounge',
+    lofi: 'Lofi',
+    relax: 'Relax',
+    'easy listening': 'Easy Listening',
+    country: 'Country',
+    global: 'Weltmusik',
+    multicultural: 'Weltmusik',
+    'world music': 'Weltmusik',
+    hiphop: 'Hip-Hop',
+    rap: 'Hip-Hop',
+    acid: 'Acid Jazz',
+    'acid jazz': 'Acid Jazz',
+    variety: 'Variety',
+    instrumental: 'Instrumental',
+    classic: 'Klassik',
+    classics: 'Klassik',
+    classical: 'Klassik',
+    local: 'Lokal',
+    young: 'Jugend',
+    urban: 'Hip-Hop',
+  };
+  return labels[normalized] || (normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : '');
+}
+
+function genreTagPriority(tag) {
+  const t = normalizeGenreTag(tag);
+  if (!t || ['radio', 'music', 'ard', 'live', 'non-stop', 'berlin', 'bayerischer rundfunk'].includes(t)) return 0;
+  if (t.includes('culture') || t.includes('kultur') || t.includes('knowledge') || t.includes('science') || t.includes('wissen')) return 100;
+  if (t.includes('news') || t.includes('information') || t.includes('talk') || t.includes('public radio')) return 100;
+  if (t.includes('hiphop') || t.includes('hip hop') || t.includes('hip-hop') || t.includes('rap') || t.includes('r&b') || t.includes('urban')) return 95;
+  if (t.includes('electro') || t.includes('edm') || t.includes('techno') || t.includes('trance') || t.includes('house') || t.includes('dance') || t.includes('club')) return 90;
+  if (t.includes('ambient') || t.includes('chill') || t.includes('lounge') || t.includes('lofi') || t.includes('relax') || t.includes('easy listening')) return 85;
+  if (t.includes('schlager') || t.includes('country') || t.includes('world') || t.includes('global') || t.includes('multicultural')) return 80;
+  if (t.includes('jazz') || t.includes('classic') || t.includes('klassik') || t === 'acid') return 75;
+  if (/\b(50s|60s|70s|80s|90s|00s|10s|1950s|1960s|1970s|1980s|1990s|2000s|2010s|50er|60er|70er|80er|90er|2000er|2010er)\b/.test(t) || t.includes('oldies') || t.includes('retro')) return 70;
+  if (t.includes('rock') || t.includes('metal') || t.includes('alternative') || t.includes('indie')) return 78;
+  if (t.includes('pop') || t.includes('charts') || t.includes('hits') || t.includes('top40') || t.includes('top 40') || t.includes('variety')) return 65;
+  if (t.includes('instrumental')) return 55;
+  return 10;
+}
+
+function pickGenreTag(tags) {
+  return [...tags].sort((a, b) => genreTagPriority(b) - genreTagPriority(a))[0] || '';
+}
+
+function inferGenreFromName(name) {
+  const n = String(name || '').toLowerCase();
+  if (n.includes('schlager')) return 'Schlager';
+  if (n.includes('berliner rundfunk')) return 'Pop';
+  if (n.includes('swr1') || n.includes('wdr4')) return 'Oldies';
+  if (n.includes('hiphop') || n.includes('hip hop') || n.includes('rap')) return 'Hip-Hop';
+  if (n.includes('trance') || n.includes('techno') || n.includes('club')) return 'Elektronik';
+  if (n.includes('country')) return 'Country';
+  if (n.includes('jazz')) return 'Jazz';
+  return '';
+}
+
+function localizeLanguageLabel(language, country = '', name = '', website = '', streamUrl = '') {
+  const raw = String(language || '').trim();
+  const countryCode = String(country || '').trim().toUpperCase();
+  const values = raw.split(',')
+    .map(l => l.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (countryCode === 'DE' && (values.length === 0 || values.includes('german') || values.includes('deutsch') || values.includes('de'))) {
+    return 'Deutsch';
+  }
+
+  const stationText = `${name} ${website} ${streamUrl}`.toLowerCase();
+  if (countryCode === 'DE' && values.length === 1 && values[0] === 'english') {
+    return 'Deutsch';
+  }
+  if (stationText.includes('90s90s') || stationText.includes('rautemusik') || stationText.includes('rm.fm')) {
+    return 'Deutsch';
+  }
+
+  const labels = {
+    german: 'Deutsch',
+    deutsch: 'Deutsch',
+    de: 'Deutsch',
+    english: 'Englisch',
+    englisch: 'Englisch',
+    en: 'Englisch',
+    french: 'Französisch',
+    francais: 'Französisch',
+    français: 'Französisch',
+    fr: 'Französisch',
+    spanish: 'Spanisch',
+    espanol: 'Spanisch',
+    español: 'Spanisch',
+    es: 'Spanisch',
+    italian: 'Italienisch',
+    it: 'Italienisch',
+    dutch: 'Niederländisch',
+    nl: 'Niederländisch',
+    instrumental: 'Instrumental',
+  };
+
+  const first = values[0] || raw.toLowerCase();
+  return labels[first] || (raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : 'Deutsch');
+}
+
+function normalizeStationLanguage(station) {
+  return {
+    ...station,
+    language: localizeLanguageLabel(station.language, station.country, station.name, station.website, station.streamUrl)
+  };
+}
+
+function normalizeStationGenre(station) {
+  const normalizedGenre = localizeGenreLabel(station.genre);
+  const inferredGenre = inferGenreFromName(station.name);
+  const weakGenres = new Set(['', 'Radio', 'Music', 'Ard', 'Berlin', 'Local']);
+  return {
+    ...station,
+    genre: inferredGenre && weakGenres.has(normalizedGenre)
+      ? inferredGenre
+      : (normalizedGenre || inferredGenre || 'Radio')
+  };
+}
+
 function mapStation(dto) {
-  let genre = 'Radio';
+  let genre = inferGenreFromName(dto.name) || 'Radio';
   if (dto.tags && typeof dto.tags === 'string') {
     const parsedTags = dto.tags.split(',')
       .map(t => t.trim())
       .filter(t => t.length > 0 && t.length < 20);
     if (parsedTags.length > 0) {
-      const first = parsedTags[0];
-      genre = first.charAt(0).toUpperCase() + first.slice(1);
+      genre = localizeGenreLabel(pickGenreTag(parsedTags)) || genre;
     }
   }
 
-  let language = 'German';
-  if (dto.language && typeof dto.language === 'string') {
-    const langs = dto.language.split(',')
-      .map(l => l.trim())
-      .filter(l => l.length > 0);
-    if (langs.length > 0) {
-      const first = langs[0];
-      language = first.charAt(0).toUpperCase() + first.slice(1);
-    }
-  }
-
-  return {
+  return normalizeStationGenre({
     id: dto.stationuuid,
     name: (dto.name || '').trim(),
     streamUrl: dto.url_resolved || dto.url,
-    iconUrl: dto.favicon || '',
+    iconUrl: dto.favicon || homepageFavicon(dto.homepage),
     genre: genre,
     country: (dto.countrycode || 'DE').toUpperCase(),
     website: dto.homepage || '',
-    language: language
-  };
+    language: localizeLanguageLabel(dto.language, dto.countrycode || 'DE', dto.name, dto.homepage, dto.url_resolved || dto.url)
+  });
 }
 
 async function fetchFromRadioBrowser() {
@@ -100,7 +262,7 @@ async function fetchFromRadioBrowser() {
   for (const mirror of mirrors) {
     try {
       const url = `${mirror}/json/stations/search?countrycode=DE&hidebroken=true&order=votes&reverse=true&limit=100`;
-      console.log(`[stations] Fetching stations from mirror: ${mirror}`);
+      debugStations(`[stations] Fetching stations from mirror: ${mirror}`);
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'WavelengthRadioPlayer/1.0.0 (Windows Electron App)'
@@ -117,47 +279,48 @@ async function fetchFromRadioBrowser() {
         throw new Error("Invalid response format");
       }
       
-      console.log(`[stations] Successfully loaded ${data.length} stations from Radio Browser.`);
+      debugStations(`[stations] Successfully loaded ${data.length} stations from Radio Browser.`);
       return data;
     } catch (err) {
-      console.warn(`[stations] Failed to fetch from mirror ${mirror}: ${err.message}`);
+      debugStations(`[stations] Failed to fetch from mirror ${mirror}: ${err.message}`);
     }
   }
   throw new Error("All mirrors failed");
 }
 
 const HIGH_RES_ICONS = {
-  'deutschlandfunk kultur': 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Deutschlandfunk_Kultur_Logo_2017.svg',
-  'deutschlandfunk nova': 'https://upload.wikimedia.org/wikipedia/commons/b/bd/Deutschlandfunk_Nova_Logo_2017.svg',
-  'deutschlandfunk': 'https://upload.wikimedia.org/wikipedia/commons/d/d0/Deutschlandfunk_Logo_2017.svg',
-  'ndr info': 'https://upload.wikimedia.org/wikipedia/commons/e/ec/NDR_Info_logo_2021.svg',
-  'wdr 5': 'https://upload.wikimedia.org/wikipedia/commons/b/b3/WDR_5_logo.svg',
-  'inforadio': 'https://upload.wikimedia.org/wikipedia/commons/4/46/Rbb24_Inforadio_logo_2021.svg',
-  'bayern 1': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Bayern_1_Logo.svg/200px-Bayern_1_Logo.svg.png',
-  'bayern 3': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Bayern_3_Logo.svg/200px-Bayern_3_Logo.svg.png',
-  'swr3': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/SWR3_logo_2020.svg/200px-SWR3_logo_2020.svg.png',
-  '1live': 'https://upload.wikimedia.org/wikipedia/commons/f/fb/WDR_1LIVE_Logo_2016.svg',
-  'n-joy': 'https://upload.wikimedia.org/wikipedia/commons/3/35/Njoy-logo.svg',
-  'wdr 2': 'https://upload.wikimedia.org/wikipedia/commons/2/23/WDR_2_logo.svg',
-  'ndr 2': 'https://upload.wikimedia.org/wikipedia/commons/9/9e/NDR_2_Logo.svg',
-  'hr3': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Hr3_Logo_2015.svg/200px-Hr3_Logo_2015.svg.png',
-  'jump': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/MDR_Jump_logo_2011.svg/200px-MDR_Jump_logo_2011.svg.png',
-  'radioeins': 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Radioeins_logo_2021.svg/200px-Radioeins_logo_2021.svg.png',
-  'fritz': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Fritz_Logo_2021.svg/200px-Fritz_Logo_2021.svg.png',
-  'antenne bayern': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Antenne_Bayern_logo_2020.svg/200px-Antenne_Bayern_logo_2020.svg.png',
-  'radio nrw': 'https://upload.wikimedia.org/wikipedia/de/thumb/8/87/Radio_NRW_logo.svg/200px-Radio_NRW_logo.svg.png',
-  'radio hamburg': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/RadioHH_Logo2021.svg/300px-RadioHH_Logo2021.svg.png',
-  '104.6 rtl': 'https://upload.wikimedia.org/wikipedia/de/thumb/a/a2/104.6_RTL_Logo.svg/200px-104.6_RTL_Logo.svg.png',
-  'energy': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/NRJ_Logo.svg/200px-NRJ_Logo.svg.png',
-  'bigfm': 'https://upload.wikimedia.org/wikipedia/de/thumb/b/b8/BigFM_Logo.svg/200px-BigFM_Logo.svg.png',
-  'klassik radio': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Klassik_Radio_logo.svg/200px-Klassik_Radio_logo.svg.png',
-  'rock antenne': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Rock_Antenne_logo.svg/200px-Rock_Antenne_logo.svg.png',
-  'bob': 'https://upload.wikimedia.org/wikipedia/de/thumb/8/87/Radio_BOB%21_logo.svg/200px-Radio_BOB%21_logo.svg.png',
+  'deutschlandfunk kultur': 'https://www.deutschlandfunkkultur.de/static/img/deutschlandfunk_kultur/icons/apple-touch-icon-128x128.png',
+  'deutschlandfunk nova': 'https://www.deutschlandfunknova.de/apple-touch-icon.png',
+  'deutschlandfunk': 'https://www.deutschlandfunk.de/static/img/deutschlandfunk/icons/apple-touch-icon-128x128.png',
+  'ndr info': 'https://images.ndr.de/image/e03539c6-eebc-482a-911f-4b4d115c1c7d/AAABnoyc4w4/AAABnSSvrFg/16x9-big/logoinfotv100.webp?width=1920',
+  'wdr 5': 'https://www1.wdr.de/resources/img/wdr/logo/epgmodule/wdr5_logo_claim.svg',
+  'inforadio': 'https://www.inforadio.de/favicon.ico',
+  'bayern 1': 'https://api.ardmediathek.de/image-service/images/urn:ard:image:b366004f6196d70c?w=512',
+  'bayern 3': 'https://api.ardmediathek.de/image-service/images/urn:ard:image:52fd25fc45de7c6a?w=512',
+  'swr3': 'https://www.swr3.de/assets/swr3/icons/apple-touch-icon.png',
+  '1live diggi': 'https://www1.wdr.de/radio/1live-diggi/resources-v5.176.1/img/favicon/apple-touch-icon.png',
+  '1live': 'https://www1.wdr.de/radio/1live/resources/img/favicon/apple-touch-icon.png',
+  'n-joy': 'https://www.phonostar.de/images/auto_created/NJOY3184x184.png',
+  'wdr 2': 'https://www1.wdr.de/resources-v5.176.1/img/favicon/apple-touch-icon.png',
+  'ndr 2': 'https://www.phonostar.de/images/auto_created/NDR22184x184.png',
+  'hr3': 'https://www.hr3.de/favicon.png',
+  'jump': 'https://images.mdr.de/image/b9fe3a54-ad0c-4f20-8ac3-9dca0c95f705/AAABnXRUSRI/AAABnR8VW9w/original/logo-green-100.jpg',
+  'radioeins': 'https://www.radioeins.de/content/dam/rbb/rad/layout/r1-logo.svg.svg/img.svg',
+  'fritz': 'https://www.fritz.de/content/dam/rbb/rbb/logos/touch/fritz-128.png',
+  'antenne bayern': 'http://www.antenne.de/logos/station-antenne-bayern/apple-touch-icon.png',
+  'radio nrw': 'https://radionrw.de/apple-touch-icon.png',
+  'radio hamburg': 'https://www.radiohamburg.de/assets/icons/apple-touch-icon.png',
+  '104.6 rtl': 'https://www.104.6rtl.com/assets/icons/icon-152x152.png',
+  'energy': 'https://www.energy.de/favicon.ico',
+  'bigfm': 'https://cdn.bigfm.de/sites/all/themes/bigfm/favicon.ico',
+  'klassik radio': 'https://www.klassikradio.de/apple-touch-icon.png',
+  'rock antenne': 'https://www.rockantenne.de/logos/station-rock-antenne/apple-touch-icon.png',
+  'bob': 'https://upload.radiobob.de/production/static/1781730030464/icons/icon_512.8WpccMNcjjc.png',
   'sunshine': 'https://upload.wikimedia.org/wikipedia/commons/0/00/Sunshine_live_Logo_2022.svg',
-  'schlager radio': 'https://upload.wikimedia.org/wikipedia/de/thumb/8/8a/Schlager_Radio_logo.svg/200px-Schlager_Radio_logo.svg.png',
-  'schlagerwelt': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/MDR_Schlagerwelt_logo.svg/200px-MDR_Schlagerwelt_logo.svg.png',
-  'cosmo': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Cosmo_WDR_logo_2016.svg/200px-Cosmo_WDR_logo_2016.svg.png',
-  'lofi girl': 'https://lofigirl.com/wp-content/uploads/2023/02/lofi-girl-logo.png',
+  'schlager radio': 'https://www.schlagerradio.de/wp-content/uploads/2021/03/schlagerradiologo_stickyy.png',
+  'schlagerwelt': 'https://cdn.mdr.de/resources/global/img/mdrde/favicons/apple-icon-120x120.png',
+  'cosmo': 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Cosmo_Logo_2017.svg',
+  'lofi girl': 'https://www.lofigirl.com/assets/images/favicon.png',
   '80s80s': 'https://upload.wikimedia.org/wikipedia/commons/a/ad/80s80s_Logo_2015.svg',
   '90s90s': 'https://upload.wikimedia.org/wikipedia/commons/1/16/90s90s_Logo_2017.svg'
 };
@@ -173,14 +336,35 @@ function enrichStationIcon(station) {
   return station;
 }
 
+function normalizeStationName(name) {
+  const value = String(name || '').toLowerCase();
+  const region = value.match(/\(([^)]*)\)/);
+  const regionSuffix = region ? region[1].replace(/[^a-z0-9]+/g, '') : '';
+  return value
+    .toLowerCase()
+    .split('|')[0]
+    .replace(/\([^)]*\)/g, '')
+    .replace(/\b(mp3|aac|opus|https?|stream|kbit|kbps|128k|192k|96k|64k|48k|24k)\b/g, '')
+    .replace(/[^a-z0-9]+/g, '') + regionSuffix;
+}
+
+function normalizeStreamUrl(streamUrl) {
+  try {
+    const url = new URL(streamUrl);
+    return `${url.hostname}${url.pathname}`.toLowerCase().replace(/\/+$/, '');
+  } catch (_) {
+    return String(streamUrl || '').toLowerCase().replace(/[?#].*$/, '').replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  }
+}
+
 function mergeStations(curated, apiStations) {
   const merged = [...curated];
-  const curatedNames = new Set(curated.map(s => s.name.toLowerCase().replace(/[^a-z0-9]/g, '')));
-  const curatedStreams = new Set(curated.map(s => s.streamUrl.toLowerCase()));
+  const curatedNames = new Set(curated.map(s => normalizeStationName(s.name)));
+  const curatedStreams = new Set(curated.map(s => normalizeStreamUrl(s.streamUrl)));
 
   for (const s of apiStations) {
-    const normName = s.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const normStream = s.streamUrl.toLowerCase();
+    const normName = normalizeStationName(s.name);
+    const normStream = normalizeStreamUrl(s.streamUrl);
     
     // Check if it matches any of the curated stations by name or stream URL
     if (curatedNames.has(normName) || curatedStreams.has(normStream)) {
@@ -222,7 +406,7 @@ async function loadStations() {
 
   // Merge default stations with API/cached stations
   const merged = mergeStations(DEFAULT_STATIONS, apiStations);
-  return merged.map(enrichStationIcon);
+  return merged.map(normalizeStationLanguage).map(normalizeStationGenre).map(enrichStationIcon);
 }
 
 module.exports = {
@@ -230,4 +414,6 @@ module.exports = {
   DEFAULT_STATIONS,
   mapStation,
   mergeStations,
+  homepageFavicon,
+  localizeLanguageLabel,
 };

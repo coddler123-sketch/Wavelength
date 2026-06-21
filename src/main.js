@@ -37,8 +37,8 @@ const LOG_FILE = path.join(app.getPath('userData'), 'logs', 'app.log');
 
 let allStations = [];
 let activeStation = null;
-let fullWidth = 400;
-let fullHeight = 400;
+let fullWidth = 460;
+let fullHeight = 480;
 
 function log(message, extra = '') {
   const line = `[${new Date().toISOString()}] ${message}${extra ? ` ${extra}` : ''}\n`;
@@ -88,9 +88,9 @@ function setSleepTimer(minutes) {
 }
 
 function sleepLabel() {
-  if (!sleepTimer) return 'Sleep Timer';
+  if (!sleepTimer) return 'Sleeptimer';
   const rem = Math.ceil((sleepEndsAt - Date.now()) / 60_000);
-  return `Sleep Timer — noch ${rem} min`;
+  return `Sleeptimer - noch ${rem} min`;
 }
 
 function sleepMenuItem(minutes) {
@@ -122,7 +122,7 @@ function scheduleSave() {
 
 // ── Window sizes ──────────────────────────────────────────
 const SIZES = {
-  full: { width: 400, height: 400 },
+  full: { width: 460, height: 480 },
   mini: { width: 290, height: 82  }
 };
 
@@ -246,8 +246,16 @@ function createTray() {
 let currentIcyRequest = null;
 let currentTrackTitle = '';
 let icyReconnectTimer = null;
+let icyClientToken = 0;
+let currentIcyStreamUrl = '';
+
+function isCurrentIcyClient(token, streamUrl) {
+  return token === icyClientToken && streamUrl === currentIcyStreamUrl;
+}
 
 function stopIcyMetadataClient() {
+  icyClientToken++;
+  currentIcyStreamUrl = '';
   if (icyReconnectTimer) {
     clearTimeout(icyReconnectTimer);
     icyReconnectTimer = null;
@@ -261,9 +269,13 @@ function stopIcyMetadataClient() {
   currentTrackTitle = '';
 }
 
-function startIcyMetadataClient(streamUrl, redirectCount = 0) {
-  stopIcyMetadataClient();
+function startIcyMetadataClient(streamUrl, redirectCount = 0, token = null) {
+  if (token === null) {
+    stopIcyMetadataClient();
+    token = ++icyClientToken;
+  }
   if (!isPlaying || !streamUrl) return;
+  currentIcyStreamUrl = streamUrl;
 
   if (redirectCount > 5) {
     log('[icy] Too many redirects for url: ' + streamUrl);
@@ -280,16 +292,20 @@ function startIcyMetadataClient(streamUrl, redirectCount = 0) {
         'User-Agent': 'WavelengthRadioPlayer/1.0.0 (Windows Electron App)'
       }
     }, (res) => {
+      if (!isCurrentIcyClient(token, streamUrl)) {
+        res.destroy();
+        return;
+      }
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         req.destroy();
-        startIcyMetadataClient(res.headers.location, redirectCount + 1);
+        startIcyMetadataClient(res.headers.location, redirectCount + 1, token);
         return;
       }
 
       if (res.statusCode !== 200) {
         log(`[icy] HTTP Status: ${res.statusCode} for ${streamUrl}`);
         req.destroy();
-        scheduleIcyReconnect(streamUrl);
+        scheduleIcyReconnect(streamUrl, token);
         return;
       }
 
@@ -305,6 +321,7 @@ function startIcyMetadataClient(streamUrl, redirectCount = 0) {
       let readingMeta = false;
 
       res.on('data', (chunk) => {
+        if (!isCurrentIcyClient(token, streamUrl)) return;
         let offset = 0;
         while (offset < chunk.length) {
           if (!readingMeta) {
@@ -378,32 +395,44 @@ function startIcyMetadataClient(streamUrl, redirectCount = 0) {
       });
 
       res.on('end', () => {
-        scheduleIcyReconnect(streamUrl);
+        scheduleIcyReconnect(streamUrl, token);
       });
 
       res.on('error', (err) => {
+        if (!isCurrentIcyClient(token, streamUrl)) return;
         log('[icy] Response error: ' + err.message);
-        scheduleIcyReconnect(streamUrl);
+        scheduleIcyReconnect(streamUrl, token);
       });
     });
 
     req.on('error', (err) => {
+      if (!isCurrentIcyClient(token, streamUrl)) return;
       log('[icy] Request error: ' + err.message);
-      scheduleIcyReconnect(streamUrl);
+      scheduleIcyReconnect(streamUrl, token);
     });
 
     currentIcyRequest = req;
   } catch (err) {
     log('[icy] Connection setup failed: ' + err.message);
-    scheduleIcyReconnect(streamUrl);
+    scheduleIcyReconnect(streamUrl, token);
   }
 }
 
-function scheduleIcyReconnect(streamUrl) {
-  stopIcyMetadataClient();
-  if (isPlaying && streamUrl) {
+function scheduleIcyReconnect(streamUrl, token = icyClientToken) {
+  if (!isCurrentIcyClient(token, streamUrl)) return;
+  if (currentIcyRequest) {
+    try {
+      currentIcyRequest.destroy();
+    } catch (_) {}
+    currentIcyRequest = null;
+  }
+  if (icyReconnectTimer) {
+    clearTimeout(icyReconnectTimer);
+    icyReconnectTimer = null;
+  }
+  if (isPlaying && streamUrl && isCurrentIcyClient(token, streamUrl)) {
     icyReconnectTimer = setTimeout(() => {
-      startIcyMetadataClient(streamUrl);
+      if (isCurrentIcyClient(token, streamUrl)) startIcyMetadataClient(streamUrl);
     }, 5000);
   }
 }
@@ -411,19 +440,19 @@ function scheduleIcyReconnect(streamUrl) {
 function updateTrayTooltip() {
   if (!tray) return;
   const label = {
-    connecting: 'Connecting',
+    connecting: 'Verbinden',
     live: 'Live',
-    reconnecting: 'Reconnecting',
-    muted: 'Muted',
-    stopped: 'Stopped',
-  }[connectionState] || (isPlaying ? 'Live' : 'Stopped');
+    reconnecting: 'Erneut verbinden',
+    muted: 'Stumm',
+    stopped: 'Gestoppt',
+  }[connectionState] || (isPlaying ? 'Live' : 'Gestoppt');
   const stationName = activeStation ? activeStation.name : 'Keine Station';
   let tooltip = `Wavelength v${APP_VERSION}\nStation: ${stationName}\nStatus: ${label}`;
   if (isPlaying && currentTrackTitle) {
     tooltip += `\nTrack: ${currentTrackTitle}`;
   }
   if (sleepTimer) {
-    tooltip += '\n(Sleep Timer aktiv)';
+    tooltip += '\n(Sleeptimer aktiv)';
   }
   tray.setToolTip(tooltip);
 }
@@ -442,7 +471,7 @@ function updateTrayMenu() {
   const menu = Menu.buildFromTemplate([
     { label: `Wavelength v${APP_VERSION}`, enabled: false, icon: getTrayIcon() },
     { type: 'separator' },
-    { label: isPlaying ? '⏹  Stop' : '▶  Play', click: () => togglePlay() },
+    { label: isPlaying ? '⏹  Stoppen' : '▶  Abspielen', click: () => togglePlay() },
     {
       label: 'Station wechseln',
       submenu: stationMenuItems.length > 0 ? stationMenuItems : [{ label: 'Lade Stationen...', enabled: false }]
@@ -461,8 +490,8 @@ function updateTrayMenu() {
     },
     { type: 'separator' },
     { label: 'Stumm', type: 'checkbox', checked: isMuted, click: () => toggleMute() },
-    { label: 'Pin (Always on Top)', type: 'checkbox', checked: isPinned, click: () => togglePin() },
-    { label: isMini ? 'Vollansicht' : 'Mini Player', click: () => toggleMini() },
+    { label: 'Anheften (immer im Vordergrund)', type: 'checkbox', checked: isPinned, click: () => togglePin() },
+    { label: isMini ? 'Vollansicht' : 'Mini-Player', click: () => toggleMini() },
     { label: 'Mini an Bildschirmkante andocken', type: 'checkbox', checked: dockMini, click: () => toggleMiniDock() },
     { label: mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() ? 'Ausblenden' : 'Anzeigen', click: toggleWindow },
     { type: 'separator' },

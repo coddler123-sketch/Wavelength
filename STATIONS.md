@@ -35,5 +35,7 @@ npm test
 - `streamUrl` must use `https://`.
 - Avoid duplicate station names and duplicate stream URLs.
 - Prefer official stream URLs and official station websites.
+- Keep curated genre labels user-facing and German where practical, for example `Nachrichten`, `Wissen / Pop`, or `Elektronik`.
 - `iconUrl` and `website` may be empty strings, but when present they must be valid `http(s)` URLs.
+- Radio Browser stations use their `favicon` first; if it is missing, Wavelength falls back to `<homepage>/favicon.ico`.
 - Keep curated stations focused; broad discovery belongs to Radio Browser fallback.

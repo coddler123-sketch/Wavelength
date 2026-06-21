@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Wavelength** is a Windows Electron tray-only radio player supporting multiple customizable stations. Similar architecture to Zucca Radio but designed for multiple stations from curated local defaults plus Radio Browser integration. The app runs minimally in the system tray with a 400×400 mini UI and expandable visualizer.
+**Wavelength** is a Windows Electron tray-only radio player supporting multiple customizable stations. Similar architecture to Zucca Radio but designed for multiple stations from curated local defaults plus Radio Browser integration. The app runs minimally in the system tray with a 460×480 main UI, compact mini mode, and expandable visualizer.
 
 **Key characteristics:**
 - Single-instance Electron app with system tray integration
 - IPC-based main/renderer communication with strict contracts
-- Mini player window (400×400px) that can minimize to tray
+- Main player window (460×480px) with compact mini mode that can minimize to tray
 - Audio visualization with 9 modes
 - Station management via curated local defaults, Radio Browser loading, and disk cache
 - Windows-only NSIS installer build

@@ -35,15 +35,47 @@
   }
 
   function getStationCategory(genre) {
-    if (!genre) return 'Sonstige / Ambient';
+    if (!genre) return 'Sonstige';
     const g = genre.toLowerCase();
+    if (g.includes('wissen') || g.includes('knowledge') || g.includes('science') || g.includes('kultur') || g.includes('culture')) return 'Wissen & Kultur';
+    if (g.includes('hiphop') || g.includes('hip hop') || g.includes('hip-hop') || g.includes('rap') || g.includes('urban') || g.includes('r&b') || g.includes('soul') || g.includes('funk') || g.includes('reggae') || g.includes('ska') || g.includes('dancehall')) return 'Hip-Hop & R&B';
+    if (g.includes('ambient') || g.includes('chill') || g.includes('lounge') || g.includes('lofi') || g.includes('downtempo') || g.includes('relax') || g.includes('easy listening') || g.includes('instrumental')) return 'Ambient/Chillout';
+    if (/\b(50s|60s|70s|80s|90s|00s|10s|1950s|1960s|1970s|1980s|1990s|2000s|2010s)\b/.test(g) || /\b(50er|60er|70er|80er|90er|00er|2000er|2010er)\b/.test(g) || g.includes('oldies') || g.includes('retro')) return 'Oldies & Jahrzehnte';
     if (g.includes('pop') || g.includes('top 40') || g.includes('hits')) return 'Pop & Charts';
     if (g.includes('rock') || g.includes('metal') || g.includes('alternative') || g.includes('indie')) return 'Rock & Metal';
-    if (g.includes('electronic') || g.includes('edm') || g.includes('techno') || g.includes('house') || g.includes('dance') || g.includes('dnb') || g.includes('drum') || g.includes('lofi')) return 'Electronic & Dance';
-    if (g.includes('hip hop') || g.includes('hip-hop') || g.includes('rap') || g.includes('urban') || g.includes('r&b') || g.includes('soul') || g.includes('funk') || g.includes('reggae') || g.includes('ska') || g.includes('dancehall')) return 'Hip-Hop & R&B';
-    if (g.includes('classical') || g.includes('klassik') || g.includes('orchestral') || g.includes('symphony') || g.includes('opera') || g.includes('chamber') || g.includes('jazz') || g.includes('blues') || g.includes('swing')) return 'Klassik & Jazz';
-    if (g.includes('news') || g.includes('talk') || g.includes('speech') || g.includes('info') || g.includes('nachrichten')) return 'News & Talk';
-    return 'Sonstige / Ambient';
+    if (g.includes('electro') || g.includes('electronic') || g.includes('elektronik') || g.includes('edm') || g.includes('techno') || g.includes('trance') || g.includes('house') || g.includes('dance') || g.includes('dnb') || g.includes('drum')) return 'Elektronik & Dance';
+    if (g.includes('classic') || g.includes('classical') || g.includes('klassik') || g.includes('orchestral') || g.includes('symphony') || g.includes('opera') || g.includes('chamber') || g.includes('jazz') || g.includes('blues') || g.includes('swing')) return 'Klassik & Jazz';
+    if (g.includes('news') || g.includes('talk') || g.includes('speech') || g.includes('info') || g.includes('information') || g.includes('public radio') || g.includes('nachrichten')) return 'Nachrichten & Talk';
+    if (g.includes('schlager') || g.includes('country') || g.includes('weltmusik') || g.includes('world') || g.includes('global') || g.includes('multicultural')) return 'Schlager & Weltmusik';
+    if (g.includes('variety')) return 'Pop & Charts';
+    return 'Sonstige';
+  }
+
+  function getLanguageLabel(language) {
+    const raw = String(language || '').trim();
+    const normalized = raw.toLowerCase();
+    const labels = {
+      german: 'Deutsch',
+      deutsch: 'Deutsch',
+      de: 'Deutsch',
+      english: 'Englisch',
+      englisch: 'Englisch',
+      en: 'Englisch',
+      french: 'Französisch',
+      francais: 'Französisch',
+      français: 'Französisch',
+      fr: 'Französisch',
+      spanish: 'Spanisch',
+      espanol: 'Spanisch',
+      español: 'Spanisch',
+      es: 'Spanisch',
+      italian: 'Italienisch',
+      it: 'Italienisch',
+      dutch: 'Niederländisch',
+      nl: 'Niederländisch',
+      instrumental: 'Instrumental',
+    };
+    return labels[normalized] || (raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : '');
   }
 
   function filterStations(stations, { search = '', genre = '', lang = '', favorites = [], favFilterActive = false } = {}) {
@@ -51,12 +83,13 @@
     return stations.filter(s => {
       if (favFilterActive && !favorites.includes(s.id)) return false;
       if (genre && getStationCategory(s.genre) !== genre) return false;
-      if (lang && s.language !== lang) return false;
+      if (lang && getLanguageLabel(s.language) !== getLanguageLabel(lang)) return false;
       if (q) {
         return s.name.toLowerCase().includes(q) ||
                (s.genre || '').toLowerCase().includes(q) ||
                (s.country || '').toLowerCase().includes(q) ||
-               (s.language || '').toLowerCase().includes(q);
+               (s.language || '').toLowerCase().includes(q) ||
+               getLanguageLabel(s.language).toLowerCase().includes(q);
       }
       return true;
     });
@@ -71,6 +104,7 @@
   exports.trayState           = trayState;
   exports.fakeBar             = fakeBar;
   exports.getStationCategory  = getStationCategory;
+  exports.getLanguageLabel    = getLanguageLabel;
   exports.filterStations      = filterStations;
   exports.buildRecentsList    = buildRecentsList;
 // eslint-disable-next-line no-undef

@@ -6,7 +6,7 @@ import {
 import { startPlay, stopPlay } from './renderer-audio.js';
 
 const api = window.electronAPI;
-const { getStationCategory, filterStations, buildRecentsList } = window.utils;
+const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList } = window.utils;
 
 function appendOption(select, value, label) {
   const option = document.createElement('option');
@@ -172,8 +172,9 @@ export function renderStations() {
 }
 
 // ── Station Selection ────────────────────────────
-export function selectStation(station) {
+export function selectStation(station, options = {}) {
   if (!station) return;
+  const { syncMain = true, startWhenStopped = true } = options;
   const wasPlaying = state.playing;
   state.activeStation = station;
   state.streamUrl = station.streamUrl;
@@ -183,7 +184,7 @@ export function selectStation(station) {
 
   localStorage.setItem('wl.lastStationId', station.id);
 
-  api.selectStation(station);
+  if (syncMain) api.selectStation(station, !startWhenStopped && !wasPlaying);
 
   setActiveStationName(station.name);
   document.getElementById('active-station-subtitle').textContent =
@@ -200,10 +201,7 @@ export function selectStation(station) {
   if (wasPlaying) {
     stopPlay();
     startPlay();
-  } else {
-    api.playPause(true);
   }
-
 }
 
 // ── Filters ──────────────────────────────────────
@@ -213,15 +211,19 @@ export function populateFilters() {
   if (!genreSelect || !langSelect) return;
 
   const categories = [
+    'Ambient/Chillout',
     'Pop & Charts',
     'Rock & Metal',
-    'Electronic & Dance',
+    'Elektronik & Dance',
     'Hip-Hop & R&B',
     'Klassik & Jazz',
-    'News & Talk',
-    'Sonstige / Ambient'
+    'Wissen & Kultur',
+    'Nachrichten & Talk',
+    'Oldies & Jahrzehnte',
+    'Schlager & Weltmusik',
+    'Sonstige'
   ];
-  const langs  = [...new Set(state.allStations.map(s => s.language).filter(Boolean))].sort();
+  const langs  = [...new Set(state.allStations.map(s => getLanguageLabel(s.language)).filter(Boolean))].sort();
 
   genreSelect.replaceChildren();
   langSelect.replaceChildren();

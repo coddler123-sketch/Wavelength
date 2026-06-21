@@ -29,7 +29,7 @@ npm run build:signed
 After the build, inspect the installer signature:
 
 ```powershell
-Get-AuthenticodeSignature "dist\Wavelength Setup 1.1.0.exe"
+Get-AuthenticodeSignature "dist\Wavelength Setup <version>.exe"
 ```
 
 Expected result for a signed release:

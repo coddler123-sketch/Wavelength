@@ -231,7 +231,7 @@ api.onWindowVisible((visible) => {
 api.onShowAbout(showAboutModal);
 api.onSetStation((station) => {
   if (state.isInitialized && station && (!state.activeStation || state.activeStation.id !== station.id)) {
-    selectStation(station);
+    selectStation(station, { syncMain: false, startWhenStopped: false });
   }
 });
 api.onTrackInfo((title) => {
@@ -282,7 +282,7 @@ function initListDragToScroll() {
     loadedStation = state.allStations[0];
   }
   if (loadedStation) {
-    selectStation(loadedStation);
+    selectStation(loadedStation, { startWhenStopped: false });
   }
 
   renderStations();
@@ -320,7 +320,7 @@ function initListDragToScroll() {
   if (wantMini  !== appState.isMini)   triggerToggleMini();
   if (wantMuted !== appState.isMuted)  api.toggleMute();
 
-  if (loadBool(LS.playing)) api.playPause();
+  if (loadBool(LS.playing)) api.playPause(true);
 
   const miniView = document.getElementById('mini-view');
   if (miniView) {

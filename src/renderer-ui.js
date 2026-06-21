@@ -55,11 +55,11 @@ window.addEventListener('resize', () => {
 export function setLiveStatus(st) {
   const el = document.getElementById('live-status');
   if (!el) return;
-  if (st === 'reconnecting') el.textContent = 'Reconnecting';
-  else if (st === 'muted')   el.textContent = 'Muted';
+  if (st === 'reconnecting') el.textContent = 'Erneut verbinden';
+  else if (st === 'muted')   el.textContent = 'Stumm';
   else if (st === 'live')    el.textContent = 'Live';
-  else if (st === 'connecting') el.textContent = 'Connecting';
-  else el.textContent = 'Stopped';
+  else if (st === 'connecting') el.textContent = 'Verbinden';
+  else el.textContent = 'Gestoppt';
 }
 
 export function reportConnectionState(st) {
@@ -154,6 +154,14 @@ export function updatePlayUI() {
     miniPath.setAttribute('d', state.playing
       ? 'M 3.5 3.5 L 14.5 3.5 L 14.5 14.5 L 3.5 14.5 Z'
       : 'M 3 2 L 15 9 L 3 16 L 3 2 Z');
+  }
+  const playLabel = state.playing ? 'Stoppen' : 'Abspielen';
+  for (const id of ['btn-playstop', 'mini-playstop']) {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.setAttribute('aria-label', playLabel);
+      btn.setAttribute('aria-pressed', String(state.playing));
+    }
   }
   sendTrayIcons();
   updateItemEqualizer();

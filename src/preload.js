@@ -1,5 +1,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+function listen(channel, cb, map = (_, v) => cb(v)) {
+  const handler = (...args) => map(...args);
+  ipcRenderer.on(channel, handler);
+  return () => ipcRenderer.removeListener(channel, handler);
+}
+
 contextBridge.exposeInMainWorld('electronAPI', {
   // Send to main
   playPause:    (forceState) => ipcRenderer.send('play-pause', forceState),
@@ -15,18 +21,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectStation:      (station, noPlay) => ipcRenderer.send('select-station', station, noPlay),
 
   // Receive from main
-  onSetPlaying:    (cb) => ipcRenderer.on('set-playing',    (_, v) => cb(v)),
-  onSetPinned:     (cb) => ipcRenderer.on('set-pinned',     (_, v) => cb(v)),
-  onSetMini:       (cb) => ipcRenderer.on('set-mini',       (_, v) => cb(v)),
-  onSetMuted:      (cb) => ipcRenderer.on('set-muted',      (_, v) => cb(v)),
-  onWindowVisible: (cb) => ipcRenderer.on('window-visible', (_, v) => cb(v)),
-  onSleepUpdate:   (cb) => ipcRenderer.on('sleep-update',   (_, v) => cb(v)),
-  onAppVersion:    (cb) => ipcRenderer.on('app-version',    (_, v) => cb(v)),
-  onResetSettings: (cb) => ipcRenderer.on('reset-settings', () => cb()),
-  onSystemIdle:    (cb) => ipcRenderer.on('system-idle',    (_, v) => cb(v)),
-  onShowAbout:     (cb) => ipcRenderer.on('show-about',     () => cb()),
-  onSetStation:    (cb) => ipcRenderer.on('set-station',    (_, v) => cb(v)),
-  onTrackInfo:     (cb) => ipcRenderer.on('track-info',     (_, v) => cb(v)),
+  onSetPlaying:    (cb) => listen('set-playing',    cb),
+  onSetPinned:     (cb) => listen('set-pinned',     cb),
+  onSetMini:       (cb) => listen('set-mini',       cb),
+  onSetMuted:      (cb) => listen('set-muted',      cb),
+  onWindowVisible: (cb) => listen('window-visible', cb),
+  onSleepUpdate:   (cb) => listen('sleep-update',   cb),
+  onAppVersion:    (cb) => listen('app-version',    cb),
+  onResetSettings: (cb) => listen('reset-settings', cb, () => cb()),
+  onSystemIdle:    (cb) => listen('system-idle',    cb),
+  onShowAbout:     (cb) => listen('show-about',     cb, () => cb()),
+  onSetStation:    (cb) => listen('set-station',    cb),
+  onTrackInfo:     (cb) => listen('track-info',     cb),
 
   // Queries
   getStations:  () => ipcRenderer.invoke('get-stations'),

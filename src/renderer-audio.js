@@ -17,7 +17,7 @@ export function applyBassBoost() {
   if (!btn) return;
   btn.classList.toggle('active', state.bassBoostLevel > 0);
   btn.dataset.level = String(state.bassBoostLevel);
-  btn.title = `Bass Boost: ${BASS_LABELS[state.bassBoostLevel]}`;
+  btn.title = `Bassverstärkung: ${BASS_LABELS[state.bassBoostLevel]}`;
 }
 
 export function cycleBassBoost() {
@@ -74,7 +74,6 @@ export function scheduleReconnect() {
   setReconnecting(true);
   const delay = RECONNECT_DELAYS[Math.min(state.reconnectAttempt, RECONNECT_DELAYS.length - 1)];
   state.reconnectAttempt++;
-  console.log('[reconnect] in', delay, 'ms (attempt', state.reconnectAttempt, ')');
   state.reconnectTimer = setTimeout(() => {
     state.reconnectTimer = null;
     if (state.playing) {
@@ -97,7 +96,7 @@ export function updateMediaSession(isPlaying) {
   if (!('mediaSession' in navigator)) return;
   if (state.activeStation) {
     let title  = state.currentTrackInfoText || state.activeStation.name;
-    let artist = state.currentTrackInfoText ? state.activeStation.name : 'Wavelength Player';
+    let artist = state.currentTrackInfoText ? state.activeStation.name : 'Wavelength';
     if (state.currentTrackInfoText && state.currentTrackInfoText.includes(' - ')) {
       const parts = state.currentTrackInfoText.split(' - ');
       artist = parts[0].trim();
@@ -113,9 +112,9 @@ export function updateMediaSession(isPlaying) {
     });
   } else {
     navigator.mediaSession.metadata = new MediaMetadata({
-      title:  'Live Stream',
-      artist: 'Wavelength Player',
-      album:  'Multi-Station Radio',
+      title:  'Livestream',
+      artist: 'Wavelength',
+      album:  'Multi-Sender-Radio',
     });
   }
   navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
