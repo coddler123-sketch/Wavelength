@@ -104,7 +104,6 @@ export function renderStations() {
     const stationName = escapeHtml(station.name);
     const stationGenre = escapeHtml(station.genre || 'Radio');
     const stationCountry = escapeHtml(station.country || '');
-    const favoriteLabel = state.favorites.includes(station.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufÃ¼gen';
 
     item.innerHTML = `
       <div class="station-icon-wrap">

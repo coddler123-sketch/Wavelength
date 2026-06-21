@@ -39,7 +39,7 @@
     const g = genre.toLowerCase();
     if (g.includes('wissen') || g.includes('knowledge') || g.includes('science') || g.includes('kultur') || g.includes('culture')) return 'Wissen & Kultur';
     if (g.includes('hiphop') || g.includes('hip hop') || g.includes('hip-hop') || g.includes('rap') || g.includes('urban') || g.includes('r&b') || g.includes('soul') || g.includes('funk') || g.includes('reggae') || g.includes('ska') || g.includes('dancehall')) return 'Hip-Hop & R&B';
-    if (g.includes('ambient') || g.includes('chill') || g.includes('lounge') || g.includes('lofi') || g.includes('downtempo') || g.includes('relax') || g.includes('easy listening') || g.includes('instrumental')) return 'Ambient/Chillout';
+    if (g.includes('ambient') || g.includes('chill') || g.includes('lounge') || g.includes('lofi') || g.includes('downtempo') || g.includes('relax') || g.includes('easy listening') || g.includes('leichte musik') || g.includes('instrumental')) return 'Ambient/Chillout';
     if (/\b(50s|60s|70s|80s|90s|00s|10s|1950s|1960s|1970s|1980s|1990s|2000s|2010s)\b/.test(g) || /\b(50er|60er|70er|80er|90er|00er|2000er|2010er)\b/.test(g) || g.includes('oldies') || g.includes('retro')) return 'Oldies & Jahrzehnte';
     if (g.includes('pop') || g.includes('top 40') || g.includes('hits')) return 'Pop & Charts';
     if (g.includes('rock') || g.includes('metal') || g.includes('alternative') || g.includes('indie')) return 'Rock & Metal';
@@ -47,7 +47,7 @@
     if (g.includes('classic') || g.includes('classical') || g.includes('klassik') || g.includes('orchestral') || g.includes('symphony') || g.includes('opera') || g.includes('chamber') || g.includes('jazz') || g.includes('blues') || g.includes('swing')) return 'Klassik & Jazz';
     if (g.includes('news') || g.includes('talk') || g.includes('speech') || g.includes('info') || g.includes('information') || g.includes('public radio') || g.includes('nachrichten')) return 'Nachrichten & Talk';
     if (g.includes('schlager') || g.includes('country') || g.includes('weltmusik') || g.includes('world') || g.includes('global') || g.includes('multicultural')) return 'Schlager & Weltmusik';
-    if (g.includes('variety')) return 'Pop & Charts';
+    if (g.includes('variety') || g.includes('mix')) return 'Pop & Charts';
     return 'Sonstige';
   }
 

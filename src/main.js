@@ -457,16 +457,57 @@ function updateTrayTooltip() {
   tray.setToolTip(tooltip);
 }
 
-function updateTrayMenu() {
-  if (!tray || tray.isDestroyed()) return;
-  const stationMenuItems = allStations.map(station => ({
+function stationMenuItem(station) {
+  return {
     label: station.name,
     type: 'radio',
     checked: activeStation && activeStation.id === station.id,
     click: () => {
       selectStationInternal(station);
     }
-  }));
+  };
+}
+
+function trayStationGroupLabel(station) {
+  const first = String(station.name || '').trim().charAt(0).toLocaleUpperCase('de');
+  return /^[A-ZÄÖÜ]$/.test(first) ? first : '0-9';
+}
+
+function buildTrayStationMenuItems() {
+  const trayStations = [...allStations].sort((a, b) =>
+    a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
+
+  if (trayStations.length <= 40) return trayStations.map(stationMenuItem);
+
+  const groups = new Map();
+  for (const station of trayStations) {
+    const label = trayStationGroupLabel(station);
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(station);
+  }
+
+  return Array.from(groups, ([label, stations]) => {
+    const hasActiveStation = stations.some(station => activeStation && station.id === activeStation.id);
+    return {
+      label: hasActiveStation ? `• ${label}` : label,
+      submenu: stations.map(stationMenuItem),
+    };
+  });
+}
+
+function stationSwitcherSubmenu(stationMenuItems) {
+  if (stationMenuItems.length === 0) return [{ label: 'Lade Stationen...', enabled: false }];
+  if (!activeStation) return stationMenuItems;
+  return [
+    { label: `Aktuell: ${activeStation.name}`, enabled: false },
+    { type: 'separator' },
+    ...stationMenuItems,
+  ];
+}
+
+function updateTrayMenu() {
+  if (!tray || tray.isDestroyed()) return;
+  const stationMenuItems = buildTrayStationMenuItems();
 
   const menu = Menu.buildFromTemplate([
     { label: `Wavelength v${APP_VERSION}`, enabled: false, icon: getTrayIcon() },
@@ -474,7 +515,7 @@ function updateTrayMenu() {
     { label: isPlaying ? '⏹  Stoppen' : '▶  Abspielen', click: () => togglePlay() },
     {
       label: 'Station wechseln',
-      submenu: stationMenuItems.length > 0 ? stationMenuItems : [{ label: 'Lade Stationen...', enabled: false }]
+      submenu: stationSwitcherSubmenu(stationMenuItems)
     },
     { type: 'separator' },
     {

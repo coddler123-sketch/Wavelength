@@ -14,6 +14,7 @@ const state = {
   sleepEndsAt: 0,
   connectionState: 'stopped',
   activeStation: null,
+  stationSelections: [],
 };
 
 app.setPath('userData', path.join(os.tmpdir(), `wavelength-ui-audit-${Date.now()}`));
@@ -48,8 +49,9 @@ function wireIpc(win) {
   ipcMain.on('connection-state', (_event, nextState) => {
     state.connectionState = nextState;
   });
-  ipcMain.on('select-station', (_event, station) => {
+  ipcMain.on('select-station', (_event, station, noPlay) => {
     state.activeStation = station;
+    state.stationSelections.push({ id: station?.id, name: station?.name, noPlay: !!noPlay });
     send(win, 'set-station', station);
   });
 
@@ -146,6 +148,111 @@ async function viewMeta(win) {
   `);
 }
 
+async function auditStationSwitch(win) {
+  const beforeCount = state.stationSelections.length;
+  const result = await win.webContents.executeJavaScript(`
+    new Promise(resolve => {
+      document.body.classList.add('view-list-active');
+      const toggleBtn = document.getElementById('btn-view-toggle');
+      if (toggleBtn) {
+        toggleBtn.classList.add('active');
+        toggleBtn.setAttribute('aria-pressed', 'true');
+      }
+
+      requestAnimationFrame(() => {
+        const items = Array.from(document.querySelectorAll('.station-item'));
+        const current = document.querySelector('.station-item.active');
+        const currentId = current?.dataset.id || '';
+        const target = items.find(item => item.dataset.id && item.dataset.id !== currentId) || items[1];
+        if (!target) {
+          resolve({ ok: false, reason: 'no selectable station item found' });
+          return;
+        }
+
+        const targetId = target.dataset.id;
+        const targetName = target.querySelector('.station-item-name')?.textContent?.trim() || '';
+        target.click();
+
+        setTimeout(() => {
+          const active = document.querySelector('.station-item.active');
+          resolve({
+            ok: true,
+            targetId,
+            targetName,
+            activeId: active?.dataset.id || '',
+            activeName: active?.querySelector('.station-item-name')?.textContent?.trim() || '',
+            headerName: document.getElementById('active-station-name-inner')?.textContent?.trim() || '',
+            miniName: document.getElementById('mini-station-name')?.textContent?.trim() || '',
+          });
+        }, 250);
+      });
+    })
+  `);
+
+  const latest = state.stationSelections[state.stationSelections.length - 1] || null;
+  const interactionIssues = [];
+  if (!result.ok) interactionIssues.push(result.reason || 'station switch click failed');
+  if (result.ok && result.activeId !== result.targetId) interactionIssues.push(`active list item stayed on ${result.activeId || 'none'} instead of ${result.targetId}`);
+  if (result.ok && result.headerName !== result.targetName) interactionIssues.push(`header shows ${result.headerName || 'empty'} instead of ${result.targetName}`);
+  if (result.ok && result.miniName !== result.targetName) interactionIssues.push(`mini player shows ${result.miniName || 'empty'} instead of ${result.targetName}`);
+  if (state.stationSelections.length !== beforeCount + 1) interactionIssues.push('select-station IPC was not emitted exactly once');
+  if (latest && latest.id !== result.targetId) interactionIssues.push(`select-station IPC used ${latest.id || 'empty'} instead of ${result.targetId}`);
+
+  return {
+    label: 'station-switch',
+    result,
+    ipcSelection: latest,
+    interactionIssues,
+  };
+}
+
+async function auditPlayTooltip(win) {
+  const read = () => win.webContents.executeJavaScript(`
+    (() => ({
+      main: document.getElementById('btn-playstop')?.getAttribute('title') || '',
+      mini: document.getElementById('mini-playstop')?.getAttribute('title') || '',
+      aria: document.getElementById('btn-playstop')?.getAttribute('aria-label') || '',
+      miniIcon: document.querySelector('#mini-icon path')?.getAttribute('d') || '',
+    }))()
+  `);
+
+  const before = await read();
+  send(win, 'set-playing', true);
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const playing = await read();
+  send(win, 'set-mini', true);
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const playingMini = await read();
+  send(win, 'set-mini', false);
+  await new Promise(resolve => setTimeout(resolve, 100));
+  send(win, 'set-playing', false);
+  await new Promise(resolve => setTimeout(resolve, 100));
+  const stopped = await read();
+
+  const interactionIssues = [];
+  if (before.main !== 'Abspielen' || before.mini !== 'Abspielen') {
+    interactionIssues.push(`initial play tooltip is ${before.main || 'empty'} / ${before.mini || 'empty'}`);
+  }
+  if (playing.main !== 'Stoppen' || playing.mini !== 'Stoppen' || playing.aria !== 'Stoppen') {
+    interactionIssues.push(`playing tooltip/aria is ${playing.main || 'empty'} / ${playing.mini || 'empty'} / ${playing.aria || 'empty'}`);
+  }
+  if (!playing.miniIcon.includes('2.5 2.5') || !playingMini.miniIcon.includes('2.5 2.5')) {
+    interactionIssues.push(`mini play icon did not switch to stop square: ${playing.miniIcon || 'empty'} / ${playingMini.miniIcon || 'empty'}`);
+  }
+  if (stopped.main !== 'Abspielen' || stopped.mini !== 'Abspielen' || stopped.aria !== 'Abspielen') {
+    interactionIssues.push(`stopped tooltip/aria is ${stopped.main || 'empty'} / ${stopped.mini || 'empty'} / ${stopped.aria || 'empty'}`);
+  }
+
+  return {
+    label: 'play-tooltip',
+    before,
+    playing,
+    playingMini,
+    stopped,
+    interactionIssues,
+  };
+}
+
 async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const win = new BrowserWindow({
@@ -172,6 +279,7 @@ async function main() {
   const full = await audit(win, 'full-player');
   full.meta = await viewMeta(win);
   results.push(full);
+  results.push(await auditPlayTooltip(win));
   await win.webContents.executeJavaScript(`
     document.body.classList.add('view-list-active');
     const toggleBtn = document.getElementById('btn-view-toggle');
@@ -182,6 +290,8 @@ async function main() {
     new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   `);
   await new Promise(resolve => setTimeout(resolve, 200));
+  const stationSwitch = await auditStationSwitch(win);
+  results.push(stationSwitch);
   const list = await audit(win, 'station-list');
   list.meta = await viewMeta(win);
   results.push(list);
@@ -193,7 +303,8 @@ async function main() {
   results.push(mini);
 
   fs.writeFileSync(path.join(outDir, 'report.json'), JSON.stringify(results, null, 2));
-  const issues = results.reduce((sum, r) => sum + r.overflow.length + r.clippedText.length, 0);
+  const issues = results.reduce((sum, r) =>
+    sum + (r.overflow?.length || 0) + (r.clippedText?.length || 0) + (r.interactionIssues?.length || 0), 0);
   console.log(`ui-audit ${issues === 0 ? 'ok' : 'found issues'}: ${issues} issue(s)`);
   console.log(`report: ${path.join(outDir, 'report.json')}`);
   console.log(`screenshots: ${outDir}`);

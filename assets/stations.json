@@ -7,7 +7,7 @@
     "genre": "Nachrichten",
     "country": "DE",
     "website": "https://deutschlandfunk.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "deutschlandfunk-kultur",
@@ -17,7 +17,7 @@
     "genre": "Kultur",
     "country": "DE",
     "website": "https://www.deutschlandfunkkultur.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "deutschlandfunk-nova",
@@ -27,7 +27,7 @@
     "genre": "Wissen / Pop",
     "country": "DE",
     "website": "https://www.deutschlandfunknova.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "ndr-info",
@@ -37,7 +37,7 @@
     "genre": "Nachrichten",
     "country": "DE",
     "website": "https://www.ndr.de/info",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "wdr-5",
@@ -47,7 +47,7 @@
     "genre": "Wissen / Talk",
     "country": "DE",
     "website": "https://wdr5.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "rbb24-inforadio",
@@ -57,7 +57,7 @@
     "genre": "Nachrichten",
     "country": "DE",
     "website": "https://www.inforadio.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "bayern1",
@@ -67,7 +67,7 @@
     "genre": "Pop / Oldies",
     "country": "DE",
     "website": "https://www.bayern1.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "bayern3",
@@ -77,7 +77,7 @@
     "genre": "Pop / Rock",
     "country": "DE",
     "website": "https://www.bayern3.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "swr3",
@@ -87,7 +87,7 @@
     "genre": "Pop / Rock",
     "country": "DE",
     "website": "https://www.swr3.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "wdr-1live",
@@ -97,7 +97,7 @@
     "genre": "Pop / Jugend",
     "country": "DE",
     "website": "https://1live.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "n-joy",
@@ -107,7 +107,7 @@
     "genre": "Pop / Jugend",
     "country": "DE",
     "website": "https://www.n-joy.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "wdr2",
@@ -117,7 +117,7 @@
     "genre": "Pop / Rock",
     "country": "DE",
     "website": "https://wdr.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "ndr2-niedersachsen",
@@ -127,7 +127,7 @@
     "genre": "Pop / Rock",
     "country": "DE",
     "website": "https://www.ndr.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "hr3",
@@ -137,7 +137,7 @@
     "genre": "Pop",
     "country": "DE",
     "website": "https://www.hr3.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "mdr-jump",
@@ -147,7 +147,7 @@
     "genre": "Pop",
     "country": "DE",
     "website": "https://www.mdr.de/jump",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "radioeins",
@@ -157,7 +157,7 @@
     "genre": "Kultur / Talk",
     "country": "DE",
     "website": "https://www.radioeins.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "fritz",
@@ -167,7 +167,7 @@
     "genre": "Pop / Jugend",
     "country": "DE",
     "website": "https://www.fritz.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "antenne-bayern",
@@ -177,7 +177,7 @@
     "genre": "Pop",
     "country": "DE",
     "website": "https://www.antenne.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "radio-nrw",
@@ -187,7 +187,7 @@
     "genre": "Pop / Lokal",
     "country": "DE",
     "website": "https://radionrw.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "radio-hamburg",
@@ -197,7 +197,7 @@
     "genre": "Pop / Charts",
     "country": "DE",
     "website": "https://www.radiohamburg.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "104-6-rtl",
@@ -207,7 +207,7 @@
     "genre": "Pop",
     "country": "DE",
     "website": "https://www.1046rtl.com",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "energy-deutschland",
@@ -217,7 +217,7 @@
     "genre": "Pop / Charts",
     "country": "DE",
     "website": "https://energy.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "bigfm",
@@ -227,7 +227,7 @@
     "genre": "Hip-Hop / Pop",
     "country": "DE",
     "website": "https://www.bigfm.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "klassik-radio",
@@ -237,7 +237,7 @@
     "genre": "Klassik",
     "country": "DE",
     "website": "https://www.klassikradio.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "rock-antenne",
@@ -247,7 +247,7 @@
     "genre": "Rock",
     "country": "DE",
     "website": "https://www.rockantenne.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "radio-bob",
@@ -257,7 +257,7 @@
     "genre": "Rock",
     "country": "DE",
     "website": "https://www.radiobob.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "sunshine-live",
@@ -267,7 +267,7 @@
     "genre": "Elektronik",
     "country": "DE",
     "website": "https://www.sunshine-live.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "schlager-radio",
@@ -277,7 +277,7 @@
     "genre": "Schlager",
     "country": "DE",
     "website": "https://www.schlagerradio.de",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "mdr-schlagerwelt",
@@ -287,7 +287,7 @@
     "genre": "Schlager",
     "country": "DE",
     "website": "https://www.mdr.de/schlagerwelt",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "cosmo",
@@ -297,7 +297,7 @@
     "genre": "Weltmusik",
     "country": "DE",
     "website": "https://www1.wdr.de/radio/cosmo/",
-    "language": "German"
+    "language": "Deutsch"
   },
   {
     "id": "lofigirl",

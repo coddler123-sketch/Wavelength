@@ -98,10 +98,14 @@ function localizeGenreLabel(tag) {
     '2000s': '2000er',
     ard: 'Nachrichten',
     'public radio': 'Nachrichten',
-    music: 'Variety',
+    'cultural news': 'Kultur / Nachrichten',
+    music: 'Mix',
     news: 'Nachrichten',
+    nachrichten: 'Nachrichten',
     culture: 'Kultur',
+    kultur: 'Kultur',
     knowledge: 'Wissen',
+    wissen: 'Wissen',
     science: 'Wissen',
     information: 'Nachrichten',
     electronic: 'Elektronik',
@@ -116,24 +120,42 @@ function localizeGenreLabel(tag) {
     lounge: 'Lounge',
     lofi: 'Lofi',
     relax: 'Relax',
-    'easy listening': 'Easy Listening',
+    'easy listening': 'Leichte Musik',
+    'leichte musik': 'Leichte Musik',
     country: 'Country',
     global: 'Weltmusik',
     multicultural: 'Weltmusik',
     'world music': 'Weltmusik',
     hiphop: 'Hip-Hop',
+    'hip-hop': 'Hip-Hop',
     rap: 'Hip-Hop',
     acid: 'Acid Jazz',
     'acid jazz': 'Acid Jazz',
-    variety: 'Variety',
+    variety: 'Mix',
+    pop: 'Pop',
+    rock: 'Rock',
+    'rock klassiker': 'Rock Klassiker',
+    talk: 'Talk',
+    charts: 'Charts',
+    oldies: 'Oldies',
     instrumental: 'Instrumental',
     classic: 'Klassik',
+    'classic rock': 'Rock Klassiker',
     classics: 'Klassik',
     classical: 'Klassik',
     local: 'Lokal',
     young: 'Jugend',
     urban: 'Hip-Hop',
   };
+  if (labels[normalized]) return labels[normalized];
+  if (normalized.includes(' / ')) {
+    return normalized
+      .split(/\s*\/\s*/)
+      .map(part => localizeGenreLabel(part))
+      .filter(Boolean)
+      .filter((part, index, all) => all.indexOf(part) === index)
+      .join(' / ');
+  }
   return labels[normalized] || (normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : '');
 }
 

@@ -152,8 +152,8 @@ export function updatePlayUI() {
   const miniPath = document.querySelector('#mini-icon path');
   if (miniPath) {
     miniPath.setAttribute('d', state.playing
-      ? 'M 3.5 3.5 L 14.5 3.5 L 14.5 14.5 L 3.5 14.5 Z'
-      : 'M 3 2 L 15 9 L 3 16 L 3 2 Z');
+      ? 'M 2.5 2.5 L 9.5 2.5 L 9.5 9.5 L 2.5 9.5 Z'
+      : 'M 2 1 L 11 6 L 2 11 L 2 1 Z');
   }
   const playLabel = state.playing ? 'Stoppen' : 'Abspielen';
   for (const id of ['btn-playstop', 'mini-playstop']) {
@@ -161,6 +161,7 @@ export function updatePlayUI() {
     if (btn) {
       btn.setAttribute('aria-label', playLabel);
       btn.setAttribute('aria-pressed', String(state.playing));
+      btn.title = playLabel;
     }
   }
   sendTrayIcons();

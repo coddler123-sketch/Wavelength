@@ -4,6 +4,7 @@ const path = require('path');
 const STATIONS_FILE = path.join(__dirname, '..', 'assets', 'stations.json');
 const REQUIRED_FIELDS = ['id', 'name', 'streamUrl', 'genre', 'country', 'language'];
 const OPTIONAL_URL_FIELDS = ['iconUrl', 'website'];
+const RAW_LANGUAGE_LABELS = new Set(['german', 'english', 'french', 'spanish', 'italian', 'dutch']);
 
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -88,6 +89,10 @@ function validateStations(stations) {
 
     if (typeof station.country === 'string' && station.country !== station.country.toUpperCase()) {
       errors.push(`${label}: country should be uppercase`);
+    }
+
+    if (typeof station.language === 'string' && RAW_LANGUAGE_LABELS.has(station.language.trim().toLowerCase())) {
+      errors.push(`${label}: language should use localized label instead of "${station.language}"`);
     }
   });
 

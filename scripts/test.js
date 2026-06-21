@@ -137,6 +137,17 @@ test('Runtime: src-Dateien enthalten keine ungeschuetzten console.log-Aufrufe', 
   }
 });
 
+test('Runtime: sichtbare Quellen enthalten keine Mojibake-Reste', () => {
+  const files = [
+    ...fs.readdirSync(path.join(__dirname, '..', 'src')).filter(f => f.endsWith('.js')).map(f => path.join('src', f)),
+    path.join('src', 'index.html')
+  ];
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
+    assert.ok(!/[ÃÂ�]/.test(content), `${file} enthält vermutlich kaputte UTF-8-Zeichen`);
+  }
+});
+
 test('Main: Tray-Updates ignorieren bereits zerstoerte Objekte', () => {
   assert.ok(main.includes('if (!tray || tray.isDestroyed()) return;'), 'updateTrayMenu muss zerstoerten Tray ignorieren');
   assert.ok(main.includes("mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() ? 'Ausblenden' : 'Anzeigen'"), 'Tray-Menue darf isVisible nicht auf zerstoertem Fenster aufrufen');
@@ -163,6 +174,18 @@ test('Main: Tray-Texte sind deutsch lokalisiert', () => {
   assert.ok(main.includes("'Mini-Player'"), 'Tray-Mini-Player-Text ist nicht deutsch');
 });
 
+test('Main: Tray-Stationsmenue ist alphabetisch sortiert', () => {
+  assert.ok(main.includes('const trayStations = [...allStations].sort'), 'Tray-Menue muss eine sortierte Kopie der Sender nutzen');
+  assert.ok(main.includes("a.name.localeCompare(b.name, 'de', { sensitivity: 'base' })"), 'Tray-Menue muss deutsch alphabetisch nach Sendername sortieren');
+  assert.ok(main.includes('if (trayStations.length <= 40) return trayStations.map(stationMenuItem)'), 'Tray-Menue muss kleine Listen flach sortiert rendern');
+  assert.ok(main.includes('function trayStationGroupLabel(station)'), 'Tray-Menue muss große Listen alphabetisch gruppieren');
+  assert.ok(main.includes('const hasActiveStation = stations.some'), 'Tray-Menue muss die aktive Buchstabengruppe markieren');
+  assert.ok(main.includes('label: hasActiveStation ? `• ${label}` : label'), 'Aktive Tray-Gruppe muss sichtbar markiert sein');
+  assert.ok(main.includes('function stationSwitcherSubmenu(stationMenuItems)'), 'Tray-Menue muss eine Station-Wechsel-Untermenue-Struktur kapseln');
+  assert.ok(main.includes('label: `Aktuell: ${activeStation.name}`'), 'Tray-Menue muss die aktuelle Station oben anzeigen');
+  assert.ok(main.includes('submenu: stations.map(stationMenuItem)'), 'Tray-Gruppen muessen Sender-Menueintraege enthalten');
+});
+
 test('UI: sichtbare Status- und Tooltexte sind deutsch lokalisiert', () => {
   assert.ok(renderer.includes("el.textContent = 'Erneut verbinden'"), 'Reconnect-Status ist nicht deutsch');
   assert.ok(renderer.includes("el.textContent = 'Stumm'"), 'Muted-Status ist nicht deutsch');
@@ -173,10 +196,15 @@ test('UI: sichtbare Status- und Tooltexte sind deutsch lokalisiert', () => {
   assert.ok(renderer.includes("title:  'Livestream'"), 'MediaSession-Fallback-Titel ist nicht deutsch');
   assert.ok(html.includes('Multi-Sender-Radio'), 'HTML-Default-Subtitle ist nicht deutsch');
   assert.ok(html.includes('aria-label="Abspielen"'), 'Play-Button aria-label ist nicht deutsch');
+  assert.ok(html.includes('id="btn-playstop" aria-label="Abspielen" aria-pressed="false" title="Abspielen"'), 'Play-Button Tooltip ist nicht die Aktion');
+  assert.ok(html.includes('id="mini-playstop" aria-label="Abspielen" aria-pressed="false" title="Abspielen"'), 'Mini-Play-Button Tooltip ist nicht die Aktion');
+  assert.ok(renderer.includes('btn.title = playLabel;'), 'Play-Button Tooltip wird nicht dynamisch aktualisiert');
+  assert.ok(html.includes('<path d="M 2 1 L 11 6 L 2 11 L 2 1 Z"/>'), 'Mini-Play-Icon muss als morphbarer path definiert sein');
+  assert.ok(renderer.includes("'M 2.5 2.5 L 9.5 2.5 L 9.5 9.5 L 2.5 9.5 Z'"), 'Mini-Play-Icon wird nicht zum Stop-Symbol aktualisiert');
   assert.ok(html.includes('aria-label="Sleeptimer"'), 'Sleeptimer aria-label ist nicht deutsch');
   assert.ok(html.includes('aria-label="Bassverstärkung"'), 'Bass aria-label ist nicht deutsch');
   assert.ok(html.includes('Stream-URL'), 'Stream-URL Label ist nicht deutsch formatiert');
-  for (const legacy of ['Multi-Station Player', 'Wavelength Player', 'aria-label="Play"', 'Sleep Timer', 'Bass Boost', 'Stream URL']) {
+  for (const legacy of ['Multi-Station Player', 'Wavelength Player', 'aria-label="Play"', 'title="Leertaste"', 'Sleep Timer', 'Bass Boost', 'Stream URL']) {
     assert.ok(!html.includes(legacy), `HTML enthaelt noch altes UI-Label: ${legacy}`);
   }
 });
@@ -472,8 +500,9 @@ test('mapStation: englische Radio-Browser-Genres werden eingedeutscht', () => {
   assert.equal(mapStation({ ...minimalDto, tags: 'culture,talk' }).genre, 'Kultur');
   assert.equal(mapStation({ ...minimalDto, tags: 'electronic,dance' }).genre, 'Elektronik');
   assert.equal(mapStation({ ...minimalDto, tags: 'classic,jazz' }).genre, 'Klassik');
+  assert.equal(mapStation({ ...minimalDto, tags: 'classic rock,pop' }).genre, 'Rock Klassiker');
   assert.equal(mapStation({ ...minimalDto, tags: 'chillout+lounge,ambient' }).genre, 'Chillout / Lounge');
-  assert.equal(mapStation({ ...minimalDto, tags: 'easy listening,relax' }).genre, 'Easy Listening');
+  assert.equal(mapStation({ ...minimalDto, tags: 'easy listening,relax' }).genre, 'Leichte Musik');
   assert.equal(mapStation({ ...minimalDto, tags: '1980s,oldies' }).genre, '80er');
 });
 
@@ -482,7 +511,7 @@ test('mapStation: schwache Radio-Browser-Tags werden uebersprungen', () => {
   assert.equal(mapStation({ ...minimalDto, name: '- 0 N - 2000s on Radio', tags: '00er,00s,2000er,pop' }).genre, '2000er');
   assert.equal(mapStation({ ...minimalDto, name: 'B5 aktuell', tags: 'ard,bayerischer rundfunk,information,news' }).genre, 'Nachrichten');
   assert.equal(mapStation({ ...minimalDto, name: 'Berliner Rundfunk 91.4', tags: 'berlin,pop' }).genre, 'Pop');
-  assert.equal(mapStation({ ...minimalDto, name: 'MANGORADIO', tags: 'music,variety' }).genre, 'Variety');
+  assert.equal(mapStation({ ...minimalDto, name: 'MANGORADIO', tags: 'music,variety' }).genre, 'Mix');
 });
 
 test('mapStation: Namen helfen bei leeren oder schwachen Tags', () => {
@@ -623,6 +652,8 @@ test('stations: alte Cache-Genres werden vor Rueckgabe normalisiert', async () =
     { id: 'berlin-cache', name: 'Berliner Rundfunk 91.4', streamUrl: 'https://berlin.test/stream', genre: 'Berlin', country: 'DE', language: 'German', iconUrl: '', website: '' },
     { id: 'b5-cache', name: 'B5 aktuell', streamUrl: 'https://b5.test/stream', genre: 'Ard', country: 'DE', language: 'German', iconUrl: '', website: '' },
     { id: 'mango-cache', name: 'MANGORADIO', streamUrl: 'https://mango.test/stream', genre: 'Music', country: 'DE', language: 'German', iconUrl: '', website: '' },
+    { id: 'compound-cache', name: 'Compound Genre Test', streamUrl: 'https://compound.test/stream', genre: 'Wissen / pop', country: 'DE', language: 'German', iconUrl: '', website: '' },
+    { id: 'cultural-cache', name: 'Cultural News Test', streamUrl: 'https://cultural.test/stream', genre: 'Cultural news', country: 'DE', language: 'German', iconUrl: '', website: '' },
   ];
   fs.writeFileSync(cacheFile, JSON.stringify({ timestamp: Date.now(), stations: staleStations }), 'utf8');
 
@@ -639,7 +670,9 @@ test('stations: alte Cache-Genres werden vor Rueckgabe normalisiert', async () =
   assert.equal(result.find(s => s.id === 'swr1-cache')?.genre, 'Oldies');
   assert.equal(result.find(s => s.id === 'berlin-cache')?.genre, 'Pop');
   assert.equal(result.find(s => s.id === 'b5-cache')?.genre, 'Nachrichten');
-  assert.equal(result.find(s => s.id === 'mango-cache')?.genre, 'Variety');
+  assert.equal(result.find(s => s.id === 'mango-cache')?.genre, 'Mix');
+  assert.equal(result.find(s => s.id === 'compound-cache')?.genre, 'Wissen / Pop');
+  assert.equal(result.find(s => s.id === 'cultural-cache')?.genre, 'Kultur / Nachrichten');
 });
 
 test('DEFAULT_STATIONS: Array mit mindestens 10 Einträgen', () => {
@@ -661,6 +694,19 @@ test('DEFAULT_STATIONS: alle Einträge haben Pflichtfelder', () => {
 test('DEFAULT_STATIONS: Sprachlabels sind deutsch lokalisiert', () => {
   assert.ok(DEFAULT_STATIONS.some(s => s.language === 'Deutsch'), 'Deutsch fehlt in Default-Stationen');
   assert.ok(!DEFAULT_STATIONS.some(s => s.language === 'German'), 'Default-Stationen duerfen nicht German anzeigen');
+});
+
+test('Stations: Maintenance-Validierung lehnt englische Sprachlabels ab', () => {
+  const errors = validateStations([{
+    id: 'test-radio',
+    name: 'Test Radio',
+    streamUrl: 'https://example.com/live.mp3',
+    iconUrl: 'https://example.com/icon.png',
+    genre: 'Pop',
+    country: 'DE',
+    language: 'German',
+  }]);
+  assert.ok(errors.some(error => error.includes('language should use localized label')), errors.join('\n'));
 });
 
 // ── visualizer.js – Smoke Tests ───────────────────────────────
@@ -702,10 +748,18 @@ test('visualizer: UMD-Export kompatibel mit Node und Browser', () => {
 // ── utils: getStationCategory ─────────────────────
 const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList } = require('../src/utils.js');
 
+test('DEFAULT_STATIONS: kein kuratierter Sender landet unter Sonstige', () => {
+  const uncategorized = DEFAULT_STATIONS
+    .filter(station => getStationCategory(station.genre) === 'Sonstige')
+    .map(station => `${station.name} (${station.genre})`);
+  assert.deepEqual(uncategorized, []);
+});
+
 test('getStationCategory: Pop-Genres werden erkannt', () => {
   assert.equal(getStationCategory('Pop'),    'Pop & Charts');
   assert.equal(getStationCategory('Top 40'), 'Pop & Charts');
   assert.equal(getStationCategory('Hits'),   'Pop & Charts');
+  assert.equal(getStationCategory('Mix'),    'Pop & Charts');
 });
 
 test('getStationCategory: Jahrzehnte und Oldies werden erkannt', () => {
@@ -741,6 +795,7 @@ test('getStationCategory: Ambient/Chillout-Genres werden erkannt', () => {
   assert.equal(getStationCategory('Lofi'),              'Ambient/Chillout');
   assert.equal(getStationCategory('Instrumental'),      'Ambient/Chillout');
   assert.equal(getStationCategory('Easy Listening'),    'Ambient/Chillout');
+  assert.equal(getStationCategory('Leichte Musik'),     'Ambient/Chillout');
 });
 
 test('getStationCategory: Hip-Hop/R&B-Genres werden erkannt', () => {
