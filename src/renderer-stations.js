@@ -262,7 +262,7 @@ export function updateMiniLogo(station) {
   const miniSvg  = document.getElementById('mini-logo-svg');
   if (!miniIcon || !miniSvg) return;
   if (station && station.iconUrl) {
-    miniIcon.src = station.iconUrl;
+    miniIcon.src = safeHttpUrl(station.iconUrl);
     miniIcon.style.display = 'block';
     miniSvg.style.display = 'none';
   } else {
@@ -276,7 +276,7 @@ export function updatePlayerLogo(station) {
   const defaultLogo = document.getElementById('player-default-logo');
   if (!playerIcon || !defaultLogo) return;
   if (station && station.iconUrl) {
-    playerIcon.src = station.iconUrl;
+    playerIcon.src = safeHttpUrl(station.iconUrl);
     playerIcon.style.display = 'block';
     defaultLogo.style.display = 'none';
   } else {
@@ -324,7 +324,7 @@ export function populateRecents() {
     item.title = station.name;
 
     const img = document.createElement('img');
-    img.src = station.iconUrl || '../assets/icon.png';
+    img.src = safeHttpUrl(station.iconUrl) || '../assets/icon.png';
     img.alt = '';
     img.onerror = () => { img.src = '../assets/icon.png'; };
     item.appendChild(img);

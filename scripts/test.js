@@ -12,6 +12,30 @@ const { buildTrayStationMenuItems, stationSwitcherSubmenu, trayStationGroupLabel
 const { validateStations } = require('./validate-stations.js');
 
 const src  = (f) => fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8');
+
+// Minimal HTML query helper — finds an element by id and reads its attributes.
+// Avoids attribute-order sensitivity of plain string includes().
+function htmlEl(source, id) {
+  const m = source.match(new RegExp(`<[a-zA-Z][^>]*\\bid="${id}"[^>]*>`));
+  if (!m) return null;
+  const tag = m[0];
+  return {
+    attr(name) {
+      const am = tag.match(new RegExp(`\\b${name}="([^"]*)"`));
+      return am ? am[1] : null;
+    },
+    text() {
+      const start = source.indexOf(m[0]) + m[0].length;
+      const after = source.slice(start);
+      const close = after.match(/^([^<]*)</);
+      return close ? close[1] : '';
+    },
+  };
+}
+function htmlHasId(source, id) {
+  return new RegExp(`\\bid="${id}"`).test(source);
+}
+
 const main    = src('main.js');
 const preload = src('preload.js');
 const stations = src('stations.js');
@@ -317,15 +341,27 @@ test('Main: Tray-Stationswechsler zeigt aktuelle Station und Ladezustand', () =>
 
 test('UI: sichtbare Status- und Tooltexte sind deutsch lokalisiert', () => {
   assert.ok(html.includes('Multi-Sender-Radio'), 'HTML-Default-Subtitle ist nicht deutsch');
-  assert.ok(html.includes(`<p class="modal-subtitle" id="about-version">v${pkg.version}</p>`), 'About-Fallback-Version muss zur package.json passen');
-  assert.ok(html.includes('aria-label="Abspielen"'), 'Play-Button aria-label ist nicht deutsch');
-  assert.ok(html.includes('id="btn-playstop" aria-label="Abspielen" aria-pressed="false" title="Abspielen"'), 'Play-Button Tooltip ist nicht die Aktion');
-  assert.ok(html.includes('id="mini-playstop" aria-label="Abspielen" aria-pressed="false" title="Abspielen"'), 'Mini-Play-Button Tooltip ist nicht die Aktion');
+  const aboutVersion = htmlEl(html, 'about-version');
+  assert.ok(aboutVersion, 'About-Version-Element fehlt');
+  assert.equal(aboutVersion.text(), `v${pkg.version}`, 'About-Fallback-Version muss zur package.json passen');
+  const btnPlay = htmlEl(html, 'btn-playstop');
+  assert.ok(btnPlay, 'Play-Button fehlt');
+  assert.equal(btnPlay.attr('aria-label'), 'Abspielen', 'Play-Button aria-label ist nicht deutsch');
+  assert.equal(btnPlay.attr('aria-pressed'), 'false', 'Play-Button aria-pressed-Initialwert fehlt');
+  assert.equal(btnPlay.attr('title'), 'Abspielen', 'Play-Button Tooltip ist nicht die Aktion');
+  const miniPlay = htmlEl(html, 'mini-playstop');
+  assert.ok(miniPlay, 'Mini-Play-Button fehlt');
+  assert.equal(miniPlay.attr('aria-label'), 'Abspielen', 'Mini-Play-Button aria-label ist nicht deutsch');
+  assert.equal(miniPlay.attr('title'), 'Abspielen', 'Mini-Play-Button Tooltip ist nicht die Aktion');
   assert.ok(renderer.includes('btn.title = playLabel;'), 'Play-Button Tooltip wird nicht dynamisch aktualisiert');
   assert.ok(html.includes('<path d="M 2 1 L 11 6 L 2 11 L 2 1 Z"/>'), 'Mini-Play-Icon muss als morphbarer path definiert sein');
   assert.ok(renderer.includes("'M 2.5 2.5 L 9.5 2.5 L 9.5 9.5 L 2.5 9.5 Z'"), 'Mini-Play-Icon wird nicht zum Stop-Symbol aktualisiert');
-  assert.ok(html.includes('aria-label="Sleeptimer"'), 'Sleeptimer aria-label ist nicht deutsch');
-  assert.ok(html.includes('aria-label="Bassverstärkung"'), 'Bass aria-label ist nicht deutsch');
+  const btnSleep = htmlEl(html, 'btn-sleep');
+  assert.ok(btnSleep, 'Sleeptimer-Button fehlt');
+  assert.equal(btnSleep.attr('aria-label'), 'Sleeptimer', 'Sleeptimer aria-label ist nicht deutsch');
+  const btnBass = htmlEl(html, 'btn-bass');
+  assert.ok(btnBass, 'Bass-Button fehlt');
+  assert.equal(btnBass.attr('aria-label'), 'Bassverstärkung', 'Bass aria-label ist nicht deutsch');
   assert.ok(html.includes('Stream-URL'), 'Stream-URL Label ist nicht deutsch formatiert');
   for (const legacy of ['Multi-Station Player', 'Wavelength Player', 'aria-label="Play"', 'title="Leertaste"', 'Sleep Timer', 'Bass Boost', 'Stream URL']) {
     assert.ok(!html.includes(legacy), `HTML enthaelt noch altes UI-Label: ${legacy}`);
@@ -474,6 +510,9 @@ test('Renderer: externe Stationsdaten werden vor Template-Rendering escaped', ()
   assert.ok(renderer.includes('const stationCountry = escapeHtml(station.country'), 'Country wird nicht escaped');
   assert.ok(renderer.includes('const stationId = escapeHtml(station.id)'), 'Station-ID wird nicht escaped');
   assert.ok(renderer.includes('const iconUrl = safeHttpUrl(station.iconUrl)'), 'Icon-URL wird nicht validiert');
+  assert.ok(renderer.includes('miniIcon.src = safeHttpUrl(station.iconUrl)'), 'Mini-Logo-URL wird nicht sanitiert');
+  assert.ok(renderer.includes('playerIcon.src = safeHttpUrl(station.iconUrl)'), 'Player-Logo-URL wird nicht sanitiert');
+  assert.ok(renderer.includes('safeHttpUrl(station.iconUrl) || \'../assets/icon.png\''), 'Recent-Item-Logo-URL wird nicht sanitiert');
   assert.ok(renderer.includes("stationIcon.addEventListener('error'"), 'Logo-Fallback sollte per Event Listener laufen');
   assert.ok(!renderer.includes('${station.name}</span>'), 'Stationsname darf nicht roh in innerHTML interpoliert werden');
   assert.ok(!renderer.includes('src="${station.iconUrl}"'), 'Icon-URL darf nicht roh in innerHTML interpoliert werden');
@@ -533,9 +572,9 @@ test('Station Gain: Regeln fuer Key, Clamp, Label und linearen Gain', async () =
 
 test('Renderer: Sender-Trim ist bedienbar verdrahtet', () => {
   const html = src('index.html');
-  assert.ok(html.includes('id="station-gain-pill"'), 'Trim-Pill fehlt');
-  assert.ok(!html.includes('id="btn-station-gain-down"'), 'leiser Button sollte nicht permanent sichtbar sein');
-  assert.ok(!html.includes('id="btn-station-gain-up"'), 'lauter Button sollte nicht permanent sichtbar sein');
+  assert.ok(htmlHasId(html, 'station-gain-pill'), 'Trim-Pill fehlt');
+  assert.ok(!htmlHasId(html, 'btn-station-gain-down'), 'leiser Button sollte nicht permanent sichtbar sein');
+  assert.ok(!htmlHasId(html, 'btn-station-gain-up'), 'lauter Button sollte nicht permanent sichtbar sein');
   assert.ok(renderer.includes("localStorage.removeItem(stationGainKey(state.activeStation.id))"), '0 dB Trim wird nicht zurückgesetzt');
   assert.ok(renderer.includes("safeAddListener('station-gain-pill', 'click', resetStationGain)"), 'Trim-Pill ist nicht verdrahtet');
   assert.ok(!renderer.includes("case 'BracketLeft'"), 'Klammer-Shortcut sollte nicht verwendet werden');
