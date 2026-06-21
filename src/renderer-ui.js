@@ -1,4 +1,15 @@
 import { state, audio } from './renderer-state.js';
+import {
+  STATION_GAIN_MIN_DB, STATION_GAIN_MAX_DB, STATION_GAIN_STEP_DB,
+  stationGainKey, clampStationGainDb, gainDbToLinear, stationGainLabel,
+  nextStationGainDb,
+} from './station-gain.mjs';
+import { connectionLabel, playStopLabel } from './ui-labels.mjs';
+
+export {
+  STATION_GAIN_MIN_DB, STATION_GAIN_MAX_DB, STATION_GAIN_STEP_DB,
+  stationGainKey,
+};
 
 const api = window.electronAPI;
 const { formatListen } = window.utils;
@@ -18,7 +29,6 @@ export const LS = {
 
 export function stationTodayKey(id) { return `wl.listenTodayMs_${id}`; }
 export function stationTotalKey(id)  { return `wl.listenTotalMs_${id}`; }
-export function stationGainKey(id)   { return `wl.stationGainDb_${id}`; }
 
 export function loadInt(key, fallback) {
   const v = parseInt(localStorage.getItem(key), 10);
@@ -55,11 +65,7 @@ window.addEventListener('resize', () => {
 export function setLiveStatus(st) {
   const el = document.getElementById('live-status');
   if (!el) return;
-  if (st === 'reconnecting') el.textContent = 'Erneut verbinden';
-  else if (st === 'muted')   el.textContent = 'Stumm';
-  else if (st === 'live')    el.textContent = 'Live';
-  else if (st === 'connecting') el.textContent = 'Verbinden';
-  else el.textContent = 'Gestoppt';
+  el.textContent = connectionLabel(st);
 }
 
 export function reportConnectionState(st) {
@@ -155,7 +161,7 @@ export function updatePlayUI() {
       ? 'M 2.5 2.5 L 9.5 2.5 L 9.5 9.5 L 2.5 9.5 Z'
       : 'M 2 1 L 11 6 L 2 11 L 2 1 Z');
   }
-  const playLabel = state.playing ? 'Stoppen' : 'Abspielen';
+  const playLabel = playStopLabel(state.playing);
   for (const id of ['btn-playstop', 'mini-playstop']) {
     const btn = document.getElementById(id);
     if (btn) {
@@ -267,23 +273,18 @@ export function updateVolSlider(val, persist = true) {
 }
 
 // ── Station Gain ─────────────────────────────────
-export const STATION_GAIN_MIN_DB = -9;
-export const STATION_GAIN_MAX_DB = 9;
-export const STATION_GAIN_STEP_DB = 1;
-
 export function currentStationGainDb() {
   if (!state.activeStation) return 0;
-  return Math.max(STATION_GAIN_MIN_DB, Math.min(STATION_GAIN_MAX_DB,
-    loadInt(stationGainKey(state.activeStation.id), 0)));
+  return clampStationGainDb(loadInt(stationGainKey(state.activeStation.id), 0));
 }
 
 export function applyStationGain() {
   const db = currentStationGainDb();
   if (state.stationGain) {
-    state.stationGain.gain.value = Math.pow(10, db / 20);
+    state.stationGain.gain.value = gainDbToLinear(db);
   }
   const pill = document.getElementById('station-gain-pill');
-  const label = db === 0 ? '0 dB' : `${db > 0 ? '+' : ''}${db} dB`;
+  const label = stationGainLabel(db);
   if (pill) {
     pill.textContent = label;
     pill.classList.toggle('nonzero', db !== 0);
@@ -292,8 +293,7 @@ export function applyStationGain() {
 
 export function adjustStationGain(deltaDb) {
   if (!state.activeStation) return;
-  const next = Math.max(STATION_GAIN_MIN_DB, Math.min(STATION_GAIN_MAX_DB,
-    currentStationGainDb() + deltaDb));
+  const next = nextStationGainDb(currentStationGainDb(), deltaDb);
   if (next === 0) {
     localStorage.removeItem(stationGainKey(state.activeStation.id));
   } else {

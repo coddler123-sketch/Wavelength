@@ -316,13 +316,6 @@ test('Main: Tray-Stationswechsler zeigt aktuelle Station und Ladezustand', () =>
 });
 
 test('UI: sichtbare Status- und Tooltexte sind deutsch lokalisiert', () => {
-  assert.ok(renderer.includes("el.textContent = 'Erneut verbinden'"), 'Reconnect-Status ist nicht deutsch');
-  assert.ok(renderer.includes("el.textContent = 'Stumm'"), 'Muted-Status ist nicht deutsch');
-  assert.ok(renderer.includes("el.textContent = 'Verbinden'"), 'Connecting-Status ist nicht deutsch');
-  assert.ok(renderer.includes("el.textContent = 'Gestoppt'"), 'Stopped-Status ist nicht deutsch');
-  assert.ok(renderer.includes("const playLabel = state.playing ? 'Stoppen' : 'Abspielen'"), 'Play/Stop aria label wird nicht deutsch aktualisiert');
-  assert.ok(renderer.includes('Bassverstärkung:'), 'Bass-Tooltip ist nicht deutsch');
-  assert.ok(renderer.includes("title:  'Livestream'"), 'MediaSession-Fallback-Titel ist nicht deutsch');
   assert.ok(html.includes('Multi-Sender-Radio'), 'HTML-Default-Subtitle ist nicht deutsch');
   assert.ok(html.includes(`<p class="modal-subtitle" id="about-version">v${pkg.version}</p>`), 'About-Fallback-Version muss zur package.json passen');
   assert.ok(html.includes('aria-label="Abspielen"'), 'Play-Button aria-label ist nicht deutsch');
@@ -337,6 +330,23 @@ test('UI: sichtbare Status- und Tooltexte sind deutsch lokalisiert', () => {
   for (const legacy of ['Multi-Station Player', 'Wavelength Player', 'aria-label="Play"', 'title="Leertaste"', 'Sleep Timer', 'Bass Boost', 'Stream URL']) {
     assert.ok(!html.includes(legacy), `HTML enthaelt noch altes UI-Label: ${legacy}`);
   }
+});
+
+test('UI Labels: deutsche Status-, Play- und Medienlabels', async () => {
+  const labels = await import('../src/ui-labels.mjs');
+  assert.equal(labels.connectionLabel('reconnecting'), 'Erneut verbinden');
+  assert.equal(labels.connectionLabel('muted'), 'Stumm');
+  assert.equal(labels.connectionLabel('connecting'), 'Verbinden');
+  assert.equal(labels.connectionLabel('stopped'), 'Gestoppt');
+  assert.equal(labels.connectionLabel('unknown'), 'Gestoppt');
+  assert.equal(labels.playStopLabel(true), 'Stoppen');
+  assert.equal(labels.playStopLabel(false), 'Abspielen');
+  assert.equal(labels.bassTooltip(1), 'Bassverstärkung: +6 dB');
+  assert.deepEqual(labels.MEDIA_SESSION_FALLBACK, {
+    title: 'Livestream',
+    artist: 'Wavelength',
+    album: 'Multi-Sender-Radio',
+  });
 });
 
 test('Release: User-Agent nutzt aktuelle Paketversion', () => {
@@ -438,12 +448,19 @@ test('Renderer: selectStation persistiert Auswahl, synchronisiert main ohne Dopp
   assert.ok(match, 'selectStation nicht gefunden');
   const body = match[1];
   assert.ok(body.includes("localStorage.setItem('wl.lastStationId', station.id)"), 'letzte Station wird nicht persistiert');
-  assert.ok(body.includes('if (syncMain) api.selectStation(station, !startWhenStopped && !wasPlaying)'), 'main process wird nicht kontrolliert synchronisiert');
-  assert.ok(body.includes('if (wasPlaying)') && body.includes('stopPlay();') && body.includes('startPlay();'), 'laufender Stream wird beim Stationswechsel nicht neu gestartet');
   assert.ok(!body.includes('api.playPause(true)'), 'selectStation darf keinen zweiten Play-Befehl senden');
   assert.ok(renderer.includes("selectStation(station, { syncMain: false, startWhenStopped: false })"), 'Main-Sync darf nicht zurück an Main funken');
   assert.ok(renderer.includes("selectStation(loadedStation, { startWhenStopped: false })"), 'Initialauswahl darf nicht automatisch Playback starten');
   assert.ok(renderer.includes('if (loadBool(LS.playing)) api.playPause(true);'), 'Autoplay-Restore muss force true nutzen');
+});
+
+test('Station Selection: Main-Sync und Playback-Restart Regeln', async () => {
+  const selection = await import('../src/station-selection.mjs');
+  assert.equal(selection.shouldSuppressMainAutoplay(false, false), true);
+  assert.equal(selection.shouldSuppressMainAutoplay(false, true), false);
+  assert.equal(selection.shouldSuppressMainAutoplay(true, false), false);
+  assert.equal(selection.shouldRestartPlayback(true), true);
+  assert.equal(selection.shouldRestartPlayback(false), false);
 });
 
 test('Main: get-stations-Fallback referenziert importierte DEFAULT_STATIONS', () => {
@@ -452,8 +469,6 @@ test('Main: get-stations-Fallback referenziert importierte DEFAULT_STATIONS', ()
 });
 
 test('Renderer: externe Stationsdaten werden vor Template-Rendering escaped', () => {
-  assert.ok(renderer.includes('function escapeHtml'), 'escapeHtml fehlt');
-  assert.ok(renderer.includes('function safeHttpUrl'), 'safeHttpUrl fehlt');
   assert.ok(renderer.includes('const stationName = escapeHtml(station.name)'), 'Stationsname wird nicht escaped');
   assert.ok(renderer.includes('const stationGenre = escapeHtml(station.genre'), 'Genre wird nicht escaped');
   assert.ok(renderer.includes('const stationCountry = escapeHtml(station.country'), 'Country wird nicht escaped');
@@ -465,33 +480,63 @@ test('Renderer: externe Stationsdaten werden vor Template-Rendering escaped', ()
   assert.ok(!renderer.includes('onerror='), 'Inline-Event-Handler im Stations-Markup sind nicht erlaubt');
 });
 
+test('Renderer Sanitizer: escaped HTML und erlaubt nur HTTP(S)-URLs', async () => {
+  const sanitize = await import('../src/renderer-sanitize.mjs');
+  assert.equal(sanitize.escapeHtml(`<img src=x onerror='x'>&"`), '&lt;img src=x onerror=&#39;x&#39;&gt;&amp;&quot;');
+  assert.equal(sanitize.escapeHtml(null), '');
+  assert.equal(sanitize.safeHttpUrl('https://example.com/a b'), 'https://example.com/a%20b');
+  assert.equal(sanitize.safeHttpUrl('http://example.com/logo.png'), 'http://example.com/logo.png');
+  assert.equal(sanitize.safeHttpUrl('javascript:alert(1)'), '');
+  assert.equal(sanitize.safeHttpUrl('file:///tmp/logo.png'), '');
+  assert.equal(sanitize.safeHttpUrl('not a url'), '');
+});
+
 test('Renderer: reconnect meldet reconnecting und setzt bei Erfolg wieder live/stopped', () => {
   assert.ok(renderer.includes('function scheduleReconnect()'), 'scheduleReconnect fehlt');
-  assert.ok(renderer.includes('if (state.reconnectTimer || !state.playing) return;'), 'Reconnect darf nicht laufen, wenn der Player gestoppt ist');
   assert.ok(renderer.includes('setReconnecting(true)'), 'Reconnect-State wird nicht gesetzt');
-  assert.ok(renderer.includes('state.reconnectAttempt++'), 'Reconnect-Versuche werden nicht hochgezählt');
   assert.ok(renderer.includes("if (state.playing) reportConnectionState(state.muted ? 'muted' : 'live')"), 'Live-State wird nach Erfolg nicht gemeldet');
   assert.ok(renderer.includes("reportConnectionState('stopped')"), 'Stopped-State wird beim Stop nicht gemeldet');
 });
 
+test('Reconnect Policy: Backoff und Scheduling-Regeln', async () => {
+  const reconnect = await import('../src/reconnect-policy.mjs');
+  assert.deepEqual(reconnect.RECONNECT_DELAYS, [1000, 2000, 4000, 8000, 16000, 30000]);
+  assert.equal(reconnect.shouldScheduleReconnect(null, true), true);
+  assert.equal(reconnect.shouldScheduleReconnect(123, true), false);
+  assert.equal(reconnect.shouldScheduleReconnect(null, false), false);
+  assert.equal(reconnect.reconnectDelayForAttempt(0), 1000);
+  assert.equal(reconnect.reconnectDelayForAttempt(4), 16000);
+  assert.equal(reconnect.reconnectDelayForAttempt(99), 30000);
+  assert.equal(reconnect.nextReconnectAttempt(2), 3);
+});
+
 test('Renderer: Sender-Normalisierung nutzt stationGain zwischen analyser und limiter', () => {
-  assert.ok(renderer.includes('function stationGainKey(id)'), 'stationGainKey fehlt');
-  assert.ok(renderer.includes('const STATION_GAIN_MIN_DB = -9'), 'untere dB-Grenze fehlt');
-  assert.ok(renderer.includes('const STATION_GAIN_MAX_DB = 9'), 'obere dB-Grenze fehlt');
   assert.ok(renderer.includes('state.stationGain = state.audioCtx.createGain()'), 'GainNode wird nicht erstellt');
   assert.ok(renderer.includes('state.analyser.connect(state.stationGain)'), 'stationGain hängt nicht nach dem analyser');
   assert.ok(renderer.includes('state.stationGain.connect(limiter)'), 'stationGain hängt nicht vor dem limiter');
-  assert.ok(renderer.includes('Math.pow(10, db / 20)'), 'dB werden nicht in linearen Gain konvertiert');
 });
 
-test('Renderer: Sender-Trim ist pro Station bedienbar und persistiert', () => {
+test('Station Gain: Regeln fuer Key, Clamp, Label und linearen Gain', async () => {
+  const gain = await import('../src/station-gain.mjs');
+  assert.equal(gain.stationGainKey('abc'), 'wl.stationGainDb_abc');
+  assert.equal(gain.clampStationGainDb(-99), -9);
+  assert.equal(gain.clampStationGainDb(99), 9);
+  assert.equal(gain.clampStationGainDb('bad'), 0);
+  assert.equal(gain.stationGainLabel(0), '0 dB');
+  assert.equal(gain.stationGainLabel(4), '+4 dB');
+  assert.equal(gain.stationGainLabel(-3), '-3 dB');
+  assert.equal(gain.nextStationGainDb(8, 4), 9);
+  assert.equal(gain.nextStationGainDb(-8, -4), -9);
+  assert.equal(gain.gainDbToLinear(0), 1);
+  assert.ok(Math.abs(gain.gainDbToLinear(6) - 1.995262) < 0.00001);
+});
+
+test('Renderer: Sender-Trim ist bedienbar verdrahtet', () => {
   const html = src('index.html');
   assert.ok(html.includes('id="station-gain-pill"'), 'Trim-Pill fehlt');
   assert.ok(!html.includes('id="btn-station-gain-down"'), 'leiser Button sollte nicht permanent sichtbar sein');
   assert.ok(!html.includes('id="btn-station-gain-up"'), 'lauter Button sollte nicht permanent sichtbar sein');
-  assert.ok(renderer.includes("localStorage.setItem(stationGainKey(state.activeStation.id), String(next))"), 'Trim wird nicht persistiert');
   assert.ok(renderer.includes("localStorage.removeItem(stationGainKey(state.activeStation.id))"), '0 dB Trim wird nicht zurückgesetzt');
-  assert.ok(renderer.includes('function resetStationGain()'), 'Reset-Funktion fehlt');
   assert.ok(renderer.includes("safeAddListener('station-gain-pill', 'click', resetStationGain)"), 'Trim-Pill ist nicht verdrahtet');
   assert.ok(!renderer.includes("case 'BracketLeft'"), 'Klammer-Shortcut sollte nicht verwendet werden');
   assert.ok(!renderer.includes("case 'BracketRight'"), 'Klammer-Shortcut sollte nicht verwendet werden');
@@ -609,10 +654,8 @@ test('windowState.clear: kein Fehler wenn Datei nicht existiert', () => {
 });
 
 // ── RECONNECT_DELAYS ─────────────────────────────────────────
-test('RECONNECT_DELAYS: exponentieller Backoff, endet bei 30s', () => {
-  const match = renderer.match(/RECONNECT_DELAYS\s*=\s*\[([^\]]+)\]/);
-  assert.ok(match, 'RECONNECT_DELAYS nicht gefunden');
-  const delays = match[1].split(',').map(s => parseInt(s.trim(), 10));
+test('RECONNECT_DELAYS: exponentieller Backoff, endet bei 30s', async () => {
+  const { RECONNECT_DELAYS: delays } = await import('../src/reconnect-policy.mjs');
   assert.equal(delays[0], 1000, 'erster Delay muss 1 s sein');
   assert.equal(delays[delays.length - 1], 30_000, 'letzter Delay muss 30 s sein');
   for (let i = 1; i < delays.length; i++) {

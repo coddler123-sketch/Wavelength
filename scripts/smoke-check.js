@@ -33,6 +33,11 @@ const renderer = [
 const utils       = read('src/utils.js');
 const winState    = read('src/window-state.js');
 const visualizer  = read('src/visualizer.js');
+const stationGain = read('src/station-gain.mjs');
+const rendererSanitize = read('src/renderer-sanitize.mjs');
+const uiLabels = read('src/ui-labels.mjs');
+const stationSelection = read('src/station-selection.mjs');
+const reconnectPolicy = read('src/reconnect-policy.mjs');
 const uiAudit     = read('scripts/ui-audit.js');
 
 function assert(condition, message) {
@@ -112,6 +117,12 @@ assert(icyMetadataClient.includes('StreamTitle'), 'icy-metadata-client.js missin
 assert(visualizer.includes('VISUALIZER_MODES'), 'visualizer.js missing visualizer modes');
 assert(visualizer.includes('function create'),  'visualizer.js missing create function');
 assert(visualizer.includes('drawMiniSignal'),   'visualizer.js missing mini signal renderer');
+assert(stationGain.includes('gainDbToLinear'), 'station-gain.mjs missing dB conversion');
+assert(rendererSanitize.includes('escapeHtml'), 'renderer-sanitize.mjs missing HTML escaping');
+assert(rendererSanitize.includes('safeHttpUrl'), 'renderer-sanitize.mjs missing URL sanitizer');
+assert(uiLabels.includes('connectionLabel'), 'ui-labels.mjs missing connection labels');
+assert(stationSelection.includes('shouldSuppressMainAutoplay'), 'station-selection.mjs missing main autoplay policy');
+assert(reconnectPolicy.includes('reconnectDelayForAttempt'), 'reconnect-policy.mjs missing reconnect delay policy');
 assert(uiAudit.includes('auditVisualizerModes'), 'ui-audit.js missing visualizer mode render audit');
 assert(uiAudit.includes('getImageData'), 'ui-audit.js must inspect canvas pixels');
 

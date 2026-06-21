@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.9
+## 1.1.11
 
 - Removed code signing from the release workflow because unsigned Windows builds are intentional for this project.
 - Added release-facing README documentation and guarded the changelog in the smoke check.
@@ -10,6 +10,8 @@
 - Hardened station logos by using HTTPS icon URLs and JavaScript error listeners instead of inline fallback handlers.
 - Moved tray station menu building into a directly tested module.
 - Moved ICY metadata parsing and reconnect handling into a dedicated main-process module.
+- Moved station gain, renderer sanitizing, and UI label rules into directly tested renderer helper modules.
+- Moved station selection and reconnect backoff policy into directly tested renderer helper modules.
 - Added direct tests for Windows media session title and artist parsing.
 - Added an Electron UI audit check that renders every visualizer mode and inspects canvas pixels.
 - Logged ICY request cleanup failures instead of silently swallowing them.

@@ -4,13 +4,20 @@ import {
   updatePlayUI, reportConnectionState, displayTrackInfo,
   showToast, applyStationGain, updateListenBadge,
 } from './renderer-ui.js';
+import { BASS_LABELS, bassTooltip, MEDIA_SESSION_FALLBACK } from './ui-labels.mjs';
+import {
+  RECONNECT_DELAYS, shouldScheduleReconnect,
+  reconnectDelayForAttempt, nextReconnectAttempt,
+} from './reconnect-policy.mjs';
+
+export { BASS_LABELS } from './ui-labels.mjs';
+export { RECONNECT_DELAYS } from './reconnect-policy.mjs';
 
 const api = window.electronAPI;
 const { mediaSessionFields } = window.utils;
 
 // ── Bass Boost ───────────────────────────────────
 export const BASS_GAINS  = [0, 6, 12];
-export const BASS_LABELS = ['aus', '+6 dB', '+12 dB'];
 
 export function applyBassBoost() {
   if (state.bassFilter) state.bassFilter.gain.value = BASS_GAINS[state.bassBoostLevel];
@@ -18,7 +25,7 @@ export function applyBassBoost() {
   if (!btn) return;
   btn.classList.toggle('active', state.bassBoostLevel > 0);
   btn.dataset.level = String(state.bassBoostLevel);
-  btn.title = `Bassverstärkung: ${BASS_LABELS[state.bassBoostLevel]}`;
+  btn.title = bassTooltip(state.bassBoostLevel);
 }
 
 export function cycleBassBoost() {
@@ -63,18 +70,16 @@ export function initAudioCtx() {
 }
 
 // ── Auto-reconnect ───────────────────────────────
-export const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000, 30000];
-
 function setReconnecting(on) {
   document.body.classList.toggle('reconnecting', on);
   if (on) reportConnectionState('reconnecting');
 }
 
 export function scheduleReconnect() {
-  if (state.reconnectTimer || !state.playing) return;
+  if (!shouldScheduleReconnect(state.reconnectTimer, state.playing)) return;
   setReconnecting(true);
-  const delay = RECONNECT_DELAYS[Math.min(state.reconnectAttempt, RECONNECT_DELAYS.length - 1)];
-  state.reconnectAttempt++;
+  const delay = reconnectDelayForAttempt(state.reconnectAttempt);
+  state.reconnectAttempt = nextReconnectAttempt(state.reconnectAttempt);
   state.reconnectTimer = setTimeout(() => {
     state.reconnectTimer = null;
     if (state.playing) {
@@ -107,9 +112,9 @@ export function updateMediaSession(isPlaying) {
     });
   } else {
     navigator.mediaSession.metadata = new MediaMetadata({
-      title:  'Livestream',
-      artist: 'Wavelength',
-      album:  'Multi-Sender-Radio',
+      title:  MEDIA_SESSION_FALLBACK.title,
+      artist: MEDIA_SESSION_FALLBACK.artist,
+      album:  MEDIA_SESSION_FALLBACK.album,
     });
   }
   navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';

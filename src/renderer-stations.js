@@ -4,6 +4,8 @@ import {
   stationGainKey, loadInt, stationTodayKey, applyStationGain,
 } from './renderer-ui.js';
 import { startPlay, stopPlay } from './renderer-audio.js';
+import { escapeHtml, safeHttpUrl } from './renderer-sanitize.mjs';
+import { shouldSuppressMainAutoplay, shouldRestartPlayback } from './station-selection.mjs';
 
 const api = window.electronAPI;
 const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList } = window.utils;
@@ -13,26 +15,6 @@ function appendOption(select, value, label) {
   option.value = value;
   option.textContent = label;
   select.appendChild(option);
-}
-
-function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, ch => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  }[ch]));
-}
-
-function safeHttpUrl(value) {
-  try {
-    const parsed = new URL(String(value));
-    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.href : '';
-  } catch (err) {
-    void err;
-    return '';
-  }
 }
 
 // ── Station List Rendering ───────────────────────
@@ -193,7 +175,7 @@ export function selectStation(station, options = {}) {
 
   localStorage.setItem('wl.lastStationId', station.id);
 
-  if (syncMain) api.selectStation(station, !startWhenStopped && !wasPlaying);
+  if (syncMain) api.selectStation(station, shouldSuppressMainAutoplay(startWhenStopped, wasPlaying));
 
   setActiveStationName(station.name);
   document.getElementById('active-station-subtitle').textContent =
@@ -207,7 +189,7 @@ export function selectStation(station, options = {}) {
   updatePlayerFavStar();
   updateListenBadge();
 
-  if (wasPlaying) {
+  if (shouldRestartPlayback(wasPlaying)) {
     stopPlay();
     startPlay();
   }
