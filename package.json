@@ -17,7 +17,9 @@
     "build:clean": "npm run dist:clean && npm run build",
     "bump:patch": "node scripts/bump-version.js patch",
     "bump:minor": "node scripts/bump-version.js minor",
-    "bump:major": "node scripts/bump-version.js major"
+    "bump:major": "node scripts/bump-version.js major",
+    "release:notes": "node scripts/release-notes.js",
+    "release:gh": "node scripts/release-notes.js --gh-release"
   },
   "build": {
     "appId": "com.wavelength.player",
@@ -26,6 +28,12 @@
       "target": [
         {
           "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
           "arch": [
             "x64"
           ]
@@ -38,6 +46,9 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
+    },
+    "portable": {
+      "artifactName": "Wavelength-${version}-portable.exe"
     },
     "files": [
       "src/**/*",

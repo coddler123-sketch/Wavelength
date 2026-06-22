@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0
+
+- Added a keyboard shortcuts help dialog reachable via `?`, `F1`, or the tray menu.
+- Self-hosted the Figtree and Syne fonts so no external CDN call is made and the CSP can drop `googleapis.com` / `gstatic.com`.
+- Added a portable Windows build target alongside the NSIS installer.
+- Added `npm run release:notes` and `npm run release:gh` to extract the CHANGELOG entry for the current version and optionally create a GitHub release with the build artifacts.
+
 ## 1.1.14
 
 - Added a keyboard shortcuts help dialog reachable via `?`, `F1`, or the tray menu.
