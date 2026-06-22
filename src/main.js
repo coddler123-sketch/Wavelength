@@ -478,6 +478,28 @@ function toggleAutostart() {
   updateTrayMenu();
 }
 
+function cleanupOrphanedAutostart() {
+  if (process.platform !== 'win32') return;
+  try {
+    const { execSync } = require('child_process');
+    const out = execSync(
+      'reg query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "electron.app.Wavelength"',
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
+    );
+    const match = out.match(/REG_SZ\s+(.+)/);
+    if (!match) return;
+    const registeredExe = match[1].trim().replace(/^"/, '').split('"')[0].split(' ')[0];
+    if (registeredExe.toLowerCase() === process.execPath.toLowerCase()) return;
+    execSync(
+      'reg delete "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "electron.app.Wavelength" /f',
+      { stdio: 'pipe' }
+    );
+    log('[autostart] Removed orphaned autostart entry pointing to: ' + registeredExe);
+  } catch (_) {
+    // Key doesn't exist — nothing to clean up
+  }
+}
+
 function showFirstRunHint() {
   if (!Notification.isSupported() || fs.existsSync(FIRST_RUN_FILE)) return;
   if (mainWindow?.isVisible() && !startedHidden) return;
@@ -611,6 +633,7 @@ function checkSystemIdle() {
 // ── App lifecycle ─────────────────────────────────────────
 app.whenReady().then(async () => {
   app.setAppUserModelId(APP_ID);
+  cleanupOrphanedAutostart();
 
   // Let the WebAudio analyser read cross-origin stream data without weakening every response.
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {

@@ -24,7 +24,18 @@ pkg.version = next;
 lock.version = next;
 if (lock.packages?.['']) lock.packages[''].version = next;
 
+const htmlPath = path.join(__dirname, '..', 'src', 'index.html');
+const html = fs.readFileSync(htmlPath, 'utf8');
+const updatedHtml = html.replace(
+  /(<p[^>]+id="about-version"[^>]*>)v[\d.]+(<\/p>)/,
+  `$1v${next}$2`
+);
+if (updatedHtml === html) {
+  console.error('Warning: about-version not found in index.html');
+}
+
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n');
+fs.writeFileSync(htmlPath, updatedHtml);
 
 console.log(`${prev} → ${next} (${type})`);

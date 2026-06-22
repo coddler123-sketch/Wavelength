@@ -203,7 +203,7 @@ export function stopPlay() {
   state.playing = false;
   audio.pause();
   audio.src = '';
-  try { audio.load(); } catch (e) {}
+  try { audio.load(); } catch (e) { console.warn('[audio] load() after stop failed:', e); }
   cancelReconnect();
   stopListenTimer();
   reportConnectionState('stopped');
