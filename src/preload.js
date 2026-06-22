@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onResetSettings: (cb) => listen('reset-settings', cb, () => cb()),
   onSystemIdle:    (cb) => listen('system-idle',    cb),
   onShowAbout:     (cb) => listen('show-about',     cb, () => cb()),
+  onShowShortcuts: (cb) => listen('show-shortcuts', cb, () => cb()),
   onSetStation:    (cb) => listen('set-station',    cb),
   onTrackInfo:     (cb) => listen('track-info',     cb),
 

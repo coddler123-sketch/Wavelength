@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.14
+
+- Added a keyboard shortcuts help dialog reachable via `?`, `F1`, or the tray menu.
+- Fixed the favorites star icon clipping by expanding the SVG viewBox and enabling `overflow="visible"`.
+- Sanitized remaining station logo URLs in mini logo, player logo, and recent items.
+- Cleaned up orphaned Windows autostart registry entries on startup so the tray checkbox reflects the real state.
+- Logged audio reload failures on stop instead of swallowing the error.
+- Synced the about-version in `index.html` from `bump-version.js`.
+
 ## 1.1.11
 
 - Removed code signing from the release workflow because unsigned Windows builds are intentional for this project.

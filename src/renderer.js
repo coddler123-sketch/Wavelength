@@ -10,6 +10,7 @@ import {
   setSleepEndsAt, showToast, updateTimeTheme, setThemeLevel,
   sendTrayIcons, switchView,
   showAboutModal, hideAboutModal,
+  showShortcutsModal, hideShortcutsModal,
 } from './renderer-ui.js';
 import {
   BASS_GAINS, applyBassBoost, cycleBassBoost,
@@ -152,8 +153,14 @@ safeQueryListener('.mini-logo',  'dblclick', (e) => { if (e.target.closest('butt
 
 // ── About Modal Wiring ───────────────────────────
 const aboutModal = document.getElementById('about-modal');
+const shortcutsModal = document.getElementById('shortcuts-modal');
 safeAddListener('about-close-btn', 'click', hideAboutModal);
 safeAddListener('about-ok-btn',    'click', hideAboutModal);
+safeAddListener('shortcuts-close-btn', 'click', hideShortcutsModal);
+safeAddListener('shortcuts-ok-btn',    'click', hideShortcutsModal);
+if (shortcutsModal) {
+  shortcutsModal.addEventListener('click', (e) => { if (e.target === shortcutsModal) hideShortcutsModal(); });
+}
 safeAddListener('about-web-btn',   'click', () => {
   if (state.activeStation && state.activeStation.website) api.openExternal(state.activeStation.website);
   hideAboutModal();
@@ -164,12 +171,21 @@ if (aboutModal) {
 
 // ── Keyboard Shortcuts ───────────────────────────
 document.addEventListener('keydown', (e) => {
-  if (e.code === 'Escape' && aboutModal && aboutModal.style.display === 'flex') {
-    e.preventDefault();
-    hideAboutModal();
-    return;
+  if (e.code === 'Escape') {
+    if (aboutModal && aboutModal.style.display === 'flex') {
+      e.preventDefault(); hideAboutModal(); return;
+    }
+    if (shortcutsModal && shortcutsModal.style.display === 'flex') {
+      e.preventDefault(); hideShortcutsModal(); return;
+    }
   }
   if (e.target.tagName === 'INPUT') return;
+  if (e.key === '?' || e.code === 'F1') {
+    e.preventDefault();
+    if (shortcutsModal && shortcutsModal.style.display === 'flex') hideShortcutsModal();
+    else showShortcutsModal();
+    return;
+  }
   const vol = () => parseInt(document.getElementById('vol-slider').value, 10);
   switch (e.code) {
     case 'Space':    e.preventDefault(); api.playPause(); break;
@@ -229,6 +245,7 @@ api.onWindowVisible((visible) => {
   if (visible && state.playing) state.visualizer.start();
 });
 api.onShowAbout(showAboutModal);
+api.onShowShortcuts(showShortcutsModal);
 api.onSetStation((station) => {
   if (state.isInitialized && station && (!state.activeStation || state.activeStation.id !== station.id)) {
     selectStation(station, { syncMain: false, startWhenStopped: false });

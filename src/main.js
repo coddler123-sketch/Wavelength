@@ -335,6 +335,7 @@ function updateTrayMenu() {
       ]
     },
     { type: 'separator' },
+    { label: 'Tastaturkürzel', click: showShortcutsDialog },
     { label: 'Über Wavelength', click: showAboutDialog },
     { type: 'separator' },
     { label: 'Beenden', click: quitApp }
@@ -554,6 +555,16 @@ function showAboutDialog() {
       mainWindow.focus();
     }
     mainWindow.webContents.send('show-about');
+  }
+}
+
+function showShortcutsDialog() {
+  if (mainWindow && !mainWindow.isDestroyed() && rendererReady) {
+    if (!mainWindow.isVisible()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+    mainWindow.webContents.send('show-shortcuts');
   }
 }
 

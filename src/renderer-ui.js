@@ -401,6 +401,27 @@ export const showAboutModal = () => {
   if (firstFocus) firstFocus.focus();
 };
 
+export const showShortcutsModal = () => {
+  previousFocus = document.activeElement;
+  const modal = document.getElementById('shortcuts-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  modal.setAttribute('aria-hidden', 'false');
+  const firstFocus = modal.querySelector('button, [href], input, [tabindex]:not([tabindex="-1"])');
+  if (firstFocus) firstFocus.focus();
+};
+
+export const hideShortcutsModal = () => {
+  const modal = document.getElementById('shortcuts-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  modal.setAttribute('aria-hidden', 'true');
+  if (previousFocus && typeof previousFocus.focus === 'function') {
+    previousFocus.focus();
+    previousFocus = null;
+  }
+};
+
 export const hideAboutModal = () => {
   const aboutModal = document.getElementById('about-modal');
   if (!aboutModal) return;
