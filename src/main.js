@@ -472,10 +472,49 @@ function sendSleepToRenderer() {
 
 function quitApp() { saveWindowState(); app.exit(0); }
 
-function getAutostart()    { return app.getLoginItemSettings({ args: ['--hidden'] }).openAtLogin; }
+const RUN_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
+const AUTOSTART_NAME = app.getName(); // 'Wavelength' in production
+
+// Returns Run key value names that point to our exe but are NOT named AUTOSTART_NAME.
+// These are entries Electron's own API won't find or clean up.
+function findMisnamedAutostartEntries() {
+  if (process.platform !== 'win32') return [];
+  try {
+    const { execSync } = require('child_process');
+    const out = execSync(`reg query "${RUN_KEY}"`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+    const myExe = process.execPath.toLowerCase();
+    const results = [];
+    for (const line of out.split(/\r?\n/)) {
+      const m = line.match(/^\s+(\S+)\s+REG_SZ\s+(.+)$/);
+      if (!m) continue;
+      const [, name, value] = m;
+      if (name === AUTOSTART_NAME) continue; // Electron manages this one
+      const exeInValue = value.trim().replace(/^"/, '').split('"')[0].trim().toLowerCase();
+      if (exeInValue === myExe) results.push(name);
+    }
+    return results;
+  } catch (_) { return []; }
+}
+
+function getAutostart() {
+  if (app.getLoginItemSettings({ args: ['--hidden'] }).openAtLogin) return true;
+  // Also check for misnamed entries (e.g. 'electron.app.Wavelength') that Electron's API misses
+  return findMisnamedAutostartEntries().length > 0;
+}
+
 function toggleAutostart() {
   const enable = !getAutostart();
   app.setLoginItemSettings({ openAtLogin: enable, args: enable ? ['--hidden'] : [] });
+  if (!enable && process.platform === 'win32') {
+    // Remove any misnamed entries Electron's setLoginItemSettings won't touch
+    const { execSync } = require('child_process');
+    for (const name of findMisnamedAutostartEntries()) {
+      try {
+        execSync(`reg delete "${RUN_KEY}" /v "${name}" /f`, { stdio: 'pipe' });
+        log(`[autostart] Removed misnamed autostart entry: ${name}`);
+      } catch (_) {}
+    }
+  }
   updateTrayMenu();
 }
 
@@ -483,22 +522,23 @@ function cleanupOrphanedAutostart() {
   if (process.platform !== 'win32') return;
   try {
     const { execSync } = require('child_process');
-    const out = execSync(
-      'reg query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "electron.app.Wavelength"',
-      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
-    );
-    const match = out.match(/REG_SZ\s+(.+)/);
-    if (!match) return;
-    const registeredExe = match[1].trim().replace(/^"/, '').split('"')[0].split(' ')[0];
-    if (registeredExe.toLowerCase() === process.execPath.toLowerCase()) return;
-    execSync(
-      'reg delete "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v "electron.app.Wavelength" /f',
-      { stdio: 'pipe' }
-    );
-    log('[autostart] Removed orphaned autostart entry pointing to: ' + registeredExe);
-  } catch (_) {
-    // Key doesn't exist — nothing to clean up
-  }
+    const out = execSync(`reg query "${RUN_KEY}"`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+    const myExe = process.execPath.toLowerCase();
+    for (const line of out.split(/\r?\n/)) {
+      const m = line.match(/^\s+(\S+)\s+REG_SZ\s+(.+)$/);
+      if (!m) continue;
+      const [, name, value] = m;
+      if (name === AUTOSTART_NAME) continue; // Electron manages this one
+      const exeInValue = value.trim().replace(/^"/, '').split('"')[0].trim().toLowerCase();
+      // Delete any entry under a different name pointing to our exe (misnamed) or a stale exe path
+      if (exeInValue === myExe || exeInValue.includes('wavelength')) {
+        try {
+          execSync(`reg delete "${RUN_KEY}" /v "${name}" /f`, { stdio: 'pipe' });
+          log(`[autostart] Removed misnamed/orphaned entry "${name}" → ${exeInValue}`);
+        } catch (_) {}
+      }
+    }
+  } catch (_) {}
 }
 
 function showFirstRunHint() {

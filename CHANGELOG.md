@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.2
+
+- Fixed autostart checkbox showing wrong state when the Run key was registered under a legacy name (`electron.app.Wavelength` instead of `Wavelength`). `getAutostart()` now scans the registry directly as fallback. Disabling autostart now also removes any misnamed entries. `cleanupOrphanedAutostart()` generalized to catch all Wavelength-related Run key entries regardless of name.
+
 ## 1.2.1
 
 - Extracted all inline CSS from `index.html` into `src/index.css` so the CSP can drop `style-src 'unsafe-inline'` for stylesheet loading.
