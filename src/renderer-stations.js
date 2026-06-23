@@ -2,6 +2,7 @@ import { state } from './renderer-state.js';
 import {
   setActiveStationName, updateListenBadge, switchView,
   stationGainKey, loadInt, stationTodayKey, applyStationGain,
+  showToast,
 } from './renderer-ui.js';
 import { startPlay, stopPlay } from './renderer-audio.js';
 import { escapeHtml, safeHttpUrl } from './renderer-sanitize.mjs';
@@ -26,6 +27,7 @@ export function renderStations() {
     search:         document.getElementById('station-search')?.value || '',
     genre:          document.getElementById('genre-filter')?.value || '',
     lang:           document.getElementById('lang-filter')?.value || '',
+    minBitrate:     parseInt(document.getElementById('bitrate-filter')?.value || '0', 10),
     favorites:      state.favorites,
     favFilterActive: state.favFilterActive,
   });
@@ -210,7 +212,14 @@ export function selectStation(station, options = {}) {
 
   localStorage.setItem('wl.lastStationId', station.id);
 
-  if (syncMain) api.selectStation(station, shouldSuppressMainAutoplay(startWhenStopped, wasPlaying));
+  if (syncMain) {
+    api.selectStation(station, shouldSuppressMainAutoplay(startWhenStopped, wasPlaying));
+    if (station.streamUrl) {
+      api.checkStream(station.streamUrl).then(result => {
+        if (!result.ok) showToast(`Stream nicht erreichbar (${result.error || result.statusCode})`);
+      }).catch(() => {});
+    }
+  }
 
   setActiveStationName(station.name);
   document.getElementById('active-station-subtitle').textContent =

@@ -689,6 +689,17 @@ ipcMain.handle('remove-custom-station', (e, id) => {
   return allStations;
 });
 
+ipcMain.handle('check-stream', (e, url) => new Promise(resolve => {
+  try {
+    const { net } = require('electron');
+    const req = net.request({ method: 'HEAD', url, redirect: 'follow' });
+    const timer = setTimeout(() => { try { req.abort(); } catch (_) {} resolve({ ok: false, error: 'timeout' }); }, 5000);
+    req.on('response', res => { clearTimeout(timer); resolve({ ok: res.statusCode < 400, statusCode: res.statusCode }); });
+    req.on('error',    err => { clearTimeout(timer); resolve({ ok: false, error: err.message }); });
+    req.end();
+  } catch (err) { resolve({ ok: false, error: err.message }); }
+}));
+
 ipcMain.handle('get-state',      () => ({
   isPlaying,
   isMini,

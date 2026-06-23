@@ -103,8 +103,9 @@ safeAddListener('player-fav-btn', 'click', () => {
 });
 
 safeAddListener('station-search', 'input',  () => renderStations());
-safeAddListener('genre-filter',   'change', () => renderStations());
+safeAddListener('genre-filter',    'change', () => renderStations());
 safeAddListener('lang-filter',    'change', () => renderStations());
+safeAddListener('bitrate-filter', 'change', () => renderStations());
 safeAddListener('btn-fav-filter', 'click', () => {
   state.favFilterActive = !state.favFilterActive;
   const btn = document.getElementById('btn-fav-filter');

@@ -1198,6 +1198,27 @@ test('filterStations: Genre + Sprache kombiniert', () => {
   assert.equal(r[0].id, 'd');
 });
 
+test('filterStations: Bitrate-Filter schließt niedrige Bitraten aus', () => {
+  const withBitrate = [
+    { id: 'a', name: 'HQ', genre: 'Pop', language: 'de', country: 'DE', bitrate: 320 },
+    { id: 'b', name: 'MQ', genre: 'Pop', language: 'de', country: 'DE', bitrate: 128 },
+    { id: 'c', name: 'LQ', genre: 'Pop', language: 'de', country: 'DE', bitrate: 48  },
+  ];
+  const r = filterStations(withBitrate, { minBitrate: 128 });
+  assert.equal(r.length, 2);
+  assert.ok(r.every(s => s.bitrate >= 128));
+});
+
+test('filterStations: Bitrate-Filter ignoriert Custom-Stationen', () => {
+  const withCustom = [
+    { id: 'x', name: 'Eigen', genre: 'Eigene', language: 'de', country: 'DE', isCustom: true },
+    { id: 'y', name: 'LQ',    genre: 'Pop',    language: 'de', country: 'DE', bitrate: 32   },
+  ];
+  const r = filterStations(withCustom, { minBitrate: 128 });
+  assert.equal(r.length, 1);
+  assert.equal(r[0].id, 'x');
+});
+
 test('Renderer: Sprachfilter zeigt lokalisierte Labels', () => {
   assert.ok(renderer.includes('getLanguageLabel'), 'Renderer nutzt keine lokalisierten Sprachlabels');
   assert.ok(renderer.includes("appendOption(langSelect, '', 'Alle Sprachen')"), 'Default-Sprachfilter fehlt');

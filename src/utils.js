@@ -78,12 +78,13 @@
     return labels[normalized] || (raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : '');
   }
 
-  function filterStations(stations, { search = '', genre = '', lang = '', favorites = [], favFilterActive = false } = {}) {
+  function filterStations(stations, { search = '', genre = '', lang = '', minBitrate = 0, favorites = [], favFilterActive = false } = {}) {
     const q = search.toLowerCase().trim();
     return stations.filter(s => {
       if (favFilterActive && !favorites.includes(s.id)) return false;
       if (genre && getStationCategory(s.genre) !== genre) return false;
       if (lang && getLanguageLabel(s.language) !== getLanguageLabel(lang)) return false;
+      if (minBitrate > 0 && !s.isCustom && (s.bitrate || 0) < minBitrate) return false;
       if (q) {
         return s.name.toLowerCase().includes(q) ||
                (s.genre || '').toLowerCase().includes(q) ||
