@@ -22,6 +22,7 @@ import {
   renderStations, selectStation, populateFilters,
   populateRecents, initKeyboardNav, toggleFavorite,
   updatePlayerFavStar,
+  openStationEditor, closeStationEditor, initStationEditor,
 } from './renderer-stations.js';
 
 const api = window.electronAPI;
@@ -161,6 +162,8 @@ safeAddListener('shortcuts-ok-btn',    'click', hideShortcutsModal);
 if (shortcutsModal) {
   shortcutsModal.addEventListener('click', (e) => { if (e.target === shortcutsModal) hideShortcutsModal(); });
 }
+safeAddListener('btn-add-station', 'click', () => openStationEditor());
+initStationEditor();
 safeAddListener('about-web-btn',   'click', () => {
   if (state.activeStation && state.activeStation.website) api.openExternal(state.activeStation.website);
   hideAboutModal();
@@ -177,6 +180,10 @@ document.addEventListener('keydown', (e) => {
     }
     if (shortcutsModal && shortcutsModal.style.display === 'flex') {
       e.preventDefault(); hideShortcutsModal(); return;
+    }
+    const editorModal = document.getElementById('station-editor-modal');
+    if (editorModal && editorModal.style.display === 'flex') {
+      e.preventDefault(); closeStationEditor(); return;
     }
   }
   if (e.target.tagName === 'INPUT') return;

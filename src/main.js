@@ -2,6 +2,7 @@ const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, nativeTheme,
         screen, globalShortcut, Notification, dialog, shell, powerMonitor, session } = require('electron');
 const { trayState: computeTrayState } = require('./utils.js');
 const { loadStations, DEFAULT_STATIONS } = require('./stations.js');
+const customStations = require('./custom-stations.js');
 const { buildTrayStationMenuItems, stationSwitcherSubmenu } = require('./tray-menu.js');
 const { createIcyMetadataClient } = require('./icy-metadata-client.js');
 const windowState = require('./window-state.js');
@@ -642,8 +643,8 @@ ipcMain.on('tray-icons',        (_, icons) => {
 ipcMain.handle('get-stations', async () => {
   try {
     const stations = await loadStations();
-    allStations = stations;
-    // Keep activeStation synchronized if not set
+    const custom = customStations.load();
+    allStations = [...custom, ...stations];
     if (!activeStation && allStations.length > 0) {
       activeStation = allStations[0];
     }
@@ -651,9 +652,41 @@ ipcMain.handle('get-stations', async () => {
     updateTrayTooltip();
     return allStations;
   } catch (err) {
-    log('get-stations-failed', err.message);
-    return DEFAULT_STATIONS;
+    log('get-stations-failed: ' + err.message);
+    const custom = customStations.load();
+    allStations = [...custom, ...DEFAULT_STATIONS];
+    return allStations;
   }
+});
+
+ipcMain.handle('add-custom-station', (e, data) => {
+  customStations.add(data);
+  const custom = customStations.load();
+  allStations = [...custom, ...allStations.filter(s => !s.isCustom)];
+  updateTrayMenu();
+  return allStations;
+});
+
+ipcMain.handle('update-custom-station', (e, id, data) => {
+  customStations.update(id, data);
+  const custom = customStations.load();
+  allStations = [...custom, ...allStations.filter(s => !s.isCustom)];
+  if (activeStation && activeStation.id === id) {
+    activeStation = custom.find(s => s.id === id) || activeStation;
+  }
+  updateTrayMenu();
+  return allStations;
+});
+
+ipcMain.handle('remove-custom-station', (e, id) => {
+  customStations.remove(id);
+  const custom = customStations.load();
+  allStations = [...custom, ...allStations.filter(s => !s.isCustom)];
+  if (activeStation && activeStation.id === id) {
+    activeStation = allStations[0] || null;
+  }
+  updateTrayMenu();
+  return allStations;
 });
 
 ipcMain.handle('get-state',      () => ({
@@ -707,12 +740,14 @@ app.whenReady().then(async () => {
   
   // Load stations on startup to pre-populate tray menu
   try {
-    allStations = await loadStations();
+    const stations = await loadStations();
+    const custom = customStations.load();
+    allStations = [...custom, ...stations];
     if (allStations.length > 0) {
       activeStation = allStations[0];
     }
   } catch (e) {
-    log('startup-stations-load-error', e.message);
+    log('startup-stations-load-error: ' + e.message);
     allStations = [];
   }
 

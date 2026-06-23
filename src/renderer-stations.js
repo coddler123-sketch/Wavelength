@@ -42,8 +42,9 @@ export function renderStations() {
   }
 
   const categoryGroups = {};
-  const favStations = stations.filter(s => state.favorites.includes(s.id));
-  const nonFavStations = stations.filter(s => !state.favorites.includes(s.id));
+  const customStns = stations.filter(s => s.isCustom);
+  const favStations = stations.filter(s => !s.isCustom && state.favorites.includes(s.id));
+  const nonFavStations = stations.filter(s => !s.isCustom && !state.favorites.includes(s.id));
 
   // Sortiere Favoriten alphabetisch
   favStations.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
@@ -137,8 +138,38 @@ export function renderStations() {
       });
     }
 
+    if (station.isCustom) {
+      const badges = item.querySelector('.item-badges');
+      if (badges) {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'station-edit-btn';
+        editBtn.title = 'Bearbeiten';
+        editBtn.setAttribute('aria-label', 'Station bearbeiten');
+        editBtn.type = 'button';
+        editBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+        const delBtn = document.createElement('button');
+        delBtn.className = 'station-delete-btn';
+        delBtn.title = 'Löschen';
+        delBtn.setAttribute('aria-label', 'Station löschen');
+        delBtn.type = 'button';
+        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+        badges.insertBefore(delBtn, badges.firstChild);
+        badges.insertBefore(editBtn, badges.firstChild);
+      }
+    }
+
     item.addEventListener('click', (e) => {
       if (state.hasDraggedSignificant) return;
+      if (e.target.closest('.station-edit-btn')) {
+        e.stopPropagation();
+        openStationEditor(station);
+        return;
+      }
+      if (e.target.closest('.station-delete-btn')) {
+        e.stopPropagation();
+        deleteCustomStation(station);
+        return;
+      }
       if (e.target.closest('.fav-star-btn')) {
         e.stopPropagation();
         toggleFavorite(station.id);
@@ -150,6 +181,10 @@ export function renderStations() {
     list.appendChild(item);
   }
 
+  if (customStns.length > 0) {
+    appendGroupHeader('✦ Meine Sender');
+    customStns.forEach(renderStationItem);
+  }
   if (favStations.length > 0) {
     appendGroupHeader('★ Favoriten', true);
     favStations.forEach(renderStationItem);
@@ -374,4 +409,99 @@ export function initKeyboardNav() {
   });
 
   searchInput.addEventListener('input', () => { state.highlightedIndex = -1; });
+}
+
+// ── Custom Station Editor ────────────────────────
+let _editorPrevFocus = null;
+
+export function openStationEditor(station = null) {
+  _editorPrevFocus = document.activeElement;
+  const modal    = document.getElementById('station-editor-modal');
+  const title    = document.getElementById('station-editor-title');
+  const idInput  = document.getElementById('station-editor-id');
+  const nameEl   = document.getElementById('station-editor-name');
+  const urlEl    = document.getElementById('station-editor-url');
+  const genreEl  = document.getElementById('station-editor-genre');
+  const iconEl   = document.getElementById('station-editor-icon');
+  const errorEl  = document.getElementById('station-editor-error');
+  if (!modal) return;
+  title.textContent   = station ? 'Station bearbeiten' : 'Station hinzufügen';
+  idInput.value       = station ? station.id : '';
+  nameEl.value        = station ? station.name : '';
+  urlEl.value         = station ? station.streamUrl : '';
+  genreEl.value       = station && station.genre !== 'Eigene' ? station.genre : '';
+  iconEl.value        = station ? (station.iconUrl || '') : '';
+  errorEl.style.display = 'none';
+  errorEl.textContent = '';
+  modal.style.display = 'flex';
+  modal.setAttribute('aria-hidden', 'false');
+  nameEl.focus();
+}
+
+export function closeStationEditor() {
+  const modal = document.getElementById('station-editor-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  modal.setAttribute('aria-hidden', 'true');
+  if (_editorPrevFocus?.focus) { _editorPrevFocus.focus(); _editorPrevFocus = null; }
+}
+
+async function deleteCustomStation(station) {
+  if (!window.confirm(`Station „${station.name}" wirklich löschen?`)) return;
+  try {
+    const newStations = await api.removeCustomStation(station.id);
+    state.allStations = newStations;
+    populateFilters();
+    renderStations();
+  } catch (err) {
+    console.error('[custom-station] delete failed:', err);
+  }
+}
+
+export function initStationEditor() {
+  const form      = document.getElementById('station-editor-form');
+  const modal     = document.getElementById('station-editor-modal');
+  const errorEl   = document.getElementById('station-editor-error');
+  if (!form) return;
+
+  document.getElementById('station-editor-close-btn')?.addEventListener('click', closeStationEditor);
+  document.getElementById('station-editor-cancel-btn')?.addEventListener('click', closeStationEditor);
+  modal?.addEventListener('click', e => { if (e.target === modal) closeStationEditor(); });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const id       = document.getElementById('station-editor-id').value;
+    const name     = document.getElementById('station-editor-name').value.trim();
+    const streamUrl = document.getElementById('station-editor-url').value.trim();
+    const genre    = document.getElementById('station-editor-genre').value.trim();
+    const iconUrl  = document.getElementById('station-editor-icon').value.trim();
+
+    const showErr = msg => {
+      errorEl.textContent = msg;
+      errorEl.style.display = 'block';
+    };
+    if (!name)       { showErr('Name ist erforderlich.'); document.getElementById('station-editor-name').focus(); return; }
+    if (!streamUrl)  { showErr('Stream-URL ist erforderlich.'); document.getElementById('station-editor-url').focus(); return; }
+    if (!/^https?:\/\//i.test(streamUrl)) { showErr('Stream-URL muss mit http:// oder https:// beginnen.'); document.getElementById('station-editor-url').focus(); return; }
+
+    const saveBtn = document.getElementById('station-editor-save-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Speichern…';
+    try {
+      const data = { name, streamUrl, genre, iconUrl };
+      const newStations = id
+        ? await api.updateCustomStation(id, data)
+        : await api.addCustomStation(data);
+      state.allStations = newStations;
+      populateFilters();
+      renderStations();
+      closeStationEditor();
+    } catch (err) {
+      showErr('Fehler beim Speichern.');
+      console.error('[custom-station] save failed:', err);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Speichern';
+    }
+  });
 }

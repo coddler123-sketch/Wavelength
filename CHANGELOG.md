@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0
+
+- Added custom station management: users can add, edit, and remove their own radio stations via a "+" button in the station list.
+- Custom stations are stored in `userData/custom-stations.json` and appear at the top of the station list under "✦ Meine Sender".
+- Edit and delete buttons appear on hover for each custom station.
+- Station editor modal supports name, stream URL, genre, and icon URL fields with validation.
+
 ## 1.2.2
 
 - Fixed autostart checkbox showing wrong state when the Run key was registered under a legacy name (`electron.app.Wavelength` instead of `Wavelength`). `getAutostart()` now scans the registry directly as fallback. Disabling autostart now also removes any misnamed entries. `cleanupOrphanedAutostart()` generalized to catch all Wavelength-related Run key entries regardless of name.

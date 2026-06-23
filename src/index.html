@@ -82,6 +82,11 @@
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
           </svg>
         </button>
+        <button class="add-station-btn" id="btn-add-station" title="Eigene Station hinzufügen" aria-label="Eigene Station hinzufügen">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
       </div>
       <div class="filter-row">
         <select id="genre-filter" aria-label="Kategorie filtern">
@@ -244,7 +249,7 @@
       </svg>
     </div>
     <h2 class="modal-title" id="about-modal-title">Wavelength</h2>
-    <p class="modal-subtitle" id="about-version">v1.2.1</p>
+    <p class="modal-subtitle" id="about-version">v1.3.0</p>
     
     <div class="modal-info-block">
       <div class="modal-info-item">
@@ -286,6 +291,37 @@
     <div class="modal-buttons">
       <button class="modal-btn" id="shortcuts-ok-btn">Schließen</button>
     </div>
+  </div>
+</div>
+
+<div id="station-editor-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="station-editor-title" aria-hidden="true" style="display: none;">
+  <div class="modal-content">
+    <button class="modal-close" id="station-editor-close-btn" title="Schließen" aria-label="Schließen">&times;</button>
+    <h2 class="modal-title" id="station-editor-title">Station hinzufügen</h2>
+    <form id="station-editor-form" class="station-editor-form" novalidate>
+      <input type="hidden" id="station-editor-id">
+      <div class="form-field">
+        <label for="station-editor-name">Name <span class="field-required">*</span></label>
+        <input type="text" id="station-editor-name" placeholder="z.B. Mein Lieblingssender" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label for="station-editor-url">Stream-URL <span class="field-required">*</span></label>
+        <input type="text" id="station-editor-url" placeholder="https://stream.beispiel.de/live" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label for="station-editor-genre">Kategorie</label>
+        <input type="text" id="station-editor-genre" placeholder="z.B. Pop, Rock, Jazz …" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label for="station-editor-icon">Icon-URL</label>
+        <input type="text" id="station-editor-icon" placeholder="https://..." autocomplete="off">
+      </div>
+      <p id="station-editor-error" class="form-error" style="display: none;"></p>
+      <div class="modal-buttons">
+        <button type="button" class="modal-btn modal-btn-ghost" id="station-editor-cancel-btn">Abbrechen</button>
+        <button type="submit" class="modal-btn" id="station-editor-save-btn">Speichern</button>
+      </div>
+    </form>
   </div>
 </div>
 

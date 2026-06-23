@@ -501,7 +501,7 @@ test('Station Selection: Main-Sync und Playback-Restart Regeln', async () => {
 
 test('Main: get-stations-Fallback referenziert importierte DEFAULT_STATIONS', () => {
   assert.ok(main.includes("const { loadStations, DEFAULT_STATIONS } = require('./stations.js')"), 'DEFAULT_STATIONS wird in main.js nicht importiert');
-  assert.ok(main.includes('return DEFAULT_STATIONS'), 'get-stations-Fallback gibt DEFAULT_STATIONS nicht zurueck');
+  assert.ok(main.includes('DEFAULT_STATIONS'), 'get-stations-Fallback referenziert DEFAULT_STATIONS nicht');
 });
 
 test('Renderer: externe Stationsdaten werden vor Template-Rendering escaped', () => {

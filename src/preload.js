@@ -36,6 +36,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onTrackInfo:     (cb) => listen('track-info',     cb),
 
   // Queries
-  getStations:  () => ipcRenderer.invoke('get-stations'),
-  getState:     () => ipcRenderer.invoke('get-state'),
+  getStations:         () => ipcRenderer.invoke('get-stations'),
+  getState:            () => ipcRenderer.invoke('get-state'),
+  addCustomStation:    (data)     => ipcRenderer.invoke('add-custom-station', data),
+  updateCustomStation: (id, data) => ipcRenderer.invoke('update-custom-station', id, data),
+  removeCustomStation: (id)       => ipcRenderer.invoke('remove-custom-station', id),
 });
