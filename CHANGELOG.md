@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+- Extracted all inline CSS from `index.html` into `src/index.css` so the CSP can drop `style-src 'unsafe-inline'` for stylesheet loading.
+- Tightened CSP: replaced `style-src 'unsafe-inline'` with `style-src-elem 'self'` (covers `<link>`) and `style-src-attr 'unsafe-inline'` (covers dynamic `style=""` attributes only).
+- Removed Google Fonts CDN references from the CSP (`googleapis.com`, `gstatic.com` no longer needed after font self-hosting).
+
 ## 1.2.0
 
 - Added a keyboard shortcuts help dialog reachable via `?`, `F1`, or the tray menu.

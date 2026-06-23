@@ -609,10 +609,10 @@ test('Renderer State: kaputte gespeicherte Listen werden bereinigt', () => {
 });
 
 test('UI: Status-Badges bleiben einzeilig', () => {
-  const html = src('index.html');
-  assert.ok(/\.listen-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(html), 'Listen-Badge darf nicht umbrechen');
-  assert.ok(/\.live-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(html), 'Live-Badge darf nicht umbrechen');
-  assert.ok(/\.sleep-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(html), 'Sleep-Badge darf nicht umbrechen');
+  const css = src('index.css');
+  assert.ok(/\.listen-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(css), 'Listen-Badge darf nicht umbrechen');
+  assert.ok(/\.live-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(css), 'Live-Badge darf nicht umbrechen');
+  assert.ok(/\.sleep-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(css), 'Sleep-Badge darf nicht umbrechen');
 });
 
 // ── window-state ─────────────────────────────────────────────
