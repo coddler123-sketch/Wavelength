@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, nativeTheme,
         screen, globalShortcut, Notification, dialog, shell, powerMonitor, session } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const { trayState: computeTrayState } = require('./utils.js');
 const { loadStations, DEFAULT_STATIONS } = require('./stations.js');
 const customStations = require('./custom-stations.js');
@@ -24,6 +25,7 @@ let isMini        = false;
 let isPinned      = false;
 let isMuted       = false;
 let rendererReady = false;
+let updateReadyVersion = null;
 const startedHidden = process.argv.includes('--hidden');
 let showOnLoad = !startedHidden;
 let connectionState = 'stopped';
@@ -339,6 +341,10 @@ function updateTrayMenu() {
     { label: 'Tastaturkürzel', click: showShortcutsDialog },
     { label: 'Über Wavelength', click: showAboutDialog },
     { type: 'separator' },
+    ...(updateReadyVersion ? [
+      { label: `⬆  Update v${updateReadyVersion} installieren`, click: () => autoUpdater.quitAndInstall() },
+      { type: 'separator' },
+    ] : []),
     { label: 'Beenden', click: quitApp }
   ]);
   tray.setContextMenu(menu);
@@ -771,6 +777,28 @@ app.whenReady().then(async () => {
   if (!globalShortcut.register('MediaStop',      () => { if (isPlaying) togglePlay(); })) log('shortcut-register-failed', 'MediaStop');
 
   setInterval(checkSystemIdle, 30_000);
+
+  if (app.isPackaged) {
+    autoUpdater.logger = { info: log, warn: log, error: log, debug: () => {} };
+    autoUpdater.autoDownload = true;
+    autoUpdater.autoInstallOnAppQuit = true;
+
+    autoUpdater.on('update-available', info => {
+      log(`update-available v${info.version}`);
+      new Notification({ title: 'Wavelength Update', body: `Version ${info.version} wird heruntergeladen…` }).show();
+    });
+
+    autoUpdater.on('update-downloaded', info => {
+      log(`update-downloaded v${info.version}`);
+      updateReadyVersion = info.version;
+      new Notification({ title: 'Wavelength Update bereit', body: `v${info.version} installiert sich beim nächsten Start.` }).show();
+      updateTrayMenu();
+    });
+
+    autoUpdater.on('error', err => log(`updater-error: ${err.message}`));
+
+    setTimeout(() => autoUpdater.checkForUpdates().catch(err => log(`update-check-failed: ${err.message}`)), 10_000);
+  }
 });
 
 app.on('will-quit', () => {

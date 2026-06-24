@@ -19,7 +19,8 @@
     "bump:minor": "node scripts/bump-version.js minor",
     "bump:major": "node scripts/bump-version.js major",
     "release:notes": "node scripts/release-notes.js",
-    "release:gh": "node scripts/release-notes.js --gh-release"
+    "release:gh": "node scripts/release-notes.js --gh-release",
+    "e2e": "playwright test"
   },
   "build": {
     "appId": "com.wavelength.player",
@@ -59,12 +60,22 @@
         "from": "assets/",
         "to": "assets/"
       }
-    ]
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "coddler123-sketch",
+      "repo": "Wavelength"
+    }
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
+    "playwright": "^1.61.1",
     "png-to-ico": "^3.0.1",
     "sharp": "^0.35.2"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }
