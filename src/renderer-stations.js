@@ -119,15 +119,7 @@ export function renderStations() {
         <span class="item-eq-anim" style="display:${state.playing && state.activeStation && station.id === state.activeStation.id ? 'inline-flex' : 'none'}">
           <span></span><span></span><span></span>
         </span>
-        <button class="fav-star-btn ${state.favorites.includes(station.id) ? 'is-fav' : ''}"
-          aria-label="${state.favorites.includes(station.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}"
-          aria-pressed="${state.favorites.includes(station.id)}"
-          data-station-id="${stationId}"
-          type="button">
-          <svg width="10" height="10" viewBox="-2 -2 28 28" overflow="visible" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-          </svg>
-        </button>
+        <button class="fav-star-btn ${state.favorites.includes(station.id) ? 'is-fav' : ''}" aria-label="${state.favorites.includes(station.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}" aria-pressed="${state.favorites.includes(station.id)}" data-station-id="${stationId}" type="button"><svg width="10" height="10" viewBox="-2 -2.5 28 28" overflow="visible" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
       </div>
     `;
 
@@ -455,16 +447,67 @@ export function closeStationEditor() {
   if (_editorPrevFocus?.focus) { _editorPrevFocus.focus(); _editorPrevFocus = null; }
 }
 
-async function deleteCustomStation(station) {
-  if (!window.confirm(`Station „${station.name}" wirklich löschen?`)) return;
-  try {
-    const newStations = await api.removeCustomStation(station.id);
-    state.allStations = newStations;
-    populateFilters();
-    renderStations();
-  } catch (err) {
-    console.error('[custom-station] delete failed:', err);
-  }
+function showConfirmModal(title, message, onConfirm) {
+  const modal = document.getElementById('confirm-modal');
+  const titleEl = document.getElementById('confirm-modal-title');
+  const bodyEl = document.getElementById('confirm-modal-body');
+  const okBtn = document.getElementById('confirm-ok-btn');
+  const cancelBtn = document.getElementById('confirm-cancel-btn');
+  if (!modal || !titleEl || !bodyEl || !okBtn || !cancelBtn) return;
+
+  titleEl.textContent = title;
+  bodyEl.textContent = message;
+  modal.style.display = 'flex';
+  modal.setAttribute('aria-hidden', 'false');
+
+  const prevFocus = document.activeElement;
+  cancelBtn.focus();
+
+  const cleanup = () => {
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    okBtn.removeEventListener('click', handleOk);
+    cancelBtn.removeEventListener('click', handleCancel);
+    document.removeEventListener('keydown', handleKeyDown);
+    if (prevFocus?.focus) prevFocus.focus();
+  };
+
+  const handleOk = () => {
+    cleanup();
+    onConfirm();
+  };
+
+  const handleCancel = () => {
+    cleanup();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancel();
+    }
+  };
+
+  okBtn.addEventListener('click', handleOk);
+  cancelBtn.addEventListener('click', handleCancel);
+  document.addEventListener('keydown', handleKeyDown);
+}
+
+function deleteCustomStation(station) {
+  showConfirmModal(
+    'Station löschen?',
+    `Möchtest du die Station „${station.name}“ wirklich löschen?`,
+    async () => {
+      try {
+        const newStations = await api.removeCustomStation(station.id);
+        state.allStations = newStations;
+        populateFilters();
+        renderStations();
+      } catch (err) {
+        console.error('[custom-station] delete failed:', err);
+      }
+    }
+  );
 }
 
 export function initStationEditor() {

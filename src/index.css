@@ -1485,3 +1485,16 @@ body.view-list-active .track-info-container {
   background: rgba(255, 255, 255, 0.045);
 }
 
+.modal-btn.danger {
+  background: rgba(224, 80, 80, 0.85);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(224, 80, 80, 0.2);
+}
+.modal-btn.danger:hover {
+  background: rgba(224, 80, 80, 1);
+  box-shadow: 0 6px 16px rgba(224, 80, 80, 0.35);
+  transform: translateY(-0.5px);
+}
+
+

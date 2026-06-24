@@ -393,6 +393,33 @@ export const showAboutModal = () => {
   previousFocus = document.activeElement;
   const ver = document.getElementById('about-version');
   if (ver) ver.textContent = `v${state.appVersion}`;
+
+  const nameEl = document.getElementById('about-station-name');
+  const urlEl  = document.getElementById('about-stream-url');
+  const webEl  = document.getElementById('about-website-url');
+
+  if (state.activeStation) {
+    if (nameEl) nameEl.textContent = state.activeStation.name || 'Keine Station';
+    if (urlEl) {
+      urlEl.textContent = state.activeStation.streamUrl || '-';
+      urlEl.title = state.activeStation.streamUrl || '';
+    }
+    if (webEl) {
+      webEl.textContent = state.activeStation.website || '-';
+      webEl.title = state.activeStation.website || '';
+    }
+  } else {
+    if (nameEl) nameEl.textContent = 'Keine Station';
+    if (urlEl) {
+      urlEl.textContent = '-';
+      urlEl.title = '';
+    }
+    if (webEl) {
+      webEl.textContent = '-';
+      webEl.title = '';
+    }
+  }
+
   const aboutModal = document.getElementById('about-modal');
   if (!aboutModal) return;
   aboutModal.style.display = 'flex';

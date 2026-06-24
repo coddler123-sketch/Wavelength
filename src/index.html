@@ -40,11 +40,7 @@
           <div class="live-badge"><span class="live-wave" aria-hidden="true"><span></span><span></span><span></span></span><span id="live-status" aria-live="polite" aria-atomic="true">Gestoppt</span></div>
           <span class="listen-badge" id="listen-badge" aria-live="polite" aria-atomic="true">Heute 0 min</span>
           <span class="sleep-badge" id="sleep-badge" aria-live="polite" aria-atomic="true"></span>
-          <button class="fav-badge-btn" id="player-fav-btn" title="Zu Favoriten hinzufügen" aria-label="Zu Favoriten hinzufügen" aria-pressed="false">
-            <svg width="11" height="11" viewBox="-2 -2 28 28" overflow="visible" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-            </svg>
-          </button>
+          <button class="fav-badge-btn" id="player-fav-btn" title="Zu Favoriten hinzufügen" aria-label="Zu Favoriten hinzufügen" aria-pressed="false"><svg width="12" height="12" viewBox="-2 -2.5 28 28" overflow="visible" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
         </div>
       </div>
     </div>
@@ -256,7 +252,7 @@
       </svg>
     </div>
     <h2 class="modal-title" id="about-modal-title">Wavelength</h2>
-    <p class="modal-subtitle" id="about-version">v1.3.0</p>
+    <p class="modal-subtitle" id="about-version">v1.3.2</p>
     
     <div class="modal-info-block">
       <div class="modal-info-item">
@@ -329,6 +325,18 @@
         <button type="submit" class="modal-btn" id="station-editor-save-btn">Speichern</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ── Confirmation Modal Overlay ─────────────────── -->
+<div id="confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" style="display: none;">
+  <div class="modal-content">
+    <h2 class="modal-title" id="confirm-modal-title">Station löschen?</h2>
+    <p class="modal-subtitle" id="confirm-modal-body" style="font-size: 11px; margin-top: 8px; margin-bottom: 16px; word-break: break-word; color: var(--text-dim); text-align: center;"></p>
+    <div class="modal-buttons" style="width: 100%;">
+      <button class="modal-btn modal-btn-ghost" id="confirm-cancel-btn">Abbrechen</button>
+      <button class="modal-btn danger" id="confirm-ok-btn">Löschen</button>
+    </div>
   </div>
 </div>
 

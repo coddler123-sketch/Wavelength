@@ -486,7 +486,7 @@ function findMisnamedAutostartEntries() {
     const myExe = process.execPath.toLowerCase();
     const results = [];
     for (const line of out.split(/\r?\n/)) {
-      const m = line.match(/^\s+(\S+)\s+REG_SZ\s+(.+)$/);
+      const m = line.match(/^\s+(.*?)\s+REG_SZ\s+(.+)$/);
       if (!m) continue;
       const [, name, value] = m;
       if (name === AUTOSTART_NAME) continue; // Electron manages this one
@@ -526,7 +526,7 @@ function cleanupOrphanedAutostart() {
     const out = execSync(`reg query "${RUN_KEY}"`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
     const myExe = process.execPath.toLowerCase();
     for (const line of out.split(/\r?\n/)) {
-      const m = line.match(/^\s+(\S+)\s+REG_SZ\s+(.+)$/);
+      const m = line.match(/^\s+(.*?)\s+REG_SZ\s+(.+)$/);
       if (!m) continue;
       const [, name, value] = m;
       if (name === AUTOSTART_NAME) continue; // Electron manages this one

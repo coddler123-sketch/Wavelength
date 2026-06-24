@@ -26,7 +26,7 @@ function save(stations) {
 function add(data) {
   const stations = load();
   const station = {
-    id: `custom-${Date.now()}`,
+    id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
     name: String(data.name || '').trim(),
     streamUrl: String(data.streamUrl || '').trim(),
     genre: String(data.genre || '').trim() || 'Eigene',
@@ -48,7 +48,7 @@ function update(id, data) {
     ...stations[idx],
     name:      String(data.name      || '').trim() || stations[idx].name,
     streamUrl: String(data.streamUrl || '').trim() || stations[idx].streamUrl,
-    genre:     String(data.genre     || '').trim() || stations[idx].genre,
+    genre:     String(data.genre     != null ? data.genre : stations[idx].genre).trim() || 'Eigene',
     iconUrl:   String(data.iconUrl   != null ? data.iconUrl : stations[idx].iconUrl).trim(),
   };
   save(stations);

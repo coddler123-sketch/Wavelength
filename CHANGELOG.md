@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.2
+
+- Centered the favorite star icon vertically and horizontally inside buttons (adjusted SVG size/viewBox, removed inner button inline whitespace, corrected CSS selector).
+
+## 1.3.1
+
+- Fixed "Über Wavelength" modal metadata fields (active station name, stream-URL, website-url) which were previously static placeholders.
+- Fixed custom station genre clearing issue in `src/custom-stations.js` where clearing genre was ignored due to a falsy OR-operator check.
+- Mitigated potential custom station ID collision risk by appending a random suffix to IDs.
+- Fixed check-stream IPC warning during UI audit.
+
 ## 1.3.0
 
 - Added custom station management: users can add, edit, and remove their own radio stations via a "+" button in the station list.
