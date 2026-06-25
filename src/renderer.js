@@ -228,6 +228,13 @@ document.addEventListener('keydown', (e) => {
     else showShortcutsModal();
     return;
   }
+  if (e.code === 'F4') {
+    e.preventDefault();
+    const hm = document.getElementById('history-modal');
+    if (hm && !hm.classList.contains('hidden')) hideHistoryModal();
+    else showHistoryModal();
+    return;
+  }
   const vol = () => parseInt(document.getElementById('vol-slider').value, 10);
   switch (e.code) {
     case 'Space':    e.preventDefault(); api.playPause(); break;
@@ -295,6 +302,7 @@ api.onSetStation((station) => {
 });
 api.onTrackInfo((title) => {
   displayTrackInfo(title);
+  recordTrackHistory(title);
   updateMediaSession(state.playing);
 });
 
@@ -350,6 +358,98 @@ function showOnboarding() {
   skipBtn?.addEventListener('click', close);
   modal.classList.remove('hidden');
   showSlide(0);
+}
+
+// ── Track History ────────────────────────────────
+const HISTORY_KEY = 'wl.trackHistory';
+const HISTORY_MAX = 30;
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+  catch { return []; }
+}
+function recordTrackHistory(title) {
+  if (!title || typeof title !== 'string' || !title.trim()) return;
+  const trimmed = title.trim();
+  if (!state.activeStation) return;
+  const history = loadHistory();
+  if (history[0] && history[0].title === trimmed) return;
+  history.unshift({
+    ts: Date.now(),
+    stationId: state.activeStation.id,
+    stationName: state.activeStation.name,
+    title: trimmed,
+  });
+  if (history.length > HISTORY_MAX) history.length = HISTORY_MAX;
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); }
+  catch { /* localStorage full or unavailable */ }
+}
+function formatRelative(ts) {
+  const sec = Math.floor((Date.now() - ts) / 1000);
+  if (sec < 60) return 'gerade eben';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `vor ${min} min`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `vor ${hr} h`;
+  const d = Math.floor(hr / 24);
+  return `vor ${d} Tag${d > 1 ? 'en' : ''}`;
+}
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (!list) return;
+  const history = loadHistory();
+  list.innerHTML = '';
+  if (history.length === 0) {
+    list.innerHTML = '<div class="history-empty">Noch nichts gehört.</div>';
+    return;
+  }
+  for (const entry of history) {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    const title = document.createElement('div');
+    title.className = 'history-title';
+    title.textContent = entry.title;
+    const meta = document.createElement('div');
+    meta.className = 'history-meta';
+    meta.textContent = `${entry.stationName} · ${formatRelative(entry.ts)}`;
+    item.appendChild(title);
+    item.appendChild(meta);
+    list.appendChild(item);
+  }
+}
+function showHistoryModal() {
+  const modal = document.getElementById('history-modal');
+  if (!modal) return;
+  renderHistory();
+  modal.classList.remove('hidden');
+}
+function hideHistoryModal() {
+  document.getElementById('history-modal')?.classList.add('hidden');
+}
+
+safeAddListener('track-info-container', 'click', showHistoryModal);
+const tic = document.getElementById('track-info-container');
+if (tic) {
+  tic.title = 'Wiedergabeverlauf öffnen (F4)';
+  tic.setAttribute('role', 'button');
+  tic.setAttribute('tabindex', '0');
+  tic.addEventListener('keydown', (e) => {
+    if (e.code === 'Enter' || e.code === 'Space') {
+      e.preventDefault();
+      showHistoryModal();
+    }
+  });
+}
+safeAddListener('history-close-btn', 'click', hideHistoryModal);
+safeAddListener('history-clear-btn', 'click', () => {
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+});
+const historyModalEl = document.getElementById('history-modal');
+if (historyModalEl) {
+  historyModalEl.addEventListener('click', (e) => {
+    if (e.target === historyModalEl) hideHistoryModal();
+  });
 }
 
 // ── Init ─────────────────────────────────────────

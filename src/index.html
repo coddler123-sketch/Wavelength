@@ -153,7 +153,7 @@
       </svg>
     </button>
     <div class="ctrl-pill">
-      <button class="action-btn" id="btn-sleep" title="Sleeptimer (30 min ein/aus)" aria-label="Sleeptimer">
+      <button class="action-btn" id="btn-sleep" title="Sleeptimer (15 → 30 → 60 → 90 min → aus)" aria-label="Sleeptimer">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
         </svg>
@@ -289,6 +289,7 @@
       <div class="shortcut-row"><span class="shortcut-label">Station-Gain</span><span><kbd>Alt</kbd>+<kbd>↑</kbd> <kbd>↓</kbd></span></div>
       <div class="shortcut-row"><span class="shortcut-label">Lautstärke (Mausrad)</span><kbd>Scrollen</kbd></div>
       <div class="shortcut-row"><span class="shortcut-label">Hilfe öffnen</span><span><kbd>?</kbd> / <kbd>F1</kbd></span></div>
+      <div class="shortcut-row"><span class="shortcut-label">Wiedergabeverlauf</span><kbd>F4</kbd></div>
       <div class="shortcut-row"><span class="shortcut-label">Modal schließen</span><kbd>Esc</kbd></div>
     </div>
     <div class="modal-buttons modal-buttons--full">
@@ -336,6 +337,18 @@
     <div class="modal-buttons modal-buttons--full">
       <button class="modal-btn modal-btn-ghost" id="confirm-cancel-btn">Abbrechen</button>
       <button class="modal-btn danger" id="confirm-ok-btn">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Track History Modal Overlay ─────────────── -->
+<div id="history-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+  <div class="modal-content history-modal">
+    <h2 class="modal-title" id="history-modal-title">Wiedergabeverlauf</h2>
+    <div id="history-list" class="history-list" aria-live="polite"></div>
+    <div class="modal-buttons modal-buttons--full">
+      <button class="modal-btn modal-btn-ghost" id="history-clear-btn">Verlauf löschen</button>
+      <button class="modal-btn" id="history-close-btn">Schließen</button>
     </div>
   </div>
 </div>

@@ -400,7 +400,12 @@ export function setSleepEndsAt(value) {
   document.body.classList.toggle('sleep-active', !!state.sleepEndsAt);
   if (state.sleepEndsAt) state.sleepUiTimer = setInterval(updateSleepBadge, 30_000);
   if (hadTimer !== !!state.sleepEndsAt) {
-    showToast(state.sleepEndsAt ? 'Sleep 30 min' : 'Sleep aus');
+    if (state.sleepEndsAt) {
+      const mins = Math.max(1, Math.ceil((state.sleepEndsAt - Date.now()) / 60_000));
+      showToast(`Sleep in ${mins} min`);
+    } else {
+      showToast('Sleep aus');
+    }
   }
 }
 

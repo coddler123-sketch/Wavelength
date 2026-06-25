@@ -627,7 +627,14 @@ ipcMain.on('open-external',     (_, url) => {
     shell.openExternal(url);
   }
 });
-ipcMain.on('cycle-sleep-timer', () => setSleepTimer(sleepTimer ? 0 : 30));
+const SLEEP_CYCLE = [15, 30, 60, 90, 0];
+ipcMain.on('cycle-sleep-timer', () => {
+  if (!sleepTimer) { setSleepTimer(SLEEP_CYCLE[0]); return; }
+  const currentRemaining = Math.round((sleepEndsAt - Date.now()) / 60_000);
+  const idx = SLEEP_CYCLE.findIndex(m => Math.abs(m - currentRemaining) <= 1);
+  const next = SLEEP_CYCLE[(idx + 1) % SLEEP_CYCLE.length];
+  setSleepTimer(next);
+});
 ipcMain.on('connection-state',  (_, state) => setConnectionState(state));
 ipcMain.on('select-station',    (_, station, noPlay) => selectStationInternal(station, noPlay));
 ipcMain.on('tray-icons',        (_, icons) => {
