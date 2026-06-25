@@ -102,7 +102,11 @@ safeAddListener('player-fav-btn', 'click', () => {
   if (state.activeStation) toggleFavorite(state.activeStation.id);
 });
 
-safeAddListener('station-search', 'input',  () => renderStations());
+let searchDebounceTimer;
+safeAddListener('station-search', 'input', () => {
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(renderStations, 80);
+});
 safeAddListener('genre-filter',    'change', () => renderStations());
 safeAddListener('lang-filter',    'change', () => renderStations());
 safeAddListener('bitrate-filter', 'change', () => renderStations());

@@ -449,6 +449,7 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
   background: transparent;
   border-left: 2px solid transparent;
   transition: background 0.15s, border-color 0.15s;
+  contain: layout style;
 }
 .station-item:hover {
   background: rgba(240, 236, 228, 0.04);
