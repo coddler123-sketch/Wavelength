@@ -18,6 +18,23 @@ function appendOption(select, value, label) {
   select.appendChild(option);
 }
 
+// ── Loading Skeleton ─────────────────────────────
+export function showStationsLoading() {
+  const list = document.getElementById('station-list');
+  if (!list) return;
+  list.classList.add('is-loading');
+  const rows = Array.from({ length: 8 }, () => `
+    <div class="station-skeleton" aria-hidden="true">
+      <div class="skeleton-icon"></div>
+      <div class="skeleton-text">
+        <div class="skeleton-line skeleton-line-name"></div>
+        <div class="skeleton-line skeleton-line-meta"></div>
+      </div>
+    </div>
+  `).join('');
+  list.innerHTML = rows;
+}
+
 // ── Station List Rendering ───────────────────────
 export function renderStations() {
   const list = document.getElementById('station-list');
@@ -33,12 +50,38 @@ export function renderStations() {
   });
 
   list.innerHTML = '';
+  list.classList.remove('is-loading');
   state.highlightedIndex = -1;
 
   if (stations.length === 0) {
+    const search = document.getElementById('station-search')?.value?.trim() || '';
+    const genre = document.getElementById('genre-filter')?.value || '';
+    const lang = document.getElementById('lang-filter')?.value || '';
+    const bitrate = parseInt(document.getElementById('bitrate-filter')?.value || '0', 10);
+    const hasFilters = !!(search || genre || lang || bitrate);
+
+    let icon, title, hint;
+    if (state.favFilterActive) {
+      icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>';
+      title = 'Keine Favoriten';
+      hint = 'Markiere Sender mit dem Stern, um sie hier zu sehen.';
+    } else if (hasFilters) {
+      icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+      title = 'Keine Treffer';
+      hint = search ? `Nichts gefunden für „${escapeHtml(search)}".` : 'Versuche andere Filter.';
+    } else {
+      icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4"/></svg>';
+      title = 'Keine Sender';
+      hint = 'Füge eigene Sender über das Plus-Symbol hinzu.';
+    }
+
     const empty = document.createElement('div');
     empty.className = 'station-empty';
-    empty.textContent = 'Keine Sender gefunden';
+    empty.innerHTML = `
+      <div class="station-empty-icon">${icon}</div>
+      <div class="station-empty-title">${title}</div>
+      <div class="station-empty-hint">${hint}</div>
+    `;
     list.appendChild(empty);
     return;
   }

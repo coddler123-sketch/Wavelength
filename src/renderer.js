@@ -19,7 +19,7 @@ import {
   scheduleReconnect, cancelReconnect, RECONNECT_DELAYS,
 } from './renderer-audio.js';
 import {
-  renderStations, selectStation, populateFilters,
+  renderStations, showStationsLoading, selectStation, populateFilters,
   populateRecents, initKeyboardNav, toggleFavorite,
   updatePlayerFavStar,
   openStationEditor, closeStationEditor, initStationEditor,
@@ -290,6 +290,7 @@ function initListDragToScroll() {
 
 // ── Init ─────────────────────────────────────────
 (async () => {
+  showStationsLoading();
   state.allStations = await api.getStations();
 
   populateFilters();

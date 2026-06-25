@@ -11,7 +11,7 @@ const path = require('path');
 const fs   = require('fs');
 
 // ── Single-instance lock ──────────────────────────────────
-if (!app.requestSingleInstanceLock()) { app.exit(0); }
+if (process.env.NODE_ENV !== 'test' && !app.requestSingleInstanceLock()) { app.exit(0); }
 app.on('second-instance', () => {
   if (!mainWindow) return;
   if (rendererReady) { mainWindow.show(); mainWindow.focus(); }
