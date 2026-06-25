@@ -27,6 +27,25 @@ import {
 
 const api = window.electronAPI;
 
+// ── Crash Reporter ───────────────────────────────
+window.addEventListener('error', (e) => {
+  api.logRendererError({
+    type: 'error',
+    message: e.message || 'unknown',
+    source: e.filename,
+    line: e.lineno,
+    stack: e.error?.stack,
+  });
+});
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason;
+  api.logRendererError({
+    type: 'unhandledrejection',
+    message: reason?.message || String(reason),
+    stack: reason?.stack,
+  });
+});
+
 // ── Visualizer ───────────────────────────────────
 const { averageLevel } = window.utils;
 state.visualizer = WavelengthVisualizer.create({

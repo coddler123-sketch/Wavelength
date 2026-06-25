@@ -67,6 +67,14 @@ function log(message, extra = '') {
 
 process.on('uncaughtException', (err) => log('uncaughtException', err.stack || String(err)));
 process.on('unhandledRejection', (reason) => log('unhandledRejection', reason?.stack || String(reason)));
+ipcMain.on('renderer-error', (_e, info) => {
+  if (!info || typeof info !== 'object') return;
+  const type = String(info.type || 'error').slice(0, 30);
+  const msg  = String(info.message || '').slice(0, 500);
+  const src  = info.source ? ` ${String(info.source).slice(0, 200)}:${info.line || '?'}` : '';
+  const stk  = info.stack ? `\n${String(info.stack).slice(0, 1500)}` : '';
+  log(`renderer-${type}: ${msg}${src}${stk}`);
+});
 
 // ── Sleep timer ───────────────────────────────────────────
 let sleepTimer  = null;
