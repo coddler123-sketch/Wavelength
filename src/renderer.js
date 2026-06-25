@@ -290,6 +290,7 @@ function initListDragToScroll() {
 
 // ── Onboarding ───────────────────────────────────
 function showOnboarding() {
+  if (localStorage.getItem('wl.onboardingDone')) return;
   const modal = document.getElementById('onboarding-modal');
   if (!modal) return;
   let current = 0;
