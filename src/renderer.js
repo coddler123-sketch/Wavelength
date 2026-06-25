@@ -132,7 +132,7 @@ if (vizCanvas && contextMenu) {
       item.textContent = WavelengthVisualizer.VISUALIZER_LABELS[m] || m;
       item.addEventListener('click', () => {
         state.visualizer.setMode(m);
-        contextMenu.style.display = 'none';
+        contextMenu.classList.add('hidden');
       });
       contextMenu.appendChild(item);
     });
@@ -145,10 +145,10 @@ if (vizCanvas && contextMenu) {
     if (y < 8) y = 8;
     contextMenu.style.left = x + 'px';
     contextMenu.style.top  = y + 'px';
-    contextMenu.style.display = 'block';
+    contextMenu.classList.remove('hidden');
   });
   document.addEventListener('click', (e) => {
-    if (!contextMenu.contains(e.target)) contextMenu.style.display = 'none';
+    if (!contextMenu.contains(e.target)) contextMenu.classList.add('hidden');
   });
 }
 
@@ -181,7 +181,7 @@ if (aboutModal) {
 function getTopmostOpenModal() {
   const modals = document.querySelectorAll('.modal-overlay');
   for (const m of modals) {
-    if (m.style.display === 'flex') return m;
+    if (!m.classList.contains('hidden')) return m;
   }
   return null;
 }
@@ -196,7 +196,7 @@ function dismissTopModal() {
   // Try button-driven dismissal first (preserves cleanup logic)
   const dismissBtn = modal.querySelector('[data-modal-dismiss], .modal-btn-ghost, [id$="-cancel-btn"], [id$="-ok-btn"], [id$="-skip-btn"]');
   if (dismissBtn) { dismissBtn.click(); return true; }
-  modal.style.display = 'none';
+  modal.classList.add('hidden');
   return true;
 }
 
@@ -224,7 +224,7 @@ document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT') return;
   if (e.key === '?' || e.code === 'F1') {
     e.preventDefault();
-    if (shortcutsModal && shortcutsModal.style.display === 'flex') hideShortcutsModal();
+    if (shortcutsModal && !shortcutsModal.classList.contains('hidden')) hideShortcutsModal();
     else showShortcutsModal();
     return;
   }
@@ -334,7 +334,7 @@ function showOnboarding() {
   const skipBtn = document.getElementById('onboarding-skip-btn');
 
   function close() {
-    modal.style.display = 'none';
+    modal.classList.add('hidden');
     localStorage.setItem('wl.onboardingDone', '1');
   }
   function showSlide(i) {
@@ -348,7 +348,7 @@ function showOnboarding() {
     else showSlide(current);
   });
   skipBtn?.addEventListener('click', close);
-  modal.style.display = 'flex';
+  modal.classList.remove('hidden');
   showSlide(0);
 }
 

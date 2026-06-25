@@ -146,7 +146,7 @@ export function renderStations() {
           ? `<img class="station-icon" src="${iconUrl}" alt="" loading="lazy">`
           : ''
         }
-        <svg class="station-icon" ${iconUrl ? 'style="display:none"' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <svg class="station-icon${iconUrl ? ' hidden' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4M3.5 3.5a14 14 0 0 0 0 17M20.5 3.5a14 14 0 0 1 0 17"/>
         </svg>
         <div class="station-play-overlay">
@@ -161,11 +161,11 @@ export function renderStations() {
           <span class="station-tag">${stationGenre}</span>
           ${stationCountry ? `<span class="station-tag">${stationCountry}</span>` : ''}
           ${gainDb !== 0 ? `<span class="station-tag">${gainDb > 0 ? '+' : ''}${gainDb} dB</span>` : ''}
-          ${today > 0 ? `<span class="station-tag" style="color: rgba(94, 232, 239, 0.9); font-weight: 600;">${Math.ceil(today / 60000)} Min.</span>` : ''}
+          ${today > 0 ? `<span class="station-tag station-tag--today">${Math.ceil(today / 60000)} Min.</span>` : ''}
         </div>
       </div>
       <div class="item-badges">
-        <span class="item-eq-anim" style="display:${state.playing && state.activeStation && station.id === state.activeStation.id ? 'inline-flex' : 'none'}">
+        <span class="item-eq-anim${state.playing && state.activeStation && station.id === state.activeStation.id ? '' : ' hidden'}">
           <span></span><span></span><span></span>
         </span>
         <button class="fav-star-btn ${state.favorites.includes(station.id) ? 'is-fav' : ''}" aria-label="${state.favorites.includes(station.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}" aria-pressed="${state.favorites.includes(station.id)}" data-station-id="${stationId}" type="button"><svg width="10" height="10" viewBox="-2 -2.5 28 28" overflow="visible" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
@@ -176,8 +176,8 @@ export function renderStations() {
     const fallbackIcon = item.querySelector('.station-icon-wrap svg.station-icon');
     if (stationIcon && fallbackIcon) {
       stationIcon.addEventListener('error', () => {
-        stationIcon.style.display = 'none';
-        fallbackIcon.style.display = 'flex';
+        stationIcon.classList.add('hidden');
+        fallbackIcon.classList.remove('hidden');
       });
     }
 
@@ -334,10 +334,10 @@ export function updatePlayerFavStar() {
   const btn = document.getElementById('player-fav-btn');
   if (!btn) return;
   if (!state.activeStation) {
-    btn.style.display = 'none';
+    btn.classList.add('hidden');
     return;
   }
-  btn.style.display = 'inline-flex';
+  btn.classList.remove('hidden');
   const isFav = state.favorites.includes(state.activeStation.id);
   btn.classList.toggle('is-fav', isFav);
   const label = isFav ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen';
@@ -353,11 +353,11 @@ export function updateMiniLogo(station) {
   if (!miniIcon || !miniSvg) return;
   if (station && station.iconUrl) {
     miniIcon.src = safeHttpUrl(station.iconUrl);
-    miniIcon.style.display = 'block';
-    miniSvg.style.display = 'none';
+    miniIcon.classList.remove('hidden');
+    miniSvg.classList.add('hidden');
   } else {
-    miniIcon.style.display = 'none';
-    miniSvg.style.display = 'block';
+    miniIcon.classList.add('hidden');
+    miniSvg.classList.remove('hidden');
   }
 }
 
@@ -367,11 +367,11 @@ export function updatePlayerLogo(station) {
   if (!playerIcon || !defaultLogo) return;
   if (station && station.iconUrl) {
     playerIcon.src = safeHttpUrl(station.iconUrl);
-    playerIcon.style.display = 'block';
-    defaultLogo.style.display = 'none';
+    playerIcon.classList.remove('hidden');
+    defaultLogo.classList.add('hidden');
   } else {
-    playerIcon.style.display = 'none';
-    defaultLogo.style.display = 'block';
+    playerIcon.classList.add('hidden');
+    defaultLogo.classList.remove('hidden');
   }
 }
 
@@ -397,12 +397,12 @@ export function populateRecents() {
     .filter(Boolean);
 
   if (activeRecents.length === 0) {
-    row.style.display = 'none';
+    row.classList.add('hidden');
     picker.classList.remove('has-recents');
     return;
   }
 
-  row.style.display = 'flex';
+  row.classList.remove('hidden');
   picker.classList.add('has-recents');
   list.innerHTML = '';
 
@@ -486,9 +486,9 @@ export function openStationEditor(station = null) {
   urlEl.value         = station ? station.streamUrl : '';
   genreEl.value       = station && station.genre !== 'Eigene' ? station.genre : '';
   iconEl.value        = station ? (station.iconUrl || '') : '';
-  errorEl.style.display = 'none';
+  errorEl.classList.add('hidden');
   errorEl.textContent = '';
-  modal.style.display = 'flex';
+  modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
   nameEl.focus();
 }
@@ -496,7 +496,7 @@ export function openStationEditor(station = null) {
 export function closeStationEditor() {
   const modal = document.getElementById('station-editor-modal');
   if (!modal) return;
-  modal.style.display = 'none';
+  modal.classList.add('hidden');
   modal.setAttribute('aria-hidden', 'true');
   if (_editorPrevFocus?.focus) { _editorPrevFocus.focus(); _editorPrevFocus = null; }
 }
@@ -511,14 +511,14 @@ function showConfirmModal(title, message, onConfirm) {
 
   titleEl.textContent = title;
   bodyEl.textContent = message;
-  modal.style.display = 'flex';
+  modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
 
   const prevFocus = document.activeElement;
   cancelBtn.focus();
 
   const cleanup = () => {
-    modal.style.display = 'none';
+    modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
     okBtn.removeEventListener('click', handleOk);
     cancelBtn.removeEventListener('click', handleCancel);
@@ -584,7 +584,7 @@ export function initStationEditor() {
 
     const showErr = msg => {
       errorEl.textContent = msg;
-      errorEl.style.display = 'block';
+      errorEl.classList.remove('hidden');
     };
     if (!name)       { showErr('Name ist erforderlich.'); document.getElementById('station-editor-name').focus(); return; }
     if (!streamUrl)  { showErr('Stream-URL ist erforderlich.'); document.getElementById('station-editor-url').focus(); return; }

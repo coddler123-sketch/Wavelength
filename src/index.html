@@ -16,7 +16,7 @@
   <div class="top-section">
     <div class="logo-area">
       <div class="logo-img-wrap" id="player-logo-wrap">
-        <img id="player-station-icon" class="logo-mark" alt="" style="display: none; object-fit: contain; padding: 3px;" />
+        <img id="player-station-icon" class="logo-mark hidden" alt="" />
         <!-- Glowing Wave Vector Logo -->
         <svg id="player-default-logo" class="logo-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke="url(#logo-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -100,9 +100,9 @@
         </select>
       </div>
     </div>
-    <div class="recents-row" id="recents-row" style="display: none;">
+    <div class="recents-row hidden" id="recents-row">
       <div class="recents-label">Zuletzt:</div>
-      <div id="recents-list" style="display: flex; gap: 6px;"></div>
+      <div id="recents-list"></div>
     </div>
     <div class="station-list" id="station-list">
       <!-- Loaded dynamically -->
@@ -196,7 +196,7 @@
           </linearGradient>
         </defs>
       </svg>
-      <img id="mini-station-icon" alt="" style="width: 100%; height: 100%; object-fit: contain; padding: 2px; display: none;">
+      <img id="mini-station-icon" class="hidden" alt="">
     </div>
     <div class="mini-info">
       <div class="mini-name" id="mini-station-name">Wavelength</div>
@@ -233,10 +233,10 @@
 </div>
 
 <!-- ── Visualizer Context Menu ──────────────────────── -->
-<div id="viz-context-menu" class="context-menu" style="display: none;"></div>
+<div id="viz-context-menu" class="context-menu hidden"></div>
 
 <!-- ── About Modal Overlay ─────────────────────────── -->
-<div id="about-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="about-modal-title" style="display: none;">
+<div id="about-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">
   <div class="modal-content">
     <button class="modal-close" id="about-close-btn" title="Schließen" aria-label="Schließen">&times;</button>
     <div class="modal-logo-wrap">
@@ -269,14 +269,14 @@
       </div>
     </div>
     
-    <div class="modal-buttons">
+    <div class="modal-buttons modal-buttons--full">
       <button class="modal-btn primary" id="about-web-btn">Website öffnen</button>
       <button class="modal-btn" id="about-ok-btn">Schließen</button>
     </div>
   </div>
 </div>
 
-<div id="shortcuts-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title" aria-hidden="true" style="display: none;">
+<div id="shortcuts-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title" aria-hidden="true">
   <div class="modal-content">
     <button class="modal-close" id="shortcuts-close-btn" title="Schließen" aria-label="Schließen">&times;</button>
     <h2 class="modal-title" id="shortcuts-modal-title">Tastaturkürzel</h2>
@@ -291,13 +291,13 @@
       <div class="shortcut-row"><span class="shortcut-label">Hilfe öffnen</span><span><kbd>?</kbd> / <kbd>F1</kbd></span></div>
       <div class="shortcut-row"><span class="shortcut-label">Modal schließen</span><kbd>Esc</kbd></div>
     </div>
-    <div class="modal-buttons">
+    <div class="modal-buttons modal-buttons--full">
       <button class="modal-btn" id="shortcuts-ok-btn">Schließen</button>
     </div>
   </div>
 </div>
 
-<div id="station-editor-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="station-editor-title" aria-hidden="true" style="display: none;">
+<div id="station-editor-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="station-editor-title" aria-hidden="true">
   <div class="modal-content">
     <button class="modal-close" id="station-editor-close-btn" title="Schließen" aria-label="Schließen">&times;</button>
     <h2 class="modal-title" id="station-editor-title">Station hinzufügen</h2>
@@ -319,8 +319,8 @@
         <label for="station-editor-icon">Icon-URL</label>
         <input type="text" id="station-editor-icon" placeholder="https://..." autocomplete="off">
       </div>
-      <p id="station-editor-error" class="form-error" style="display: none;"></p>
-      <div class="modal-buttons">
+      <p id="station-editor-error" class="form-error hidden"></p>
+      <div class="modal-buttons modal-buttons--full">
         <button type="button" class="modal-btn modal-btn-ghost" id="station-editor-cancel-btn">Abbrechen</button>
         <button type="submit" class="modal-btn" id="station-editor-save-btn">Speichern</button>
       </div>
@@ -329,11 +329,11 @@
 </div>
 
 <!-- ── Confirmation Modal Overlay ─────────────────── -->
-<div id="confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" style="display: none;">
+<div id="confirm-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
   <div class="modal-content">
     <h2 class="modal-title" id="confirm-modal-title">Station löschen?</h2>
-    <p class="modal-subtitle" id="confirm-modal-body" style="font-size: 11px; margin-top: 8px; margin-bottom: 16px; word-break: break-word; color: var(--text-dim); text-align: center;"></p>
-    <div class="modal-buttons" style="width: 100%;">
+    <p class="modal-subtitle" id="confirm-modal-body"></p>
+    <div class="modal-buttons modal-buttons--full">
       <button class="modal-btn modal-btn-ghost" id="confirm-cancel-btn">Abbrechen</button>
       <button class="modal-btn danger" id="confirm-ok-btn">Löschen</button>
     </div>
@@ -341,7 +341,7 @@
 </div>
 
 <!-- ── Onboarding Modal Overlay ─────────────────── -->
-<div id="onboarding-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" style="display: none;">
+<div id="onboarding-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
   <div class="modal-content onboarding">
     <div class="onboarding-slides">
       <div class="onboarding-slide active" data-slide="0">
@@ -371,7 +371,7 @@
       <span class="onboarding-dot" data-dot="1"></span>
       <span class="onboarding-dot" data-dot="2"></span>
     </div>
-    <div class="modal-buttons" style="width: 100%;">
+    <div class="modal-buttons modal-buttons--full">
       <button class="modal-btn modal-btn-ghost" id="onboarding-skip-btn">Überspringen</button>
       <button class="modal-btn" id="onboarding-next-btn">Weiter</button>
     </div>

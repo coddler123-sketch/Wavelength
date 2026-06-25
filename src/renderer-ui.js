@@ -160,7 +160,7 @@ export function setThemeLevel(level) {
 // ── Play UI ──────────────────────────────────────
 export function updateItemEqualizer() {
   document.querySelectorAll('.item-eq-anim').forEach(eq => {
-    eq.style.display = state.playing ? 'inline-flex' : 'none';
+    eq.classList.toggle('hidden', !state.playing);
   });
 }
 
@@ -439,7 +439,7 @@ export const showAboutModal = () => {
 
   const aboutModal = document.getElementById('about-modal');
   if (!aboutModal) return;
-  aboutModal.style.display = 'flex';
+  aboutModal.classList.remove('hidden');
   aboutModal.setAttribute('aria-hidden', 'false');
   const firstFocus = aboutModal.querySelector('button, [href], input, [tabindex]:not([tabindex="-1"])');
   if (firstFocus) firstFocus.focus();
@@ -449,7 +449,7 @@ export const showShortcutsModal = () => {
   previousFocus = document.activeElement;
   const modal = document.getElementById('shortcuts-modal');
   if (!modal) return;
-  modal.style.display = 'flex';
+  modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
   const firstFocus = modal.querySelector('button, [href], input, [tabindex]:not([tabindex="-1"])');
   if (firstFocus) firstFocus.focus();
@@ -458,7 +458,7 @@ export const showShortcutsModal = () => {
 export const hideShortcutsModal = () => {
   const modal = document.getElementById('shortcuts-modal');
   if (!modal) return;
-  modal.style.display = 'none';
+  modal.classList.add('hidden');
   modal.setAttribute('aria-hidden', 'true');
   if (previousFocus && typeof previousFocus.focus === 'function') {
     previousFocus.focus();
@@ -469,7 +469,7 @@ export const hideShortcutsModal = () => {
 export const hideAboutModal = () => {
   const aboutModal = document.getElementById('about-modal');
   if (!aboutModal) return;
-  aboutModal.style.display = 'none';
+  aboutModal.classList.add('hidden');
   aboutModal.setAttribute('aria-hidden', 'true');
   if (previousFocus && typeof previousFocus.focus === 'function') {
     previousFocus.focus();

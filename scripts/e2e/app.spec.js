@@ -27,7 +27,7 @@ test.beforeAll(async () => {
     localStorage.setItem('wl.onboardingDone', '1');
     localStorage.setItem('wl.shortcutsHintSeen', '1');
     const m = document.getElementById('onboarding-modal');
-    if (m) m.style.display = 'none';
+    if (m) m.classList.add('hidden');
   });
 });
 
