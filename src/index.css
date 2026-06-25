@@ -526,6 +526,78 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
   background: rgba(255, 183, 0, 0.08);
 }
 
+/* ── Onboarding Modal ────────────────────────────── */
+.modal-content.onboarding {
+  text-align: center;
+  max-height: 90vh;
+}
+.onboarding-slides {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.onboarding-slide {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.onboarding-slide.active {
+  display: flex;
+  animation: onboarding-fade 0.25s ease;
+}
+@keyframes onboarding-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.onboarding-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--accent, #5ee8ef);
+  opacity: 0.85;
+  margin-bottom: 4px;
+}
+.onboarding-icon svg { width: 100%; height: 100%; }
+.onboarding-text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  max-width: 280px;
+  margin: 0 0 8px;
+}
+.onboarding-text kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(94,232,239,0.12);
+  border: 1px solid rgba(94,232,239,0.3);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+}
+.onboarding-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: 12px 0;
+}
+.onboarding-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  transition: background 0.2s, transform 0.2s;
+}
+.onboarding-dot.active {
+  background: var(--accent, #5ee8ef);
+  transform: scale(1.3);
+}
+
 /* ── Empty State ─────────────────────────────────── */
 .station-empty {
   display: flex;
@@ -655,6 +727,26 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
 .viz-toast.show {
   opacity: 1;
   transform: translateY(0);
+  pointer-events: auto;
+}
+.viz-toast .toast-text {
+  display: inline-block;
+}
+.viz-toast .toast-action {
+  margin-left: 8px;
+  background: rgba(94,232,239,0.18);
+  border: 1px solid rgba(94,232,239,0.4);
+  color: #5ee8ef;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+.viz-toast .toast-action:hover {
+  background: rgba(94,232,239,0.3);
 }
 
 /* ── Controls ───────────────────────────────────── */

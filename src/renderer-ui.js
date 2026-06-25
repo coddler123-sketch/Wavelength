@@ -109,13 +109,30 @@ function ensureListenDate() {
 }
 
 // ── Toast ────────────────────────────────────────
-export function showToast(message) {
+export function showToast(message, options = {}) {
   const toast = document.getElementById('viz-toast');
   if (!toast) return;
-  toast.textContent = message;
+  toast.innerHTML = '';
+  const text = document.createElement('span');
+  text.className = 'toast-text';
+  text.textContent = message;
+  toast.appendChild(text);
+  if (options.actionLabel && typeof options.onAction === 'function') {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'toast-action';
+    btn.textContent = options.actionLabel;
+    btn.addEventListener('click', () => {
+      toast.classList.remove('show');
+      clearTimeout(showToast.timer);
+      options.onAction();
+    });
+    toast.appendChild(btn);
+  }
   toast.classList.add('show');
   clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(() => toast.classList.remove('show'), 1100);
+  const duration = options.duration || (options.actionLabel ? 4000 : 1100);
+  showToast.timer = setTimeout(() => toast.classList.remove('show'), duration);
 }
 
 // ── Theme / Time ─────────────────────────────────

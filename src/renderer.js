@@ -288,6 +288,35 @@ function initListDragToScroll() {
   });
 }
 
+// ── Onboarding ───────────────────────────────────
+function showOnboarding() {
+  const modal = document.getElementById('onboarding-modal');
+  if (!modal) return;
+  let current = 0;
+  const slides = modal.querySelectorAll('.onboarding-slide');
+  const dots   = modal.querySelectorAll('.onboarding-dot');
+  const nextBtn = document.getElementById('onboarding-next-btn');
+  const skipBtn = document.getElementById('onboarding-skip-btn');
+
+  function close() {
+    modal.style.display = 'none';
+    localStorage.setItem('wl.onboardingDone', '1');
+  }
+  function showSlide(i) {
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+    dots.forEach((d, idx)   => d.classList.toggle('active', idx === i));
+    if (nextBtn) nextBtn.textContent = (i === slides.length - 1) ? 'Los geht\'s' : 'Weiter';
+  }
+  nextBtn?.addEventListener('click', () => {
+    current++;
+    if (current >= slides.length) close();
+    else showSlide(current);
+  });
+  skipBtn?.addEventListener('click', close);
+  modal.style.display = 'flex';
+  showSlide(0);
+}
+
 // ── Init ─────────────────────────────────────────
 (async () => {
   showStationsLoading();
@@ -337,6 +366,14 @@ function initListDragToScroll() {
       strip.classList.add('viz-hint');
       strip.addEventListener('animationend', () => strip.classList.remove('viz-hint'), { once: true });
     }
+  }
+
+  const isAudit = new URLSearchParams(location.search).get('audit') === '1';
+  if (!isAudit && !localStorage.getItem('wl.onboardingDone')) {
+    setTimeout(showOnboarding, 600);
+  } else if (!isAudit && !localStorage.getItem('wl.shortcutsHintSeen')) {
+    localStorage.setItem('wl.shortcutsHintSeen', '1');
+    setTimeout(() => showToast('Tipp: F1 zeigt alle Tastaturkürzel', { duration: 3500 }), 2500);
   }
 
   const wantPin   = loadBool(LS.pin);

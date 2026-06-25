@@ -63,7 +63,7 @@ function wireIpc(win) {
 }
 
 async function waitForReady(win) {
-  await win.loadFile(path.join(root, 'src', 'index.html'));
+  await win.loadFile(path.join(root, 'src', 'index.html'), { query: { audit: '1' } });
   await win.webContents.executeJavaScript(`
     new Promise(resolve => {
       const done = () => document.querySelectorAll('.station-item').length > 0;

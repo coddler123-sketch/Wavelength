@@ -21,6 +21,14 @@ test.beforeAll(async () => {
 
   await win.waitForLoadState('domcontentloaded');
   await win.waitForSelector('.station-item', { state: 'attached', timeout: 45_000 });
+
+  // Dismiss first-run onboarding modal so it doesn't intercept clicks
+  await win.evaluate(() => {
+    localStorage.setItem('wl.onboardingDone', '1');
+    localStorage.setItem('wl.shortcutsHintSeen', '1');
+    const m = document.getElementById('onboarding-modal');
+    if (m) m.style.display = 'none';
+  });
 });
 
 test.afterAll(async () => {

@@ -119,6 +119,12 @@ export function renderStations() {
     item.setAttribute('role', 'button');
     item.setAttribute('tabindex', '0');
     item.setAttribute('aria-label', `${station.name}, ${station.genre}, ${station.country}`);
+    const tipParts = [station.name];
+    if (station.genre) tipParts.push(station.genre);
+    if (station.country) tipParts.push(station.country);
+    if (station.bitrate) tipParts.push(`${station.bitrate} kbps`);
+    if (station.codec) tipParts.push(station.codec);
+    item.title = tipParts.join(' · ');
     if (state.activeStation && station.id === state.activeStation.id) {
       item.classList.add('active');
     }
@@ -251,7 +257,12 @@ export function selectStation(station, options = {}) {
     api.selectStation(station, shouldSuppressMainAutoplay(startWhenStopped, wasPlaying));
     if (station.streamUrl) {
       api.checkStream(station.streamUrl).then(result => {
-        if (!result.ok) showToast(`Stream nicht erreichbar (${result.error || result.statusCode})`);
+        if (!result.ok) {
+          showToast(`Stream nicht erreichbar (${result.error || result.statusCode})`, {
+            actionLabel: 'Nochmal',
+            onAction: () => selectStation(station, { startWhenStopped: true }),
+          });
+        }
       }).catch(() => {});
     }
   }
