@@ -173,18 +173,48 @@ if (aboutModal) {
   aboutModal.addEventListener('click', (e) => { if (e.target === aboutModal) hideAboutModal(); });
 }
 
+// ── Modal Helpers (a11y) ─────────────────────────
+function getTopmostOpenModal() {
+  const modals = document.querySelectorAll('.modal-overlay');
+  for (const m of modals) {
+    if (m.style.display === 'flex') return m;
+  }
+  return null;
+}
+function getFocusable(root) {
+  return Array.from(root.querySelectorAll(
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  )).filter(el => el.offsetParent !== null);
+}
+function dismissTopModal() {
+  const modal = getTopmostOpenModal();
+  if (!modal) return false;
+  // Try button-driven dismissal first (preserves cleanup logic)
+  const dismissBtn = modal.querySelector('[data-modal-dismiss], .modal-btn-ghost, [id$="-cancel-btn"], [id$="-ok-btn"], [id$="-skip-btn"]');
+  if (dismissBtn) { dismissBtn.click(); return true; }
+  modal.style.display = 'none';
+  return true;
+}
+
 // ── Keyboard Shortcuts ───────────────────────────
 document.addEventListener('keydown', (e) => {
   if (e.code === 'Escape') {
-    if (aboutModal && aboutModal.style.display === 'flex') {
-      e.preventDefault(); hideAboutModal(); return;
-    }
-    if (shortcutsModal && shortcutsModal.style.display === 'flex') {
-      e.preventDefault(); hideShortcutsModal(); return;
-    }
-    const editorModal = document.getElementById('station-editor-modal');
-    if (editorModal && editorModal.style.display === 'flex') {
-      e.preventDefault(); closeStationEditor(); return;
+    if (dismissTopModal()) { e.preventDefault(); return; }
+  }
+  // Focus-trap: keep Tab inside the topmost open modal
+  if (e.key === 'Tab') {
+    const modal = getTopmostOpenModal();
+    if (modal) {
+      const focusable = getFocusable(modal);
+      if (focusable.length) {
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault(); first.focus();
+        }
+      }
     }
   }
   if (e.target.tagName === 'INPUT') return;
