@@ -60,3 +60,7 @@ electron-log.txt
 part1.txt
 part2.txt
 .claude/
+
+# Playwright
+test-results/
+playwright-report/
