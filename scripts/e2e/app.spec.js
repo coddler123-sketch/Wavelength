@@ -87,8 +87,70 @@ test('Suchfeld filtert die Senderliste', async () => {
   await win.waitForTimeout(200);
 });
 
+test('Mute-Button toggelt aria-pressed', async () => {
+  const before = await win.evaluate(() => document.querySelector('#btn-mute')?.getAttribute('aria-pressed'));
+  await win.evaluate(() => document.querySelector('#btn-mute')?.click());
+  await win.waitForTimeout(200);
+  const after = await win.evaluate(() => document.querySelector('#btn-mute')?.getAttribute('aria-pressed'));
+  expect(after).not.toBe(before);
+  // Reset
+  await win.evaluate(() => document.querySelector('#btn-mute')?.click());
+  await win.waitForTimeout(100);
+});
+
+test('Favoriten-Stern markiert eine Station', async () => {
+  const { id, wasFav } = await win.evaluate(() => {
+    const item = document.querySelector('.station-item');
+    const btn = item?.querySelector('.fav-star-btn');
+    return { id: item?.dataset.id ?? '', wasFav: btn?.classList.contains('is-fav') ?? false };
+  });
+  await win.evaluate(() => document.querySelector('.station-item .fav-star-btn')?.click());
+  await win.waitForTimeout(400);
+  const isFav = await win.evaluate((stationId) => {
+    const btn = document.querySelector(`.station-item[data-id="${stationId}"] .fav-star-btn`);
+    return btn?.classList.contains('is-fav') ?? false;
+  }, id);
+  expect(isFav).toBe(!wasFav);
+  // Reset
+  await win.evaluate((stationId) => {
+    document.querySelector(`.station-item[data-id="${stationId}"] .fav-star-btn`)?.click();
+  }, id);
+  await win.waitForTimeout(200);
+});
+
+test('Sleep-Timer-Button zeigt Badge nach Klick', async () => {
+  await win.evaluate(() => document.querySelector('#btn-sleep')?.click());
+  await win.waitForTimeout(300);
+  const badgeText = await win.evaluate(() => document.querySelector('#sleep-badge')?.textContent?.trim() ?? '');
+  expect(badgeText.length).toBeGreaterThan(0);
+  // Zyklus bis Badge leer (max 4 weitere Klicks)
+  for (let i = 0; i < 4; i++) {
+    await win.evaluate(() => document.querySelector('#btn-sleep')?.click());
+    await win.waitForTimeout(150);
+    const t = await win.evaluate(() => document.querySelector('#sleep-badge')?.textContent?.trim() ?? '');
+    if (!t) break;
+  }
+});
+
+test('Track-History-Modal öffnet und schließt sich', async () => {
+  await win.evaluate(() => {
+    const m = document.getElementById('history-modal');
+    if (m) m.classList.remove('hidden');
+  });
+  await win.waitForTimeout(200);
+  const visible = await win.evaluate(() => !document.getElementById('history-modal')?.classList.contains('hidden'));
+  expect(visible).toBe(true);
+  await win.evaluate(() => document.getElementById('history-close-btn')?.click());
+  await win.waitForTimeout(200);
+  const hidden = await win.evaluate(() => document.getElementById('history-modal')?.classList.contains('hidden'));
+  expect(hidden).toBe(true);
+});
+
 test('Mini-Modus umschalten zeigt Mini-View', async () => {
   await win.evaluate(() => document.querySelector('#btn-mini')?.click());
   await win.waitForTimeout(500);
   expect(await win.locator('#mini-view').count()).toBe(1);
+  // Reset zurück zu Full-View
+  await win.evaluate(() => document.querySelector('#mini-btn-back')?.click());
+  await win.waitForTimeout(300);
 });
