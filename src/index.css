@@ -285,7 +285,7 @@ body.mini-mode #mini-view { display: flex; }
   gap: 16px;
   flex-shrink: 0;
 }
-.top-section .logo-area { flex: 1; min-width: 0; padding-right: 68px; }
+.top-section .logo-area { flex: 1; min-width: 0; padding-right: 112px; }
 
 /* ── Logo area ──────────────────────────────────── */
 .logo-area {
@@ -530,7 +530,7 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
 
 .settings-btn {
   position: absolute;
-  top: 14px; right: 48px;
+  top: 14px; right: 80px;
   width: 26px; height: 26px;
   background: rgba(255,255,255,0.035);
   border: 1px solid transparent;
