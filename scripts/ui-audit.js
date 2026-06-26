@@ -321,6 +321,39 @@ async function auditVisualizerModes(win) {
   `);
 }
 
+async function auditButtonOverlap(win) {
+  return win.webContents.executeJavaScript(`
+    (() => {
+      const rectsOverlap = (a, b) =>
+        a.left < b.right - 1 && a.right > b.left + 1 &&
+        a.top  < b.bottom - 1 && a.bottom > b.top + 1;
+
+      const buttons = Array.from(document.querySelectorAll('button'))
+        .filter(el => {
+          if (el.closest('.modal-overlay')) return false;
+          const style = getComputedStyle(el);
+          if (style.display === 'none' || style.visibility === 'hidden') return false;
+          const rect = el.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0 && rect.top < 80;
+        })
+        .map(el => ({
+          id: el.id || el.className.trim().split(/\s+/)[0],
+          rect: el.getBoundingClientRect().toJSON(),
+        }));
+
+      const overlaps = [];
+      for (let i = 0; i < buttons.length; i++) {
+        for (let j = i + 1; j < buttons.length; j++) {
+          if (rectsOverlap(buttons[i].rect, buttons[j].rect)) {
+            overlaps.push(buttons[i].id + ' overlaps ' + buttons[j].id);
+          }
+        }
+      }
+      return { label: 'button-overlap', buttons, interactionIssues: overlaps };
+    })()
+  `);
+}
+
 async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const win = new BrowserWindow({
@@ -348,6 +381,7 @@ async function main() {
   full.meta = await viewMeta(win);
   results.push(full);
   results.push(await auditPlayTooltip(win));
+  results.push(await auditButtonOverlap(win));
   results.push(await auditVisualizerModes(win));
   await win.webContents.executeJavaScript(`
     document.body.classList.add('view-list-active');
