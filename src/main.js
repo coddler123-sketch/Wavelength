@@ -832,7 +832,7 @@ ipcMain.handle('cache-icon', async (e, url) => {
     if (iconMemCache.size % 50 === 0) cacheCleanup();
     return dataUrl;
   } catch { return null; }
-}));
+});
 
 ipcMain.handle('get-state',      () => ({
   isPlaying,
