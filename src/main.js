@@ -747,7 +747,14 @@ function extFromContentType(ct) {
   if (ct.includes('gif'))  return 'gif';
   if (ct.includes('webp')) return 'webp';
   if (ct.includes('svg'))  return 'svg';
+  if (ct.includes('icon') || ct.includes('ico')) return 'ico';
   return 'png';
+}
+function mimeFromExt(ext) {
+  if (ext === 'jpg') return 'image/jpeg';
+  if (ext === 'svg') return 'image/svg+xml';
+  if (ext === 'ico') return 'image/x-icon';
+  return `image/${ext}`;
 }
 function cacheCleanup() {
   try {
@@ -771,8 +778,7 @@ function readFromDisk(url) {
     const fp = path.join(dir, files[0]);
     const buf = fs.readFileSync(fp);
     const ext = files[0].split('.').pop();
-    const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
-    return `data:${mime};base64,${buf.toString('base64')}`;
+    return `data:${mimeFromExt(ext)};base64,${buf.toString('base64')}`;
   } catch { return null; }
 }
 
@@ -815,8 +821,7 @@ ipcMain.handle('cache-icon', (e, url) => new Promise(resolve => {
         clearTimeout(timer);
         const buf = Buffer.concat(chunks);
         const ext = extFromContentType(res.headers['content-type']?.[0] || '');
-        const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
-        const dataUrl = `data:${mime};base64,${buf.toString('base64')}`;
+        const dataUrl = `data:${mimeFromExt(ext)};base64,${buf.toString('base64')}`;
         iconMemCache.set(url, dataUrl);
         try { fs.writeFileSync(path.join(getIconCacheDir(), `${urlHash(url)}.${ext}`), buf); } catch (_) {}
         if (iconMemCache.size % 50 === 0) cacheCleanup();
