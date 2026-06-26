@@ -142,11 +142,8 @@ export function renderStations() {
 
     item.innerHTML = `
       <div class="station-icon-wrap">
-        ${iconUrl
-          ? `<img class="station-icon" src="${iconUrl}" alt="" loading="lazy">`
-          : ''
-        }
-        <svg class="station-icon${iconUrl ? ' hidden' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <img class="station-icon hidden" alt="">
+        <svg class="station-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4M3.5 3.5a14 14 0 0 0 0 17M20.5 3.5a14 14 0 0 1 0 17"/>
         </svg>
         <div class="station-play-overlay">
@@ -171,15 +168,6 @@ export function renderStations() {
         <button class="fav-star-btn ${state.favorites.includes(station.id) ? 'is-fav' : ''}" aria-label="${state.favorites.includes(station.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}" aria-pressed="${state.favorites.includes(station.id)}" data-station-id="${stationId}" type="button"><svg width="10" height="10" viewBox="-2 -2.5 28 28" overflow="visible" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
       </div>
     `;
-
-    const stationIcon = item.querySelector('.station-icon-wrap img.station-icon');
-    const fallbackIcon = item.querySelector('.station-icon-wrap svg.station-icon');
-    if (stationIcon && fallbackIcon) {
-      stationIcon.addEventListener('error', () => {
-        stationIcon.classList.add('hidden');
-        fallbackIcon.classList.remove('hidden');
-      });
-    }
 
     if (station.isCustom) {
       const badges = item.querySelector('.item-badges');
@@ -222,6 +210,18 @@ export function renderStations() {
     });
 
     list.appendChild(item);
+
+    if (iconUrl) {
+      const imgEl = item.querySelector('img.station-icon');
+      const svgEl = item.querySelector('svg.station-icon');
+      api.cacheIcon(iconUrl).then(dataUrl => {
+        if (dataUrl && imgEl && svgEl) {
+          imgEl.src = dataUrl;
+          imgEl.classList.remove('hidden');
+          svgEl.classList.add('hidden');
+        }
+      }).catch(() => {});
+    }
   }
 
   if (customStns.length > 0) {
@@ -351,10 +351,15 @@ export function updateMiniLogo(station) {
   const miniIcon = document.getElementById('mini-station-icon');
   const miniSvg  = document.getElementById('mini-logo-svg');
   if (!miniIcon || !miniSvg) return;
-  if (station && station.iconUrl) {
-    miniIcon.src = safeHttpUrl(station.iconUrl);
-    miniIcon.classList.remove('hidden');
-    miniSvg.classList.add('hidden');
+  const url = station && safeHttpUrl(station.iconUrl);
+  if (url) {
+    api.cacheIcon(url).then(dataUrl => {
+      if (dataUrl) {
+        miniIcon.src = dataUrl;
+        miniIcon.classList.remove('hidden');
+        miniSvg.classList.add('hidden');
+      }
+    }).catch(() => {});
   } else {
     miniIcon.classList.add('hidden');
     miniSvg.classList.remove('hidden');
@@ -365,10 +370,15 @@ export function updatePlayerLogo(station) {
   const playerIcon  = document.getElementById('player-station-icon');
   const defaultLogo = document.getElementById('player-default-logo');
   if (!playerIcon || !defaultLogo) return;
-  if (station && station.iconUrl) {
-    playerIcon.src = safeHttpUrl(station.iconUrl);
-    playerIcon.classList.remove('hidden');
-    defaultLogo.classList.add('hidden');
+  const url = station && safeHttpUrl(station.iconUrl);
+  if (url) {
+    api.cacheIcon(url).then(dataUrl => {
+      if (dataUrl) {
+        playerIcon.src = dataUrl;
+        playerIcon.classList.remove('hidden');
+        defaultLogo.classList.add('hidden');
+      }
+    }).catch(() => {});
   } else {
     playerIcon.classList.add('hidden');
     defaultLogo.classList.remove('hidden');
@@ -414,9 +424,12 @@ export function populateRecents() {
     item.title = station.name;
 
     const img = document.createElement('img');
-    img.src = safeHttpUrl(station.iconUrl) || '../assets/icon.png';
+    img.src = '../assets/icon.png';
     img.alt = '';
-    img.onerror = () => { img.src = '../assets/icon.png'; };
+    const recentUrl = safeHttpUrl(station.iconUrl);
+    if (recentUrl) {
+      api.cacheIcon(recentUrl).then(dataUrl => { if (dataUrl) img.src = dataUrl; }).catch(() => {});
+    }
     item.appendChild(img);
     item.addEventListener('click', () => selectStation(station));
     list.appendChild(item);

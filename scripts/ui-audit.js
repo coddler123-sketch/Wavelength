@@ -31,6 +31,7 @@ function wireIpc(win) {
   ipcMain.handle('get-stations', () => DEFAULT_STATIONS);
   ipcMain.handle('get-state', () => ({ ...state }));
   ipcMain.handle('check-stream', () => ({ ok: true }));
+  ipcMain.handle('cache-icon', () => null);
 
   ipcMain.on('play-pause', (_event, forceState) => {
     state.isPlaying = typeof forceState === 'boolean' ? forceState : !state.isPlaying;

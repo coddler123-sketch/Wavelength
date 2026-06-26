@@ -721,6 +721,91 @@ ipcMain.handle('check-stream', (e, url) => new Promise(resolve => {
   } catch (err) { resolve({ ok: false, error: err.message }); }
 }));
 
+// ── Icon Cache ────────────────────────────────────
+const crypto = require('crypto');
+let iconCacheDir = null;
+function getIconCacheDir() {
+  if (!iconCacheDir) {
+    iconCacheDir = path.join(app.getPath('userData'), 'icons');
+    try { fs.mkdirSync(iconCacheDir, { recursive: true }); } catch (_) {}
+  }
+  return iconCacheDir;
+}
+const iconMemCache = new Map(); // url -> dataURL
+const ICON_MAX_BYTES = 200_000;
+const ICON_MAX_FILES = 300;
+
+function urlHash(url) { return crypto.createHash('sha1').update(url).digest('hex'); }
+function extFromContentType(ct) {
+  if (!ct) return 'png';
+  if (ct.includes('jpeg') || ct.includes('jpg')) return 'jpg';
+  if (ct.includes('gif'))  return 'gif';
+  if (ct.includes('webp')) return 'webp';
+  if (ct.includes('svg'))  return 'svg';
+  return 'png';
+}
+function cacheCleanup() {
+  try {
+    const dir = getIconCacheDir();
+    const files = fs.readdirSync(dir).map(f => {
+      const fp = path.join(dir, f);
+      try { return { fp, mtime: fs.statSync(fp).mtimeMs }; } catch { return null; }
+    }).filter(Boolean).sort((a, b) => b.mtime - a.mtime);
+    for (const { fp } of files.slice(ICON_MAX_FILES)) {
+      try { fs.unlinkSync(fp); } catch (_) {}
+    }
+  } catch (_) {}
+}
+
+function readFromDisk(url) {
+  try {
+    const dir = getIconCacheDir();
+    const hash = urlHash(url);
+    const files = fs.readdirSync(dir).filter(f => f.startsWith(hash + '.'));
+    if (!files[0]) return null;
+    const fp = path.join(dir, files[0]);
+    const buf = fs.readFileSync(fp);
+    const ext = files[0].split('.').pop();
+    const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
+    return `data:${mime};base64,${buf.toString('base64')}`;
+  } catch { return null; }
+}
+
+ipcMain.handle('cache-icon', (e, url) => new Promise(resolve => {
+  if (!url || typeof url !== 'string' || !/^https?:\/\//.test(url)) return resolve(null);
+  if (iconMemCache.has(url)) return resolve(iconMemCache.get(url));
+  const fromDisk = readFromDisk(url);
+  if (fromDisk) { iconMemCache.set(url, fromDisk); return resolve(fromDisk); }
+  try {
+    const { net } = require('electron');
+    const req = net.request({ url, redirect: 'follow' });
+    const timer = setTimeout(() => { try { req.abort(); } catch (_) {} resolve(null); }, 5000);
+    req.on('response', res => {
+      if (res.statusCode >= 400) { clearTimeout(timer); resolve(null); return; }
+      const chunks = [];
+      let size = 0;
+      res.on('data', chunk => {
+        size += chunk.length;
+        if (size > ICON_MAX_BYTES) { try { req.abort(); } catch (_) {} clearTimeout(timer); resolve(null); return; }
+        chunks.push(chunk);
+      });
+      res.on('end', () => {
+        clearTimeout(timer);
+        const buf = Buffer.concat(chunks);
+        const ext = extFromContentType(res.headers['content-type']?.[0] || '');
+        const mime = ext === 'jpg' ? 'image/jpeg' : `image/${ext}`;
+        const dataUrl = `data:${mime};base64,${buf.toString('base64')}`;
+        iconMemCache.set(url, dataUrl);
+        try { fs.writeFileSync(path.join(getIconCacheDir(), `${urlHash(url)}.${ext}`), buf); } catch (_) {}
+        if (iconMemCache.size % 50 === 0) cacheCleanup();
+        resolve(dataUrl);
+      });
+    });
+    req.on('error', () => { clearTimeout(timer); resolve(null); });
+    req.end();
+  } catch { resolve(null); }
+}));
+
 ipcMain.handle('get-state',      () => ({
   isPlaying,
   isMini,

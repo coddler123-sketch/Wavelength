@@ -510,10 +510,8 @@ test('Renderer: externe Stationsdaten werden vor Template-Rendering escaped', ()
   assert.ok(renderer.includes('const stationCountry = escapeHtml(station.country'), 'Country wird nicht escaped');
   assert.ok(renderer.includes('const stationId = escapeHtml(station.id)'), 'Station-ID wird nicht escaped');
   assert.ok(renderer.includes('const iconUrl = safeHttpUrl(station.iconUrl)'), 'Icon-URL wird nicht validiert');
-  assert.ok(renderer.includes('miniIcon.src = safeHttpUrl(station.iconUrl)'), 'Mini-Logo-URL wird nicht sanitiert');
-  assert.ok(renderer.includes('playerIcon.src = safeHttpUrl(station.iconUrl)'), 'Player-Logo-URL wird nicht sanitiert');
-  assert.ok(renderer.includes('safeHttpUrl(station.iconUrl) || \'../assets/icon.png\''), 'Recent-Item-Logo-URL wird nicht sanitiert');
-  assert.ok(renderer.includes("stationIcon.addEventListener('error'"), 'Logo-Fallback sollte per Event Listener laufen');
+  assert.ok(renderer.includes('safeHttpUrl(station.iconUrl)') && renderer.includes('api.cacheIcon('), 'Icon-URLs werden nicht über Cache-Proxy geladen');
+  assert.ok(renderer.includes('const recentUrl = safeHttpUrl(station.iconUrl)'), 'Recent-Item-Logo-URL wird nicht sanitiert');
   assert.ok(!renderer.includes('${station.name}</span>'), 'Stationsname darf nicht roh in innerHTML interpoliert werden');
   assert.ok(!renderer.includes('src="${station.iconUrl}"'), 'Icon-URL darf nicht roh in innerHTML interpoliert werden');
   assert.ok(!renderer.includes('onerror='), 'Inline-Event-Handler im Stations-Markup sind nicht erlaubt');

@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openExternal:       (url) => ipcRenderer.send('open-external', url),
   selectStation:      (station, noPlay) => ipcRenderer.send('select-station', station, noPlay),
   logRendererError:   (info) => ipcRenderer.send('renderer-error', info),
+  cacheIcon:          (url) => ipcRenderer.invoke('cache-icon', url),
 
   // Receive from main
   onSetPlaying:    (cb) => listen('set-playing',    cb),
