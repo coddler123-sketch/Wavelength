@@ -11,6 +11,8 @@ import { shouldSuppressMainAutoplay, shouldRestartPlayback } from './station-sel
 const api = window.electronAPI;
 const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList } = window.utils;
 
+const iconRendererCache = new Map(); // url -> dataUrl (renderer-side, survives re-renders)
+
 function appendOption(select, value, label) {
   const option = document.createElement('option');
   option.value = value;
@@ -214,13 +216,20 @@ export function renderStations() {
     if (iconUrl) {
       const imgEl = item.querySelector('img.station-icon');
       const svgEl = item.querySelector('svg.station-icon');
-      api.cacheIcon(iconUrl).then(dataUrl => {
-        if (dataUrl && imgEl && svgEl) {
-          imgEl.src = dataUrl;
-          imgEl.classList.remove('hidden');
-          svgEl.classList.add('hidden');
-        }
-      }).catch(() => {});
+      if (iconRendererCache.has(iconUrl)) {
+        imgEl.src = iconRendererCache.get(iconUrl);
+        imgEl.classList.remove('hidden');
+        svgEl.classList.add('hidden');
+      } else {
+        api.cacheIcon(iconUrl).then(dataUrl => {
+          if (dataUrl && imgEl && svgEl) {
+            iconRendererCache.set(iconUrl, dataUrl);
+            imgEl.src = dataUrl;
+            imgEl.classList.remove('hidden');
+            svgEl.classList.add('hidden');
+          }
+        }).catch(() => {});
+      }
     }
   }
 
@@ -353,13 +362,20 @@ export function updateMiniLogo(station) {
   if (!miniIcon || !miniSvg) return;
   const url = station && safeHttpUrl(station.iconUrl);
   if (url) {
-    api.cacheIcon(url).then(dataUrl => {
-      if (dataUrl) {
-        miniIcon.src = dataUrl;
-        miniIcon.classList.remove('hidden');
-        miniSvg.classList.add('hidden');
-      }
-    }).catch(() => {});
+    if (iconRendererCache.has(url)) {
+      miniIcon.src = iconRendererCache.get(url);
+      miniIcon.classList.remove('hidden');
+      miniSvg.classList.add('hidden');
+    } else {
+      api.cacheIcon(url).then(dataUrl => {
+        if (dataUrl) {
+          iconRendererCache.set(url, dataUrl);
+          miniIcon.src = dataUrl;
+          miniIcon.classList.remove('hidden');
+          miniSvg.classList.add('hidden');
+        }
+      }).catch(() => {});
+    }
   } else {
     miniIcon.classList.add('hidden');
     miniSvg.classList.remove('hidden');
@@ -372,13 +388,20 @@ export function updatePlayerLogo(station) {
   if (!playerIcon || !defaultLogo) return;
   const url = station && safeHttpUrl(station.iconUrl);
   if (url) {
-    api.cacheIcon(url).then(dataUrl => {
-      if (dataUrl) {
-        playerIcon.src = dataUrl;
-        playerIcon.classList.remove('hidden');
-        defaultLogo.classList.add('hidden');
-      }
-    }).catch(() => {});
+    if (iconRendererCache.has(url)) {
+      playerIcon.src = iconRendererCache.get(url);
+      playerIcon.classList.remove('hidden');
+      defaultLogo.classList.add('hidden');
+    } else {
+      api.cacheIcon(url).then(dataUrl => {
+        if (dataUrl) {
+          iconRendererCache.set(url, dataUrl);
+          playerIcon.src = dataUrl;
+          playerIcon.classList.remove('hidden');
+          defaultLogo.classList.add('hidden');
+        }
+      }).catch(() => {});
+    }
   } else {
     playerIcon.classList.add('hidden');
     defaultLogo.classList.remove('hidden');

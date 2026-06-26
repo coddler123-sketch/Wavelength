@@ -771,8 +771,25 @@ function readFromDisk(url) {
   } catch { return null; }
 }
 
+function isPrivateHost(urlStr) {
+  try {
+    const { hostname } = new URL(urlStr);
+    if (hostname === 'localhost') return true;
+    const p = hostname.split('.').map(Number);
+    if (p.length === 4 && p.every(n => n >= 0 && n <= 255)) {
+      if (p[0] === 127) return true;
+      if (p[0] === 10) return true;
+      if (p[0] === 172 && p[1] >= 16 && p[1] <= 31) return true;
+      if (p[0] === 192 && p[1] === 168) return true;
+      if (p[0] === 169 && p[1] === 254) return true;
+    }
+  } catch { return true; }
+  return false;
+}
+
 ipcMain.handle('cache-icon', (e, url) => new Promise(resolve => {
   if (!url || typeof url !== 'string' || !/^https?:\/\//.test(url)) return resolve(null);
+  if (isPrivateHost(url)) return resolve(null);
   if (iconMemCache.has(url)) return resolve(iconMemCache.get(url));
   const fromDisk = readFromDisk(url);
   if (fromDisk) { iconMemCache.set(url, fromDisk); return resolve(fromDisk); }
