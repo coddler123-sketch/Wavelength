@@ -810,39 +810,28 @@ function isPrivateHost(urlStr) {
   return false;
 }
 
-ipcMain.handle('cache-icon', (e, url) => new Promise(resolve => {
-  if (!url || typeof url !== 'string' || !/^https?:\/\//.test(url)) return resolve(null);
-  if (isPrivateHost(url)) return resolve(null);
-  if (iconMemCache.has(url)) return resolve(iconMemCache.get(url));
+ipcMain.handle('cache-icon', async (e, url) => {
+  if (!url || typeof url !== 'string' || !/^https?:\/\//.test(url)) return null;
+  if (isPrivateHost(url)) return null;
+  if (iconMemCache.has(url)) return iconMemCache.get(url);
   const fromDisk = readFromDisk(url);
-  if (fromDisk) { iconMemCache.set(url, fromDisk); return resolve(fromDisk); }
+  if (fromDisk) { iconMemCache.set(url, fromDisk); return fromDisk; }
   try {
     const { net } = require('electron');
-    const req = net.request({ url, redirect: 'follow' });
-    const timer = setTimeout(() => { try { req.abort(); } catch (_) {} resolve(null); }, 5000);
-    req.on('response', res => {
-      if (res.statusCode >= 400) { clearTimeout(timer); resolve(null); return; }
-      const chunks = [];
-      let size = 0;
-      res.on('data', chunk => {
-        size += chunk.length;
-        if (size > ICON_MAX_BYTES) { try { req.abort(); } catch (_) {} clearTimeout(timer); resolve(null); return; }
-        chunks.push(chunk);
-      });
-      res.on('end', () => {
-        clearTimeout(timer);
-        const buf = Buffer.concat(chunks);
-        const ext = extFromContentType(res.headers['content-type']?.[0] || '');
-        const dataUrl = `data:${mimeFromExt(ext)};base64,${buf.toString('base64')}`;
-        iconMemCache.set(url, dataUrl);
-        try { fs.writeFileSync(path.join(getIconCacheDir(), `${urlHash(url)}.${ext}`), buf); } catch (_) {}
-        if (iconMemCache.size % 50 === 0) cacheCleanup();
-        resolve(dataUrl);
-      });
-    });
-    req.on('error', () => { clearTimeout(timer); resolve(null); });
-    req.end();
-  } catch { resolve(null); }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const res = await net.fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length > ICON_MAX_BYTES) return null;
+    const ext = extFromContentType(res.headers.get('content-type') || '');
+    const dataUrl = `data:${mimeFromExt(ext)};base64,${buf.toString('base64')}`;
+    iconMemCache.set(url, dataUrl);
+    try { fs.writeFileSync(path.join(getIconCacheDir(), `${urlHash(url)}.${ext}`), buf); } catch (_) {}
+    if (iconMemCache.size % 50 === 0) cacheCleanup();
+    return dataUrl;
+  } catch { return null; }
 }));
 
 ipcMain.handle('get-state',      () => ({
