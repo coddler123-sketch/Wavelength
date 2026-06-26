@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.0
+
+- **Icon-Proxy & lokales Caching**: Stationsicons werden über den Main-Prozess geladen (`net.request`), auf Disk gecacht (`userData/icons/<sha1>.<ext>`) und als `data:`-URL an den Renderer zurückgegeben. In-Memory-Map, 5 s Timeout, 200 KB-Limit, max. 300 Dateien. CSP verschärft: `img-src *` entfernt, nur noch `img-src 'self' data:` erlaubt.
+- **Sleep-Timer-Zyklus**: Der Sleep-Button durchläuft jetzt vier Stufen (15 → 30 → 60 → 90 Min. → aus) statt eines einfachen An/Aus-Toggles.
+- **Wiedergabeverlauf** (F4): Jeder ICY-Titel wird in `localStorage` gespeichert (max. 30 Einträge). Das History-Modal zeigt Titel mit relativen Zeitstempeln; Verlauf kann geleert werden.
+- **Crash Reporter**: Renderer-Fehler (`window.error`) und unbehandelte Promise-Rejections werden per IPC an den Main-Prozess weitergeleitet und in `app.log` geloggt.
+- **Barrierefreiheit**: Generischer Modal-Esc-Handler schließt alle fünf Modals; Tab-Fokus bleibt innerhalb offener Modals; Onboarding-Modal mit 3 Folien beim ersten Start.
+- **Performance**: Sucheingabe per 80 ms Debounce entprellt; CSS-Containment (`contain: layout style`) auf Senderliste-Items.
+- **UX-Polish**: Lade-Skeleton mit 8 Platzhalter-Zeilen; kontextbezogene Leerzustände (Favoriten, Suche, leer); Toast-Buttons mit Retry-Aktion; Shortcut-Hinweis beim ersten Start.
+- **CI/CD**: GitHub Actions Pipeline — `verify` + `npm run e2e` bei jedem Push, NSIS-Installer-Release bei Tags.
+- **E2E-Tests** (Playwright): 6 automatisierte UI-Tests für Play/Stop, Stationswechsel, Lautstärke, Stumm, Mini-Modus und Visualizer.
+- **Inline-Style-Refactor**: Alle `element.style.display`-Zuweisungen durch `classList.add/remove('hidden')` ersetzt; `.hidden { display: none !important }` als zentrale CSS-Klasse.
+
 ## 1.3.2
 
 - Centered the favorite star icon vertically and horizontally inside buttons (adjusted SVG size/viewBox, removed inner button inline whitespace, corrected CSS selector).
