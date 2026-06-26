@@ -210,6 +210,7 @@ export function renderStations() {
         return;
       }
       selectStation(station);
+      switchView('player');
     });
 
     list.appendChild(item);
@@ -455,7 +456,7 @@ export function populateRecents() {
       api.cacheIcon(recentUrl).then(dataUrl => { if (dataUrl) img.src = dataUrl; }).catch(() => {});
     }
     item.appendChild(img);
-    item.addEventListener('click', () => selectStation(station));
+    item.addEventListener('click', () => { selectStation(station); switchView('player'); });
     list.appendChild(item);
   });
 }
@@ -495,7 +496,7 @@ export function initKeyboardNav() {
         e.preventDefault();
         const targetId = items[state.highlightedIndex].dataset.id;
         const station = state.allStations.find(s => s.id === targetId);
-        if (station) selectStation(station);
+        if (station) { selectStation(station); switchView('player'); }
       }
     }
   });

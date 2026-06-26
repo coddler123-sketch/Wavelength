@@ -263,8 +263,8 @@ body.mini-mode #full-view {
   position: absolute;
   top: -9999px;
   left: -9999px;
-  width: 460px;
-  height: 480px;
+  width: 520px;
+  height: 560px;
 }
 body.mini-mode #mini-view { display: flex; }
 
