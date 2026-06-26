@@ -1,3 +1,5 @@
+import { loadSettings, saveSettings, applyTheme } from './settings.js';
+import { setLang, getLang, t, applyI18n } from './i18n.js';
 import { state } from './renderer-state.js';
 import {
   LS, loadInt, loadBool, saveBool,
@@ -473,6 +475,10 @@ if (historyModalEl) {
 
 // ── Init ─────────────────────────────────────────
 (async () => {
+  const settings = loadSettings();
+  applyTheme(settings.theme);
+  setLang(settings.lang);
+
   showStationsLoading();
   state.allStations = await api.getStations();
 
@@ -491,7 +497,7 @@ if (historyModalEl) {
     loadedStation = state.allStations[0];
   }
   if (loadedStation) {
-    selectStation(loadedStation, { startWhenStopped: false });
+    selectStation(loadedStation, { startWhenStopped: settings.autoplayOnStart });
   }
 
   renderStations();
@@ -531,7 +537,7 @@ if (historyModalEl) {
   }
 
   const wantPin   = loadBool(LS.pin);
-  const wantMini  = loadBool(LS.mini);
+  const wantMini  = settings.startMini || loadBool(LS.mini);
   const wantMuted = loadBool(LS.muted);
   if (wantPin   !== appState.isPinned) api.togglePin();
   if (wantMini  !== appState.isMini)   triggerToggleMini();
@@ -550,5 +556,69 @@ if (historyModalEl) {
     if (document.body.classList.contains('mini-mode')) document.body.classList.add('mini-idle');
   }
 
+  initSettingsModal();
+
   state.isInitialized = true;
 })();
+
+// ── Settings Modal ───────────────────────────────
+function initSettingsModal() {
+  const modal   = document.getElementById('settings-modal');
+  const saveBtn = document.getElementById('settings-save-btn');
+  const openBtn = document.getElementById('btn-settings');
+  if (!modal) return;
+
+  openBtn?.addEventListener('click', showSettingsModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+  saveBtn?.addEventListener('click', saveAndClose);
+
+  document.getElementById('theme-picker')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.theme-btn');
+    if (btn) highlightPicker('theme-picker', btn.dataset.theme, 'data-theme');
+  });
+  document.getElementById('lang-picker')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.lang-btn');
+    if (btn) highlightPicker('lang-picker', btn.dataset.lang, 'data-lang');
+  });
+}
+
+function showSettingsModal() {
+  const modal = document.getElementById('settings-modal');
+  if (!modal) return;
+  const s = loadSettings();
+
+  highlightPicker('theme-picker', s.theme, 'data-theme');
+  highlightPicker('lang-picker',  s.lang,  'data-lang');
+  document.getElementById('setting-autoplay').checked  = s.autoplayOnStart;
+  document.getElementById('setting-startmini').checked = s.startMini;
+
+  api.getAutostart().then(on => {
+    document.getElementById('setting-autostart').checked = Boolean(on);
+  });
+
+  modal.classList.remove('hidden');
+  modal.removeAttribute('aria-hidden');
+  modal.querySelector('button')?.focus();
+}
+
+async function saveAndClose() {
+  const theme        = document.querySelector('#theme-picker .theme-btn.active')?.dataset.theme || 'nacht';
+  const lang         = document.querySelector('#lang-picker .lang-btn.active')?.dataset.lang   || 'de';
+  const autoplayOn   = document.getElementById('setting-autoplay').checked;
+  const startMini    = document.getElementById('setting-startmini').checked;
+  const autostartOn  = document.getElementById('setting-autostart').checked;
+
+  saveSettings({ theme, lang, autoplayOnStart: autoplayOn, startMini });
+  applyTheme(theme);
+  setLang(lang);
+  applyI18n();
+  api.setAutostart(autostartOn);
+
+  document.getElementById('settings-modal')?.classList.add('hidden');
+}
+
+function highlightPicker(pickerId, value, attr) {
+  document.querySelectorAll(`#${pickerId} [${attr}]`).forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute(attr) === value);
+  });
+}

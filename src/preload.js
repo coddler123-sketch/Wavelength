@@ -21,6 +21,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectStation:      (station, noPlay) => ipcRenderer.send('select-station', station, noPlay),
   logRendererError:   (info) => ipcRenderer.send('renderer-error', info),
   cacheIcon:          (url) => ipcRenderer.invoke('cache-icon', url),
+  getAutostart:       ()    => ipcRenderer.invoke('get-autostart'),
+  setAutostart:       (on)  => ipcRenderer.send('set-autostart', on),
 
   // Receive from main
   onSetPlaying:    (cb) => listen('set-playing',    cb),

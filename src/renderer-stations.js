@@ -7,6 +7,7 @@ import {
 import { startPlay, stopPlay } from './renderer-audio.js';
 import { escapeHtml, safeHttpUrl } from './renderer-sanitize.mjs';
 import { shouldSuppressMainAutoplay, shouldRestartPlayback } from './station-selection.mjs';
+import { t } from './i18n.js';
 
 const api = window.electronAPI;
 const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList } = window.utils;
@@ -65,16 +66,16 @@ export function renderStations() {
     let icon, title, hint;
     if (state.favFilterActive) {
       icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>';
-      title = 'Keine Favoriten';
-      hint = 'Markiere Sender mit dem Stern, um sie hier zu sehen.';
+      title = t('empty.fav.title');
+      hint = t('empty.fav.hint');
     } else if (hasFilters) {
       icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
-      title = 'Keine Treffer';
-      hint = search ? `Nichts gefunden für „${escapeHtml(search)}".` : 'Versuche andere Filter.';
+      title = t('empty.search.title');
+      hint = search ? t('empty.search.hint.query', escapeHtml(search)) : t('empty.search.hint.filter');
     } else {
       icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4"/></svg>';
-      title = 'Keine Sender';
-      hint = 'Füge eigene Sender über das Plus-Symbol hinzu.';
+      title = t('empty.none.title');
+      hint = t('empty.none.hint');
     }
 
     const empty = document.createElement('div');
@@ -267,8 +268,8 @@ export function selectStation(station, options = {}) {
     if (station.streamUrl) {
       api.checkStream(station.streamUrl).then(result => {
         if (!result.ok) {
-          showToast(`Stream nicht erreichbar (${result.error || result.statusCode})`, {
-            actionLabel: 'Nochmal',
+          showToast(t('toast.stream.error', result.error || result.statusCode), {
+            actionLabel: t('toast.retry'),
             onAction: () => selectStation(station, { startWhenStopped: true }),
           });
         }

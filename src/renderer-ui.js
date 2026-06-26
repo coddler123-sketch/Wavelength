@@ -4,7 +4,8 @@ import {
   stationGainKey, clampStationGainDb, gainDbToLinear, stationGainLabel,
   nextStationGainDb,
 } from './station-gain.mjs';
-import { connectionLabel, playStopLabel } from './ui-labels.mjs';
+import { playStopLabel } from './ui-labels.mjs';
+import { t } from './i18n.js';
 
 export {
   STATION_GAIN_MIN_DB, STATION_GAIN_MAX_DB, STATION_GAIN_STEP_DB,
@@ -65,7 +66,7 @@ window.addEventListener('resize', () => {
 export function setLiveStatus(st) {
   const el = document.getElementById('live-status');
   if (!el) return;
-  el.textContent = connectionLabel(st);
+  el.textContent = t(`status.${st}`);
 }
 
 export function reportConnectionState(st) {
@@ -402,9 +403,9 @@ export function setSleepEndsAt(value) {
   if (hadTimer !== !!state.sleepEndsAt) {
     if (state.sleepEndsAt) {
       const mins = Math.max(1, Math.ceil((state.sleepEndsAt - Date.now()) / 60_000));
-      showToast(`Sleep in ${mins} min`);
+      showToast(t('toast.sleep.on', mins));
     } else {
-      showToast('Sleep aus');
+      showToast(t('toast.sleep.off'));
     }
   }
 }

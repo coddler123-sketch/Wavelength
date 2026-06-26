@@ -486,7 +486,7 @@ test('Renderer: selectStation persistiert Auswahl, synchronisiert main ohne Dopp
   assert.ok(body.includes("localStorage.setItem('wl.lastStationId', station.id)"), 'letzte Station wird nicht persistiert');
   assert.ok(!body.includes('api.playPause(true)'), 'selectStation darf keinen zweiten Play-Befehl senden');
   assert.ok(renderer.includes("selectStation(station, { syncMain: false, startWhenStopped: false })"), 'Main-Sync darf nicht zurück an Main funken');
-  assert.ok(renderer.includes("selectStation(loadedStation, { startWhenStopped: false })"), 'Initialauswahl darf nicht automatisch Playback starten');
+  assert.ok(renderer.includes("selectStation(loadedStation, { startWhenStopped: settings.autoplayOnStart })"), 'Initialauswahl nutzt settings.autoplayOnStart');
   assert.ok(renderer.includes('if (loadBool(LS.playing)) api.playPause(true);'), 'Autoplay-Restore muss force true nutzen');
 });
 

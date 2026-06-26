@@ -710,6 +710,11 @@ ipcMain.handle('remove-custom-station', (e, id) => {
   return allStations;
 });
 
+ipcMain.handle('get-autostart', () => getAutostart());
+ipcMain.on('set-autostart', (e, enable) => {
+  if (Boolean(enable) !== getAutostart()) toggleAutostart();
+});
+
 ipcMain.handle('check-stream', (e, url) => new Promise(resolve => {
   try {
     const { net } = require('electron');
