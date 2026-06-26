@@ -733,10 +733,22 @@ function getIconCacheDir() {
   if (!iconCacheDir) {
     iconCacheDir = path.join(app.getPath('userData'), 'icons');
     try { fs.mkdirSync(iconCacheDir, { recursive: true }); } catch (_) {}
+    const versionFile = path.join(iconCacheDir, '_version');
+    try {
+      if (fs.readFileSync(versionFile, 'utf8').trim() !== ICON_CACHE_VERSION) throw new Error();
+    } catch {
+      try {
+        for (const f of fs.readdirSync(iconCacheDir)) {
+          if (f !== '_version') fs.unlinkSync(path.join(iconCacheDir, f));
+        }
+        fs.writeFileSync(versionFile, ICON_CACHE_VERSION);
+      } catch (_) {}
+    }
   }
   return iconCacheDir;
 }
 const iconMemCache = new Map(); // url -> dataURL
+const ICON_CACHE_VERSION = '2'; // bump to invalidate disk cache on format changes
 const ICON_MAX_BYTES = 200_000;
 const ICON_MAX_FILES = 300;
 
