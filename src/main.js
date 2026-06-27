@@ -4,7 +4,7 @@ const { autoUpdater } = require('electron-updater');
 const { trayState: computeTrayState } = require('./utils.js');
 const { loadStations, DEFAULT_STATIONS } = require('./stations.js');
 const customStations = require('./custom-stations.js');
-const { buildTrayStationMenuItems, stationSwitcherSubmenu } = require('./tray-menu.js');
+const { buildTrayStationMenuItems, stationSwitcherSubmenu, setTrayLang, tr } = require('./tray-menu.js');
 const { createIcyMetadataClient } = require('./icy-metadata-client.js');
 const windowState = require('./window-state.js');
 const path = require('path');
@@ -107,15 +107,16 @@ function setSleepTimer(minutes) {
 }
 
 function sleepLabel() {
-  if (!sleepTimer) return 'Sleeptimer';
+  const s = tr();
+  if (!sleepTimer) return s.sleep;
   const rem = Math.ceil((sleepEndsAt - Date.now()) / 60_000);
-  return `Sleeptimer - noch ${rem} min`;
+  return `${s.sleep} - ${rem} min`;
 }
 
 function sleepMenuItem(minutes) {
   const active = sleepTimer && Math.round((sleepEndsAt - Date.now()) / 60_000) === minutes;
   return {
-    label: `${minutes} Minuten`,
+    label: tr().sleepMin(minutes),
     type: 'checkbox',
     checked: !!active,
     click: () => setSleepTimer(minutes)
@@ -309,12 +310,13 @@ function updateTrayMenu() {
   if (!tray || tray.isDestroyed()) return;
   const stationMenuItems = buildTrayStationMenuItems(allStations, activeStation, selectStationInternal);
 
+  const s = tr();
   const menu = Menu.buildFromTemplate([
     { label: `Wavelength v${APP_VERSION}`, enabled: false, icon: getTrayIcon() },
     { type: 'separator' },
-    { label: isPlaying ? '⏹  Stoppen' : '▶  Abspielen', click: () => togglePlay() },
+    { label: isPlaying ? s.stop : s.play, click: () => togglePlay() },
     {
-      label: 'Station wechseln',
+      label: s.switchStation,
       submenu: stationSwitcherSubmenu(stationMenuItems, activeStation)
     },
     { type: 'separator' },
@@ -326,34 +328,34 @@ function updateTrayMenu() {
         sleepMenuItem(60),
         sleepMenuItem(90),
         { type: 'separator' },
-        { label: 'Abbrechen', enabled: !!sleepTimer, click: () => setSleepTimer(0) },
+        { label: s.sleepCancel, enabled: !!sleepTimer, click: () => setSleepTimer(0) },
       ]
     },
     { type: 'separator' },
-    { label: 'Stumm', type: 'checkbox', checked: isMuted, click: () => toggleMute() },
-    { label: 'Anheften (immer im Vordergrund)', type: 'checkbox', checked: isPinned, click: () => togglePin() },
-    { label: isMini ? 'Vollansicht' : 'Mini-Player', click: () => toggleMini() },
-    { label: 'Mini an Bildschirmkante andocken', type: 'checkbox', checked: dockMini, click: () => toggleMiniDock() },
-    { label: mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() ? 'Ausblenden' : 'Anzeigen', click: toggleWindow },
+    { label: s.mute, type: 'checkbox', checked: isMuted, click: () => toggleMute() },
+    { label: s.pin, type: 'checkbox', checked: isPinned, click: () => togglePin() },
+    { label: isMini ? s.full : s.mini, click: () => toggleMini() },
+    { label: s.dock, type: 'checkbox', checked: dockMini, click: () => toggleMiniDock() },
+    { label: mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() ? s.hide : s.show, click: toggleWindow },
     { type: 'separator' },
-    { label: 'Autostart', type: 'checkbox', checked: getAutostart(), click: () => toggleAutostart() },
+    { label: s.autostart, type: 'checkbox', checked: getAutostart(), click: () => toggleAutostart() },
     { type: 'separator' },
     {
-      label: 'Zurücksetzen',
+      label: s.reset,
       submenu: [
-        { label: 'Fensterposition zurücksetzen', click: resetWindowPosition },
-        { label: 'Einstellungen zurücksetzen', click: resetAppSettings },
+        { label: s.resetWin, click: resetWindowPosition },
+        { label: s.resetApp, click: resetAppSettings },
       ]
     },
     { type: 'separator' },
-    { label: 'Tastaturkürzel', click: showShortcutsDialog },
-    { label: 'Über Wavelength', click: showAboutDialog },
+    { label: s.shortcuts, click: showShortcutsDialog },
+    { label: s.about, click: showAboutDialog },
     { type: 'separator' },
     ...(updateReadyVersion ? [
-      { label: `⬆  Update v${updateReadyVersion} installieren`, click: () => autoUpdater.quitAndInstall() },
+      { label: s.update(updateReadyVersion), click: () => autoUpdater.quitAndInstall() },
       { type: 'separator' },
     ] : []),
-    { label: 'Beenden', click: quitApp }
+    { label: s.quit, click: quitApp }
   ]);
   tray.setContextMenu(menu);
 }
@@ -713,6 +715,11 @@ ipcMain.handle('remove-custom-station', (e, id) => {
 ipcMain.handle('get-autostart', () => getAutostart());
 ipcMain.on('set-autostart', (e, enable) => {
   if (Boolean(enable) !== getAutostart()) toggleAutostart();
+});
+
+ipcMain.on('set-lang', (e, lang) => {
+  setTrayLang(lang);
+  updateTrayMenu();
 });
 
 ipcMain.handle('check-stream', (e, url) => new Promise(resolve => {

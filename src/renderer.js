@@ -478,6 +478,7 @@ if (historyModalEl) {
   const settings = loadSettings();
   applyTheme(settings.theme);
   setLang(settings.lang);
+  api.setLang(settings.lang);
 
   showStationsLoading();
   state.allStations = await api.getStations();
@@ -611,6 +612,7 @@ async function saveAndClose() {
   saveSettings({ theme, lang, autoplayOnStart: autoplayOn, startMini });
   applyTheme(theme);
   setLang(lang);
+  api.setLang(lang);
   applyI18n();
   populateFilters();
   renderStations();

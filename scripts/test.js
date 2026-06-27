@@ -211,7 +211,7 @@ test('Runtime: sichtbare Quellen enthalten keine Mojibake-Reste', () => {
 
 test('Main: Tray-Updates ignorieren bereits zerstoerte Objekte', () => {
   assert.ok(main.includes('if (!tray || tray.isDestroyed()) return;'), 'updateTrayMenu muss zerstoerten Tray ignorieren');
-  assert.ok(main.includes("mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() ? 'Ausblenden' : 'Anzeigen'"), 'Tray-Menue darf isVisible nicht auf zerstoertem Fenster aufrufen');
+  assert.ok(main.includes('mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()'), 'Tray-Menue darf isVisible nicht auf zerstoertem Fenster aufrufen');
   assert.ok(main.includes("if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();"), 'hide-window IPC braucht Window-Guard');
 });
 
@@ -290,11 +290,12 @@ test('Main: Tray-Texte sind deutsch lokalisiert', () => {
   assert.ok(main.includes("connecting: 'Verbinden'"), 'Tray-Status connecting ist nicht deutsch');
   assert.ok(main.includes("reconnecting: 'Erneut verbinden'"), 'Tray-Status reconnecting ist nicht deutsch');
   assert.ok(main.includes("stopped: 'Gestoppt'"), 'Tray-Status stopped ist nicht deutsch');
-  assert.ok(main.includes("'▶  Abspielen'"), 'Tray-Play-Text ist nicht deutsch');
-  assert.ok(main.includes("'⏹  Stoppen'"), 'Tray-Stop-Text ist nicht deutsch');
-  assert.ok(main.includes("'Anheften (immer im Vordergrund)'"), 'Tray-Pin-Text ist nicht deutsch');
-  assert.ok(main.includes("return 'Sleeptimer'"), 'Tray-Sleeptimer-Text ist nicht deutsch');
-  assert.ok(main.includes("'Mini-Player'"), 'Tray-Mini-Player-Text ist nicht deutsch');
+  const trayMenu = fs.readFileSync(path.join(__dirname, '../src/tray-menu.js'), 'utf8');
+  assert.ok(trayMenu.includes("'▶  Abspielen'"), 'Tray-Play-Text ist nicht deutsch');
+  assert.ok(trayMenu.includes("'⏹  Stoppen'"), 'Tray-Stop-Text ist nicht deutsch');
+  assert.ok(trayMenu.includes("'Anheften (immer im Vordergrund)'"), 'Tray-Pin-Text ist nicht deutsch');
+  assert.ok(trayMenu.includes("'Sleeptimer'"), 'Tray-Sleeptimer-Text ist nicht deutsch');
+  assert.ok(trayMenu.includes("'Mini-Player'"), 'Tray-Mini-Player-Text ist nicht deutsch');
 });
 
 test('Main: Tray-Stationsmenue ist alphabetisch sortiert', () => {
@@ -330,7 +331,7 @@ test('Main: Tray-Stationsmenue gruppiert große Listen alphabetisch', () => {
 
 test('Main: Tray-Stationswechsler zeigt aktuelle Station und Ladezustand', () => {
   const menuItems = [{ label: 'Alpha' }];
-  assert.deepEqual(stationSwitcherSubmenu([], null), [{ label: 'Lade Stationen...', enabled: false }]);
+  assert.deepEqual(stationSwitcherSubmenu([], null), [{ label: 'Lade Stationen…', enabled: false }]);
   assert.deepEqual(stationSwitcherSubmenu(menuItems, null), menuItems);
   assert.deepEqual(stationSwitcherSubmenu(menuItems, { name: 'Beta' }), [
     { label: 'Aktuell: Beta', enabled: false },
