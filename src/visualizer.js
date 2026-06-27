@@ -4,6 +4,7 @@
   const VISUALIZER_MODES = [
     'bars', 'mirror', 'oscilloscope', 'waterfall',
     'wave', 'dna', 'particles', 'tunnel', 'scanner', 'medwaves', 'neonpulse',
+    'flexi', 'unchained', 'geiss', 'idiot',
   ];
   const VISUALIZER_LABELS = {
     bars:        'Bars',
@@ -17,6 +18,10 @@
     scanner:     'Signal Scanner',
     medwaves:    'Wavelength Waves',
     neonpulse:   'Neon Pulse',
+    flexi:       'Flexi',
+    unchained:   'Unchained',
+    geiss:       'Geiss',
+    idiot:       'Idiot',
   };
 
   function create(options) {
@@ -48,6 +53,7 @@
     let tunnelHistory = null; // tunnel ring buffer
     let tunnelHead    = 0;
     let particles     = [];
+    let idiotFlashes  = [];
 
     const WFALL_FRAMES  = 80;
     const TUNNEL_RINGS  = 22;
@@ -575,6 +581,126 @@
       canvasCtx.restore();
     }
 
+    function drawFlexi(values, W, H) {
+      const ctx = canvasCtx;
+      const cx = W / 2, cy = H / 2;
+      const bass = values.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
+      const baseR = Math.min(W, H) * (0.18 + bass * 0.12);
+      const steps = 128;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fillRect(0, 0, W, H);
+      for (let layer = 0; layer < 3; layer++) {
+        const hue = (clock * 30 + layer * 120) % 360;
+        ctx.beginPath();
+        for (let i = 0; i <= steps; i++) {
+          const a  = (i / steps) * Math.PI * 2;
+          const fi = Math.floor((i / steps) * values.length);
+          const v  = values[fi] || 0;
+          const warp = Math.sin(a * 3 + clock * 1.2) * 0.15 + Math.sin(a * 5 - clock * 0.8) * 0.1;
+          const r = (baseR + v * baseR * 0.9 + warp * baseR) * (1 - layer * 0.18);
+          const x = cx + Math.cos(a) * r;
+          const y = cy + Math.sin(a) * r;
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = `hsla(${hue},90%,65%,${0.7 - layer * 0.2})`;
+        ctx.shadowColor = `hsla(${hue},90%,65%,0.6)`;
+        ctx.shadowBlur  = 12 + bass * 20;
+        ctx.lineWidth   = 2 - layer * 0.4;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawUnchained(values, W, H) {
+      const ctx = canvasCtx;
+      const cx = W / 2, cy = H / 2;
+      const n  = 64;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < n; i++) {
+        const a   = (i / n) * Math.PI * 2 + clock * 0.15;
+        const fi  = Math.floor((i / n) * values.length);
+        const v   = values[fi] || 0;
+        const len = (0.06 + v * 0.42) * Math.min(W, H);
+        const hue = (i / n * 280 + clock * 40) % 360;
+        ctx.strokeStyle = `hsla(${hue},100%,68%,${0.5 + v * 0.5})`;
+        ctx.shadowColor = `hsla(${hue},100%,68%,0.8)`;
+        ctx.shadowBlur  = 6 + v * 16;
+        ctx.lineWidth   = 1 + v * 2.5;
+        ctx.lineCap     = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawGeiss(values, W, H) {
+      const ctx  = canvasCtx;
+      const bass = values.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
+      const mid  = values.slice(8, 24).reduce((a, b) => a + b, 0) / 16;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.fillRect(0, 0, W, H);
+      const cols = 8, rows = 6;
+      for (let row = 0; row <= rows; row++) {
+        for (let col = 0; col <= cols; col++) {
+          const px  = (col / cols) * W;
+          const py  = (row / rows) * H;
+          const v   = values[Math.floor((col / cols) * values.length)] || 0;
+          const hue = ((Math.sin(px / W * 3 + clock) * 120 + Math.cos(py / H * 2 - clock * 0.7) * 80 + clock * 50) % 360 + 360) % 360;
+          const r   = (20 + v * 60 + bass * 30) * (0.6 + mid * 0.5);
+          const g   = ctx.createRadialGradient(px, py, 0, px, py, r);
+          g.addColorStop(0, `hsla(${hue},100%,65%,${0.18 + v * 0.22})`);
+          g.addColorStop(1, 'transparent');
+          ctx.fillStyle = g;
+          ctx.fillRect(px - r, py - r, r * 2, r * 2);
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawIdiot(values, W, H) {
+      const ctx  = canvasCtx;
+      const bass = values.slice(0, 6).reduce((a, b) => a + b, 0) / 6;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      ctx.fillRect(0, 0, W, H);
+      if (bass > 0.55 && idiotFlashes.length < 14) {
+        const hue = Math.random() * 360;
+        idiotFlashes.push({
+          x1: Math.random() * W, y1: Math.random() * H,
+          x2: Math.random() * W, y2: Math.random() * H,
+          hue, life: 1.0, width: 1 + Math.random() * 3,
+        });
+      }
+      idiotFlashes = idiotFlashes.filter(f => f.life > 0);
+      ctx.lineCap = 'round';
+      for (const f of idiotFlashes) {
+        ctx.strokeStyle = `hsla(${f.hue},100%,75%,${f.life})`;
+        ctx.shadowColor = `hsla(${f.hue},100%,65%,${f.life * 0.8})`;
+        ctx.shadowBlur  = 14 * f.life;
+        ctx.lineWidth   = f.width * f.life;
+        ctx.beginPath();
+        ctx.moveTo(f.x1, f.y1);
+        ctx.lineTo(f.x2, f.y2);
+        ctx.stroke();
+        f.life -= 0.04;
+      }
+      ctx.globalAlpha = bass * 0.55;
+      const grd = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * 0.4);
+      grd.addColorStop(0, `hsl(${(clock * 80) % 360},100%,75%)`);
+      grd.addColorStop(1, 'transparent');
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
     function drawNeonPulse(values, W, H) {
       const n   = 46;
       const gap = W / n;
@@ -614,6 +740,10 @@
       else if (mode === 'scanner')      drawScanner(values, W, H);
       else if (mode === 'medwaves')     drawMedWaves(values, W, H);
       else if (mode === 'neonpulse')    drawNeonPulse(values, W, H);
+      else if (mode === 'flexi')        drawFlexi(values, W, H);
+      else if (mode === 'unchained')    drawUnchained(values, W, H);
+      else if (mode === 'geiss')        drawGeiss(values, W, H);
+      else if (mode === 'idiot')        drawIdiot(values, W, H);
       else                              drawBars(values, W, H);
     }
 
