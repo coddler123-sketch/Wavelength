@@ -281,10 +281,21 @@ export function updateVolSlider(val, persist = true) {
   document.getElementById('vol-val').textContent = val + '%';
   document.getElementById('mini-vol').value = val;
   document.getElementById('mini-vol-val').textContent = val + '%';
-  const pct = val + '%';
-  const fill = `linear-gradient(to right, var(--accent2) 0%, var(--accent2) ${pct}, var(--surface2) ${pct})`;
-  document.getElementById('vol-slider').style.background = fill;
-  document.getElementById('mini-vol').style.background = fill;
+  const sliderFill = (el, thumbPx) => {
+    const w = el.offsetWidth;
+    const pct = w > thumbPx ? ((thumbPx / w) * 100).toFixed(2) + '%' : val + '%';
+    el.style.background = `linear-gradient(to right, var(--accent2) 0%, var(--accent2) ${pct}, var(--surface2) ${pct})`;
+  };
+  const thumbOffset = (sliderEl, thumbW) => {
+    const w = sliderEl.offsetWidth;
+    return w > 0 ? thumbW / 2 + (val / 100) * (w - thumbW) : null;
+  };
+  const mainEl = document.getElementById('vol-slider');
+  const miniEl = document.getElementById('mini-vol');
+  const mainOffset = thumbOffset(mainEl, 14);
+  const miniOffset = thumbOffset(miniEl, 11);
+  if (mainOffset !== null) sliderFill(mainEl, mainOffset);
+  if (miniOffset !== null) sliderFill(miniEl, miniOffset);
   if (persist) localStorage.setItem(LS.vol, String(val));
   const isMuteActive = document.body.classList.contains('muted-state');
   document.getElementById('mute-icon').innerHTML = isMuteActive ? MUTED_SVG : speakerSVG(val);
