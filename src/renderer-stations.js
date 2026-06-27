@@ -7,7 +7,7 @@ import {
 import { startPlay, stopPlay } from './renderer-audio.js';
 import { escapeHtml, safeHttpUrl } from './renderer-sanitize.mjs';
 import { shouldSuppressMainAutoplay, shouldRestartPlayback } from './station-selection.mjs';
-import { t } from './i18n.js';
+import { t, displayGenre } from './i18n.js';
 
 const api = window.electronAPI;
 const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList } = window.utils;
@@ -121,9 +121,10 @@ export function renderStations() {
     item.dataset.id = station.id;
     item.setAttribute('role', 'button');
     item.setAttribute('tabindex', '0');
-    item.setAttribute('aria-label', `${station.name}, ${station.genre}, ${station.country}`);
+    const genreDisplay = displayGenre(station.genre);
+    item.setAttribute('aria-label', `${station.name}, ${genreDisplay}, ${station.country}`);
     const tipParts = [station.name];
-    if (station.genre) tipParts.push(station.genre);
+    if (genreDisplay) tipParts.push(genreDisplay);
     if (station.country) tipParts.push(station.country);
     if (station.bitrate) tipParts.push(`${station.bitrate} kbps`);
     if (station.codec) tipParts.push(station.codec);
@@ -140,7 +141,7 @@ export function renderStations() {
     const iconUrl = safeHttpUrl(station.iconUrl);
     const stationId = escapeHtml(station.id);
     const stationName = escapeHtml(station.name);
-    const stationGenre = escapeHtml(station.genre || 'Radio');
+    const stationGenre = escapeHtml(displayGenre(station.genre) || 'Radio');
     const stationCountry = escapeHtml(station.country || '');
 
     item.innerHTML = `
@@ -280,7 +281,7 @@ export function selectStation(station, options = {}) {
 
   setActiveStationName(station.name);
   document.getElementById('active-station-subtitle').textContent =
-    `${station.genre} · ${station.country}`;
+    `${displayGenre(station.genre)} · ${station.country}`;
   document.getElementById('mini-station-name').textContent = station.name;
   document.getElementById('mini-station-name').title = station.name;
   updateMiniLogo(station);

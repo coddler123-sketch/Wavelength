@@ -506,7 +506,7 @@ test('Main: get-stations-Fallback referenziert importierte DEFAULT_STATIONS', ()
 
 test('Renderer: externe Stationsdaten werden vor Template-Rendering escaped', () => {
   assert.ok(renderer.includes('const stationName = escapeHtml(station.name)'), 'Stationsname wird nicht escaped');
-  assert.ok(renderer.includes('const stationGenre = escapeHtml(station.genre'), 'Genre wird nicht escaped');
+  assert.ok(renderer.includes('const stationGenre = escapeHtml(displayGenre(station.genre') || renderer.includes('const stationGenre = escapeHtml(station.genre'), 'Genre wird nicht escaped');
   assert.ok(renderer.includes('const stationCountry = escapeHtml(station.country'), 'Country wird nicht escaped');
   assert.ok(renderer.includes('const stationId = escapeHtml(station.id)'), 'Station-ID wird nicht escaped');
   assert.ok(renderer.includes('const iconUrl = safeHttpUrl(station.iconUrl)'), 'Icon-URL wird nicht validiert');

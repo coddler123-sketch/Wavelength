@@ -132,6 +132,23 @@ export function t(key, ...args) {
   return args.reduce((s, a, i) => s.replace(`{${i}}`, a), str);
 }
 
+const GENRE_EN = {
+  '60er': '60s', '70er': '70s', '80er': '80s', '90er': '90s', '2000er': '2000s',
+  'Nachrichten': 'News', 'Kultur': 'Culture', 'Wissen': 'Knowledge',
+  'Elektronik': 'Electronic', 'Leichte Musik': 'Easy Listening',
+  'Weltmusik': 'World Music', 'Klassik': 'Classical',
+  'Rock Klassiker': 'Classic Rock', 'Jugend': 'Youth', 'Lokal': 'Local',
+  'Schlager': 'Schlager',
+};
+
+export function displayGenre(genre) {
+  if (_lang === 'de' || !genre) return genre;
+  return genre
+    .split(' / ')
+    .map(p => GENRE_EN[p] ?? p)
+    .join(' / ');
+}
+
 export function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
