@@ -304,25 +304,25 @@ export function populateFilters() {
   if (!genreSelect || !langSelect) return;
 
   const categories = [
-    'Ambient/Chillout',
-    'Pop & Charts',
-    'Rock & Metal',
-    'Elektronik & Dance',
-    'Hip-Hop & R&B',
-    'Klassik & Jazz',
-    'Wissen & Kultur',
-    'Nachrichten & Talk',
-    'Oldies & Jahrzehnte',
-    'Schlager & Weltmusik',
-    'Sonstige'
+    ['Ambient/Chillout',    'filter.cat.ambient'],
+    ['Pop & Charts',        'filter.cat.pop'],
+    ['Rock & Metal',        'filter.cat.rock'],
+    ['Elektronik & Dance',  'filter.cat.electronic'],
+    ['Hip-Hop & R&B',       'filter.cat.hiphop'],
+    ['Klassik & Jazz',      'filter.cat.classical'],
+    ['Wissen & Kultur',     'filter.cat.knowledge'],
+    ['Nachrichten & Talk',  'filter.cat.news'],
+    ['Oldies & Jahrzehnte', 'filter.cat.oldies'],
+    ['Schlager & Weltmusik','filter.cat.schlager'],
+    ['Sonstige',            'filter.cat.other'],
   ];
   const langs  = [...new Set(state.allStations.map(s => getLanguageLabel(s.language)).filter(Boolean))].sort();
 
   genreSelect.replaceChildren();
   langSelect.replaceChildren();
-  appendOption(genreSelect, '', 'Alle Kategorien');
-  appendOption(langSelect, '', 'Alle Sprachen');
-  categories.forEach(c => appendOption(genreSelect, c, c));
+  appendOption(genreSelect, '', t('filter.all.categories'));
+  appendOption(langSelect, '', t('filter.all.languages'));
+  categories.forEach(([val, key]) => appendOption(genreSelect, val, t(key)));
   langs.forEach(l => appendOption(langSelect, l, l));
 }
 

@@ -1219,14 +1219,14 @@ test('filterStations: Bitrate-Filter ignoriert Custom-Stationen', () => {
 
 test('Renderer: Sprachfilter zeigt lokalisierte Labels', () => {
   assert.ok(renderer.includes('getLanguageLabel'), 'Renderer nutzt keine lokalisierten Sprachlabels');
-  assert.ok(renderer.includes("appendOption(langSelect, '', 'Alle Sprachen')"), 'Default-Sprachfilter fehlt');
+  assert.ok(renderer.includes("appendOption(langSelect, '', t('filter.all.languages'))"), 'Default-Sprachfilter fehlt');
   assert.ok(renderer.includes('getLanguageLabel(s.language)'), 'Sprachfilter-Optionen werden nicht lokalisiert');
 });
 
 test('Renderer: Genre-Filter enthaelt Oldies & Jahrzehnte und Ambient/Chillout', () => {
-  assert.ok(renderer.includes("'Oldies & Jahrzehnte'"), 'Oldies/Jahrzehnte-Kategorie fehlt im Genre-Filter');
-  assert.ok(renderer.includes("'Ambient/Chillout'"), 'Ambient/Chillout-Kategorie fehlt im Genre-Filter');
-  assert.ok(renderer.includes("'Sonstige'"), 'Sonstige-Kategorie fehlt im Genre-Filter');
+  assert.ok(renderer.includes("'filter.cat.oldies'"), 'Oldies/Jahrzehnte-Kategorie fehlt im Genre-Filter');
+  assert.ok(renderer.includes("'filter.cat.ambient'"), 'Ambient/Chillout-Kategorie fehlt im Genre-Filter');
+  assert.ok(renderer.includes("'filter.cat.other'"), 'Sonstige-Kategorie fehlt im Genre-Filter');
   assert.ok(!renderer.includes("'Sonstige / Ambient'"), 'Alter Sonstige/Ambient-Mix darf nicht mehr im Genre-Filter stehen');
 });
 
