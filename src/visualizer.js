@@ -3,7 +3,7 @@
   const BAR_COUNT = 44;
   const VISUALIZER_MODES = [
     'bars', 'mirror', 'oscilloscope', 'waterfall',
-    'wave', 'dna', 'particles', 'tunnel', 'scanner', 'medwaves',
+    'wave', 'dna', 'particles', 'tunnel', 'scanner', 'medwaves', 'neonpulse',
   ];
   const VISUALIZER_LABELS = {
     bars:        'Bars',
@@ -16,6 +16,7 @@
     tunnel:      'Tunnel',
     scanner:     'Signal Scanner',
     medwaves:    'Wavelength Waves',
+    neonpulse:   'Neon Pulse',
   };
 
   function create(options) {
@@ -574,6 +575,34 @@
       canvasCtx.restore();
     }
 
+    function drawNeonPulse(values, W, H) {
+      const n   = 46;
+      const gap = W / n;
+      const mid = H / 2;
+      const ctx = canvasCtx;
+      ctx.save();
+      ctx.lineCap = 'round';
+      for (let j = 0; j < n; j++) {
+        const f   = j / (n - 1);
+        const val = values[Math.floor(f * (values.length - 1))] || 0;
+        const hgt = val * mid * 0.92;
+        const x   = j * gap + gap * 0.5;
+        // Pink (#ff2d95) → Cyan (#21d3ee) across bars
+        const hue = 320 - f * 200;
+        const col = `hsl(${hue},95%,62%)`;
+        ctx.strokeStyle = col;
+        ctx.shadowColor = col;
+        ctx.shadowBlur  = 10 + val * 14;
+        ctx.lineWidth   = Math.max(2, gap * 0.42);
+        ctx.beginPath();
+        ctx.moveTo(x, mid - hgt);
+        ctx.lineTo(x, mid + hgt);
+        ctx.stroke();
+      }
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
     function drawMain(values, W, H) {
       if      (mode === 'mirror')       drawMirror(values, W, H);
       else if (mode === 'oscilloscope') drawOscilloscope(values, W, H);
@@ -584,6 +613,7 @@
       else if (mode === 'tunnel')       drawTunnel(values, W, H);
       else if (mode === 'scanner')      drawScanner(values, W, H);
       else if (mode === 'medwaves')     drawMedWaves(values, W, H);
+      else if (mode === 'neonpulse')    drawNeonPulse(values, W, H);
       else                              drawBars(values, W, H);
     }
 
