@@ -748,7 +748,7 @@ function getIconCacheDir() {
   return iconCacheDir;
 }
 const iconMemCache = new Map(); // url -> dataURL
-const ICON_CACHE_VERSION = '2'; // bump to invalidate disk cache on format changes
+const ICON_CACHE_VERSION = '3';
 const ICON_MAX_BYTES = 1_000_000;
 const ICON_MAX_FILES = 300;
 
@@ -820,7 +820,10 @@ ipcMain.handle('cache-icon', async (e, url) => {
     const { net } = require('electron');
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
-    const res = await net.fetch(url, { signal: controller.signal });
+    const res = await net.fetch(url, {
+      signal: controller.signal,
+      headers: { 'User-Agent': APP_USER_AGENT }
+    });
     clearTimeout(timer);
     if (!res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());

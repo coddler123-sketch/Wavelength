@@ -330,7 +330,7 @@ const HIGH_RES_ICONS = {
   'ndr 2': 'https://www.phonostar.de/images/auto_created/NDR22184x184.png',
   'hr3': 'https://www.hr3.de/favicon.png',
   'jump': 'https://images.mdr.de/image/b9fe3a54-ad0c-4f20-8ac3-9dca0c95f705/AAABnXRUSRI/AAABnR8VW9w/original/logo-green-100.jpg',
-  'radioeins': 'https://www.radioeins.de/content/dam/rbb/rad/layout/r1-logo.svg.svg/img.svg',
+  'radioeins': 'https://www.phonostar.de/images/auto_created/radioeins3184x184.png',
   'fritz': 'https://www.fritz.de/content/dam/rbb/rbb/logos/touch/fritz-128.png',
   'antenne bayern': 'https://www.antenne.de/logos/station-antenne-bayern/apple-touch-icon.png',
   'radio nrw': 'https://radionrw.de/apple-touch-icon.png',
@@ -344,9 +344,9 @@ const HIGH_RES_ICONS = {
   'sunshine': 'https://upload.wikimedia.org/wikipedia/commons/0/00/Sunshine_live_Logo_2022.svg',
   'schlager radio': 'https://www.schlagerradio.de/wp-content/uploads/2021/03/schlagerradiologo_stickyy.png',
   'schlagerwelt': 'https://cdn.mdr.de/resources/global/img/mdrde/favicons/apple-icon-120x120.png',
-  'cosmo': 'https://upload.wikimedia.org/wikipedia/commons/e/e0/Cosmo_Logo_2017.svg',
+  'cosmo': 'https://www1.wdr.de/radio/cosmo/resources/img/favicon/apple-touch-icon.png',
   'lofi girl': 'https://www.lofigirl.com/assets/images/favicon.png',
-  '80s80s': 'https://upload.wikimedia.org/wikipedia/commons/a/ad/80s80s_Logo_2015.svg',
+  '80s80s': 'https://images.80s80s.de/files/logo.png',
   '90s90s': 'https://upload.wikimedia.org/wikipedia/commons/1/16/90s90s_Logo_2017.svg'
 };
 
