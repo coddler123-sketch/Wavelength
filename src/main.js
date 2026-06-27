@@ -142,7 +142,7 @@ function scheduleSave() {
 
 // ── Window sizes ──────────────────────────────────────────
 const SIZES = {
-  full: { width: 520, height: 560 },
+  full: { width: 460, height: 520 },
   mini: { width: 290, height: 82  }
 };
 

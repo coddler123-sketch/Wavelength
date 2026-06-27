@@ -441,8 +441,8 @@ test('UI Audit: prueft alle Visualizer-Modi per Canvas-Pixel', () => {
   assert.ok(audit.includes('miniLitPixels'), 'Mini-Visualizer muss mitgeprueft werden');
 });
 
-test('Window: Hauptfenster bleibt feste 520x560 UI', () => {
-  assert.ok(main.includes('full: { width: 520, height: 560 }'), 'Full-View-Größe muss fest definiert sein');
+test('Window: Hauptfenster bleibt feste 460x520 UI', () => {
+  assert.ok(main.includes('full: { width: 460, height: 520 }'), 'Full-View-Größe muss fest definiert sein');
   assert.ok(main.includes('resizable: false'), 'BrowserWindow sollte nicht frei skalierbar sein');
   assert.ok(main.includes('maxWidth: startSize.width, maxHeight: startSize.height'), 'Fenster-Maximalgröße fehlt');
   assert.ok(main.includes('fullWidth = SIZES.full.width'), 'gespeicherte Breite darf die feste UI nicht überschreiben');
