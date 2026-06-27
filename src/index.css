@@ -302,7 +302,7 @@ body.mini-mode #mini-view { display: flex; }
 /* ── Logo area ──────────────────────────────────── */
 .logo-area {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   position: relative;
   -webkit-app-region: no-drag;
@@ -355,14 +355,13 @@ body.mini-mode #mini-view { display: flex; }
 .logo-info { flex: 1; min-width: 0; }
 .app-title-label {
   font-family: 'Syne', sans-serif;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  color: rgba(94,232,239,0.78);
-  letter-spacing: 0.12em;
+  color: var(--accent2);
+  letter-spacing: 0.18em;
   line-height: 1;
-  margin-bottom: 2px;
-  opacity: 0.78;
+  margin-bottom: 4px;
 }
 .logo-name {
   flex: 1;
