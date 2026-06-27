@@ -593,9 +593,9 @@
       for (let layer = 0; layer < 3; layer++) {
         const hue = (clock * 30 + layer * 120) % 360;
         ctx.beginPath();
-        for (let i = 0; i <= steps; i++) {
+        for (let i = 0; i < steps; i++) {
           const a  = (i / steps) * Math.PI * 2;
-          const fi = Math.floor((i / steps) * values.length);
+          const fi = Math.floor((i / steps) * (values.length - 1));
           const v  = values[fi] || 0;
           const warp = Math.sin(a * 3 + clock * 1.2) * 0.15 + Math.sin(a * 5 - clock * 0.8) * 0.1;
           const r = (baseR + v * baseR * 0.9 + warp * baseR) * (1 - layer * 0.18);
@@ -604,10 +604,17 @@
           i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         }
         ctx.closePath();
-        ctx.strokeStyle = `hsla(${hue},90%,65%,${0.7 - layer * 0.2})`;
+        if (layer === 0) {
+          const fill = ctx.createRadialGradient(cx, cy, 0, cx, cy, baseR * 1.8);
+          fill.addColorStop(0, `hsla(${hue},70%,40%,0.18)`);
+          fill.addColorStop(1, 'transparent');
+          ctx.fillStyle = fill;
+          ctx.fill();
+        }
+        ctx.strokeStyle = `hsla(${hue},90%,65%,${0.75 - layer * 0.2})`;
         ctx.shadowColor = `hsla(${hue},90%,65%,0.6)`;
         ctx.shadowBlur  = 12 + bass * 20;
-        ctx.lineWidth   = 2 - layer * 0.4;
+        ctx.lineWidth   = 2.2 - layer * 0.5;
         ctx.stroke();
       }
       ctx.restore();
