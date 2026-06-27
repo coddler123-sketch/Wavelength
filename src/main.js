@@ -749,7 +749,7 @@ function getIconCacheDir() {
 }
 const iconMemCache = new Map(); // url -> dataURL
 const ICON_CACHE_VERSION = '2'; // bump to invalidate disk cache on format changes
-const ICON_MAX_BYTES = 200_000;
+const ICON_MAX_BYTES = 1_000_000;
 const ICON_MAX_FILES = 300;
 
 function urlHash(url) { return crypto.createHash('sha1').update(url).digest('hex'); }
