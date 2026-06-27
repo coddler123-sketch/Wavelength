@@ -80,15 +80,15 @@ export function updateListenBadge() {
   const badge = document.getElementById('listen-badge');
   if (!badge) return;
   if (!state.activeStation) {
-    badge.textContent = 'Heute 0 min';
+    badge.textContent = t('listen.today', '0 min');
     badge.title = t('tooltip.no.station');
     return;
   }
   const today   = parseInt(localStorage.getItem(stationTodayKey(state.activeStation.id)) || '0', 10);
   const total   = parseInt(localStorage.getItem(stationTotalKey(state.activeStation.id)) || '0', 10);
   const overall = parseInt(localStorage.getItem(LS.listenOverallTotal) || '0', 10);
-  badge.textContent = `Heute ${formatListen(today)}`;
-  badge.title = `Dieser Sender: ${formatListen(total)} gesamt\nWavelength gesamt: ${formatListen(overall)}`;
+  badge.textContent = t('listen.today', formatListen(today));
+  badge.title = t('listen.badge.tooltip', formatListen(total), formatListen(overall));
 }
 
 function todayKey() {

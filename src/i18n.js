@@ -55,6 +55,8 @@ const T = {
     'tooltip.history':       'Wiedergabeverlauf öffnen (F4)',
     'tooltip.recent':        'Zuletzt: {0}',
     'tooltip.no.station':    'Keine Station aktiv',
+    'listen.today':          'Heute {0}',
+    'listen.badge.tooltip':  'Dieser Sender: {0} gesamt\nWavelength gesamt: {1}',
   },
   en: {
     'settings.title':      'Settings',
@@ -112,6 +114,8 @@ const T = {
     'tooltip.history':       'Open play history (F4)',
     'tooltip.recent':        'Recent: {0}',
     'tooltip.no.station':    'No station active',
+    'listen.today':          'Today {0}',
+    'listen.badge.tooltip':  'This station: {0} total\nWavelength total: {1}',
   },
 };
 
