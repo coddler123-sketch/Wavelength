@@ -4,7 +4,8 @@
   const VISUALIZER_MODES = [
     'bars', 'mirror', 'oscilloscope', 'waterfall',
     'wave', 'dna', 'particles', 'tunnel', 'scanner', 'medwaves', 'neonpulse',
-    'flexi', 'unchained', 'geiss', 'idiot',
+    'flexi', 'unchained', 'geiss', 'idiot', 'tunnel3d',
+    'horizon3d', 'orb3d', 'warp3d', 'valley3d', 'matrix3d', 'mandala3d'
   ];
   const VISUALIZER_LABELS = {
     bars:        'Bars',
@@ -22,6 +23,13 @@
     unchained:   'Unchained',
     geiss:       'Geiss',
     idiot:       'Idiot',
+    tunnel3d:    '3D Neon Tunnel (WebGL)',
+    horizon3d:   '3D Retrowave Horizon (WebGL)',
+    orb3d:       '3D Audio Plasmakugel (WebGL)',
+    warp3d:      '3D Hyperspace Warp (WebGL)',
+    valley3d:    '3D Infinite Valley (WebGL)',
+    matrix3d:    '3D Audio Matrix (WebGL)',
+    mandala3d:   '3D Psychedelic Mandala (WebGL)',
   };
 
   function create(options) {
@@ -55,6 +63,28 @@
     let particles     = [];
     let idiotFlashes  = [];
 
+    // WebGL state
+    let webglCanvas   = null;
+    let gl            = null;
+    let positionBuffer = null;
+    let webglPrograms = {}; // maps mode -> { program, uniforms: { u_resolution, u_time, u_bass, u_treble, u_frequencies } }
+
+    // Dynamic theme colors
+    let primaryColorVec = null;
+    let secondaryColorVec = null;
+    let tertiaryColorVec = null;
+    let primaryColorStr = 'rgba(0, 240, 255, 1.0)';
+    let secondaryColorStr = 'rgba(112, 0, 255, 1.0)';
+    let tertiaryColorStr = 'rgba(255, 0, 153, 1.0)';
+
+    const primaryColorStrAlpha = (a) => primaryColorVec ? `rgba(${Math.round(primaryColorVec[0]*255)}, ${Math.round(primaryColorVec[1]*255)}, ${Math.round(primaryColorVec[2]*255)}, ${a})` : `rgba(0, 240, 255, ${a})`;
+    const secondaryColorStrAlpha = (a) => secondaryColorVec ? `rgba(${Math.round(secondaryColorVec[0]*255)}, ${Math.round(secondaryColorVec[1]*255)}, ${Math.round(secondaryColorVec[2]*255)}, ${a})` : `rgba(112, 0, 255, ${a})`;
+    const tertiaryColorStrAlpha = (a) => tertiaryColorVec ? `rgba(${Math.round(tertiaryColorVec[0]*255)}, ${Math.round(tertiaryColorVec[1]*255)}, ${Math.round(tertiaryColorVec[2]*255)}, ${a})` : `rgba(255, 0, 153, ${a})`;
+
+    // Interactive mouse state
+    let mouseX = 0.5;
+    let mouseY = 0.5;
+
     const WFALL_FRAMES  = 80;
     const TUNNEL_RINGS  = 22;
     const MAX_PARTICLES = 90;
@@ -77,6 +107,19 @@
             c.width  = Math.round(w * dpr);
             c.height = Math.round(h * dpr);
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          }
+        }
+      }
+
+      if (webglCanvas && gl) {
+        const w = webglCanvas.offsetWidth, h = webglCanvas.offsetHeight;
+        if (w > 0 && h > 0) {
+          const targetW = Math.round(w * dpr);
+          const targetH = Math.round(h * dpr);
+          if (webglCanvas.width !== targetW || webglCanvas.height !== targetH) {
+            webglCanvas.width = targetW;
+            webglCanvas.height = targetH;
+            gl.viewport(0, 0, targetW, targetH);
           }
         }
       }
@@ -106,11 +149,11 @@
       const gap = 1.5;
       const barW = (W - gap * (count - 1)) / count;
       const grad = miniCanvasCtx.createLinearGradient(0, H, 0, 0);
-      grad.addColorStop(0, '#0072ff'); // Electric Blue
-      grad.addColorStop(1, '#00f0ff'); // Neon Cyan
+      grad.addColorStop(0, tertiaryColorStrAlpha(1.0));
+      grad.addColorStop(1, primaryColorStrAlpha(1.0));
 
       miniCanvasCtx.fillStyle = grad;
-      miniCanvasCtx.shadowColor = 'rgba(0, 240, 255, 0.3)';
+      miniCanvasCtx.shadowColor = primaryColorStrAlpha(0.3);
       miniCanvasCtx.shadowBlur = 3;
 
       for (let i = 0; i < count; i++) {
@@ -137,12 +180,12 @@
       const gap  = 2;
       const barW = (W - gap * (BAR_COUNT - 1)) / BAR_COUNT;
       const grad = canvasCtx.createLinearGradient(0, H, 0, 0);
-      grad.addColorStop(0.0,  '#7000ff'); // Neon Purple
-      grad.addColorStop(0.52, '#0072ff'); // Electric Blue
-      grad.addColorStop(1.0,  '#00f0ff'); // Neon Cyan
+      grad.addColorStop(0.0,  secondaryColorStrAlpha(1.0));
+      grad.addColorStop(0.52, tertiaryColorStrAlpha(1.0));
+      grad.addColorStop(1.0,  primaryColorStrAlpha(1.0));
 
       canvasCtx.save();
-      canvasCtx.shadowColor = 'rgba(0, 240, 255, 0.16)';
+      canvasCtx.shadowColor = primaryColorStrAlpha(0.16);
       canvasCtx.shadowBlur  = 7;
       for (let i = 0; i < BAR_COUNT; i++) {
         const x    = i * (barW + gap);
@@ -156,12 +199,12 @@
 
         if (peaks[i] > 0.04) {
           const peakY = H - peaks[i] * H * 0.84 - 2.5;
-          canvasCtx.shadowColor = 'rgba(0, 240, 255, 0.55)';
+          canvasCtx.shadowColor = primaryColorStrAlpha(0.55);
           canvasCtx.shadowBlur  = 5;
           canvasCtx.fillStyle   = 'rgba(255, 255, 255, 0.85)';
           canvasCtx.fillRect(x, peakY, barW, 1.5);
           canvasCtx.shadowBlur  = 7;
-          canvasCtx.shadowColor = 'rgba(0, 240, 255, 0.16)';
+          canvasCtx.shadowColor = primaryColorStrAlpha(0.16);
         }
       }
       canvasCtx.restore();
@@ -172,12 +215,12 @@
       const barW = (W - gap * (BAR_COUNT - 1)) / BAR_COUNT;
       const mid  = H / 2;
       const grad = canvasCtx.createLinearGradient(0, H, 0, 0);
-      grad.addColorStop(0.0,  '#7000ff');
-      grad.addColorStop(0.52, '#0072ff');
-      grad.addColorStop(1.0,  '#00f0ff');
+      grad.addColorStop(0.0,  secondaryColorStrAlpha(1.0));
+      grad.addColorStop(0.52, tertiaryColorStrAlpha(1.0));
+      grad.addColorStop(1.0,  primaryColorStrAlpha(1.0));
 
       canvasCtx.save();
-      canvasCtx.shadowColor = 'rgba(0, 240, 255, 0.18)';
+      canvasCtx.shadowColor = primaryColorStrAlpha(0.18);
       canvasCtx.shadowBlur  = 6;
       canvasCtx.fillStyle   = grad;
       for (let i = 0; i < BAR_COUNT; i++) {
@@ -187,7 +230,7 @@
         canvasCtx.fillRect(x, mid,     barW, h);
       }
       canvasCtx.shadowBlur    = 0;
-      canvasCtx.strokeStyle   = 'rgba(0, 240, 255, 0.07)';
+      canvasCtx.strokeStyle   = primaryColorStrAlpha(0.07);
       canvasCtx.lineWidth     = 1;
       canvasCtx.beginPath();
       canvasCtx.moveTo(0, mid);
@@ -593,17 +636,20 @@
       for (let layer = 0; layer < 3; layer++) {
         const hue = (clock * 30 + layer * 120) % 360;
         ctx.beginPath();
-        for (let i = 0; i < steps; i++) {
+        let firstX = 0, firstY = 0;
+        for (let i = 0; i <= steps; i++) {
           const a  = (i / steps) * Math.PI * 2;
-          const fi = Math.floor((i / steps) * (values.length - 1));
+          // wrap fi so last point uses same frequency band as first → no radius jump
+          const fi = Math.floor((i % steps) / steps * (values.length - 1));
           const v  = values[fi] || 0;
           const warp = Math.sin(a * 3 + clock * 1.2) * 0.15 + Math.sin(a * 5 - clock * 0.8) * 0.1;
           const r = (baseR + v * baseR * 0.9 + warp * baseR) * (1 - layer * 0.18);
           const x = cx + Math.cos(a) * r;
           const y = cy + Math.sin(a) * r;
-          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          if (i === 0) { firstX = x; firstY = y; ctx.moveTo(x, y); }
+          else ctx.lineTo(x, y);
         }
-        ctx.closePath();
+        ctx.lineTo(firstX, firstY);
         if (layer === 0) {
           const fill = ctx.createRadialGradient(cx, cy, 0, cx, cy, baseR * 1.8);
           fill.addColorStop(0, `hsla(${hue},70%,40%,0.18)`);
@@ -736,7 +782,755 @@
       ctx.restore();
     }
 
+    function initWebGL() {
+      if (webglCanvas) return true;
+      try {
+        const isAudit = window.location.search.includes('audit=1');
+        if (isAudit) return false;
+
+        webglCanvas = document.createElement('canvas');
+        webglCanvas.id = 'visualizer-webgl';
+        webglCanvas.className = canvas.className;
+        webglCanvas.style.cssText = 'display: block; width: 100%; height: 100%; cursor: pointer; position: relative; z-index: 1; -webkit-app-region: no-drag;';
+        webglCanvas.setAttribute('role', 'img');
+        webglCanvas.setAttribute('aria-label', 'Audio-Visualizer, Modus: 3D Neon Tunnel (WebGL)');
+        webglCanvas.setAttribute('title', canvas.getAttribute('title') || '');
+
+        webglCanvas.addEventListener('click', () => {
+          toggleMode();
+        });
+        webglCanvas.addEventListener('contextmenu', (e) => {
+          const newEvent = new MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX: e.clientX,
+            clientY: e.clientY,
+            button: 2
+          });
+          canvas.dispatchEvent(newEvent);
+        });
+        canvas.parentNode.insertBefore(webglCanvas, canvas.nextSibling);
+
+        gl = webglCanvas.getContext('webgl', { antialias: true, alpha: false });
+        if (!gl) {
+          gl = webglCanvas.getContext('experimental-webgl', { antialias: true, alpha: false });
+        }
+        if (!gl) return false;
+
+        const vsSource = `
+          attribute vec2 position;
+          void main() {
+            gl_Position = vec4(position, 0.0, 1.0);
+          }
+        `;
+
+        const fsTunnel3D = `
+          precision mediump float;
+          uniform vec2 u_resolution;
+          uniform float u_time;
+          uniform float u_bass;
+          uniform float u_treble;
+          uniform float u_frequencies[16];
+          uniform vec3 u_primary_color;
+          uniform vec3 u_secondary_color;
+          uniform vec3 u_tertiary_color;
+          uniform vec2 u_mouse;
+
+          mat2 rot(float a) {
+            float c = cos(a), s = sin(a);
+            return mat2(c, -s, s, c);
+          }
+
+          float map(vec3 p) {
+            return 1.8 - length(p.xy);
+          }
+
+          void main() {
+            float shake = sin(u_time * 60.0) * u_bass * u_bass * 0.012;
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / max(1.0, u_resolution.y) + vec2(shake, -shake);
+            vec3 ro = vec3((u_mouse.x - 0.5) * 1.5, (u_mouse.y - 0.5) * 1.5, u_time * 2.0);
+            vec3 rd = normalize(vec3(uv, 1.0));
+            ro.x += sin(u_time * 0.5) * 0.2;
+            ro.y += cos(u_time * 0.4) * 0.2;
+            rd = vec3(rd.xy * rot(sin(u_time * 0.1) * 0.1), rd.z);
+            
+            float t = 0.0;
+            float max_d = 24.0;
+            int steps = 0;
+            
+            for (int i = 0; i < 48; i++) {
+              vec3 p = ro + rd * t;
+              float d = map(p);
+              if (d < 0.005 || t > max_d) {
+                steps = i;
+                break;
+              }
+              t += d * 0.95;
+            }
+            
+            vec3 color = vec3(0.0);
+            if (t < max_d) {
+              vec3 p = ro + rd * t;
+              float waveX = sin(p.z * 0.25 + u_time * 0.5) * 0.3;
+              float waveY = cos(p.z * 0.22 + u_time * 0.4) * 0.25;
+              vec3 wp = p;
+              wp.x += waveX;
+              wp.y += waveY;
+              
+              float angle = atan(wp.y, wp.x);
+              float ringLine = sin(p.z * 3.0 - u_time * 2.5);
+              float spiralLine = sin(angle * 6.0 + p.z * 0.4);
+              float grid = smoothstep(0.7, 0.96, ringLine) + smoothstep(0.7, 0.96, spiralLine);
+              
+              float freqVal = 0.0;
+              int bandIdx = int(mod(abs(p.z * 1.2), 16.0));
+              if (bandIdx == 0) freqVal = u_frequencies[0];
+              else if (bandIdx == 1) freqVal = u_frequencies[1];
+              else if (bandIdx == 2) freqVal = u_frequencies[2];
+              else if (bandIdx == 3) freqVal = u_frequencies[3];
+              else if (bandIdx == 4) freqVal = u_frequencies[4];
+              else if (bandIdx == 5) freqVal = u_frequencies[5];
+              else if (bandIdx == 6) freqVal = u_frequencies[6];
+              else if (bandIdx == 7) freqVal = u_frequencies[7];
+              else if (bandIdx == 8) freqVal = u_frequencies[8];
+              else if (bandIdx == 9) freqVal = u_frequencies[9];
+              else if (bandIdx == 10) freqVal = u_frequencies[10];
+              else if (bandIdx == 11) freqVal = u_frequencies[11];
+              else if (bandIdx == 12) freqVal = u_frequencies[12];
+              else if (bandIdx == 13) freqVal = u_frequencies[13];
+              else if (bandIdx == 14) freqVal = u_frequencies[14];
+              else if (bandIdx == 15) freqVal = u_frequencies[15];
+
+              float colorPos = sin(p.z * 0.1) * 0.5 + 0.5;
+              vec3 neonBase = mix(u_primary_color, u_secondary_color, colorPos);
+              neonBase = mix(neonBase, u_tertiary_color, freqVal * 0.4);
+              
+              float glow = (0.2 + freqVal * 1.6) * (0.25 + grid * 0.75);
+              color = neonBase * glow;
+              
+              float ridges = smoothstep(0.9, 0.96, ringLine);
+              color += vec3(0.8, 0.95, 1.0) * ridges * u_bass * 0.4;
+              
+              float fog = 1.0 - (t / max_d);
+              color *= fog * fog;
+              color += neonBase * (float(steps) * 0.012) * (0.4 + u_bass * 0.6);
+            } else {
+              vec3 bgCyan = u_primary_color * 0.15 * (0.4 + u_bass * 0.6);
+              vec3 bgPurple = u_secondary_color * 0.12 * (0.4 + u_treble * 0.6);
+              color = mix(bgCyan, bgPurple, clamp(uv.x * 0.5 + 0.5, 0.0, 1.0));
+              color += vec3(0.5, 0.85, 1.0) * (0.012 / (length(uv) + 0.03)) * (0.5 + u_bass * 0.5);
+            }
+            color = pow(max(color, vec3(0.0)), vec3(1.2));
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `;
+
+        const fsHorizon3D = `
+          precision mediump float;
+          uniform vec2 u_resolution;
+          uniform float u_time;
+          uniform float u_bass;
+          uniform float u_treble;
+          uniform float u_frequencies[16];
+          uniform vec3 u_primary_color;
+          uniform vec3 u_secondary_color;
+          uniform vec3 u_tertiary_color;
+          uniform vec2 u_mouse;
+
+          mat2 rot(float a) {
+            float c = cos(a), s = sin(a);
+            return mat2(c, -s, s, c);
+          }
+
+          void main() {
+            float shake = sin(u_time * 60.0) * u_bass * u_bass * 0.012;
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / max(1.0, u_resolution.y) + vec2(shake, -shake);
+            vec3 ro = vec3(0.0, 0.2, 0.0);
+            vec3 rd = normalize(vec3(uv, 0.8));
+            rd = vec3(rd.xy * rot((u_mouse.x - 0.5) * 0.5), rd.z);
+            
+            vec3 color = vec3(0.0);
+            
+            if (rd.y < -0.02) {
+              float t = (-0.5 - ro.y) / rd.y;
+              vec3 p = ro + rd * t;
+              float ripple = sin(p.x * 2.0 + p.z * 0.4 - u_time * 3.5) * (0.04 + u_bass * 0.16) * exp(-p.z * 0.08);
+              float lineX = sin(p.x * 1.5);
+              float lineZ = sin(p.z * 1.2 - u_time * 4.0 + ripple * 4.0);
+              float grid = smoothstep(0.9, 0.98, abs(lineX)) + smoothstep(0.9, 0.98, abs(lineZ));
+              
+              vec3 gridColor = mix(u_primary_color, u_secondary_color, clamp(p.z * 0.05, 0.0, 1.0));
+              
+              float glow = (0.25 + u_bass * 1.2) * (0.3 + grid * 0.7);
+              color = gridColor * glow;
+              
+              float fog = clamp(1.0 - (t / 30.0), 0.0, 1.0);
+              color *= fog * fog;
+            } else {
+              color = mix(u_secondary_color * 0.12, u_tertiary_color * 0.15, clamp(uv.y * 2.0, 0.0, 1.0));
+              
+              float starNoise = sin(uv.x * 123.4) * cos(uv.y * 345.6);
+              if (starNoise > 0.994) {
+                float starPulse = sin(u_time * 3.0 + starNoise * 10.0) * 0.5 + 0.5;
+                color += vec3(0.8, 0.9, 1.0) * starPulse * (0.3 + u_treble * 0.7);
+              }
+              
+              vec2 sunCenter = vec2(0.0, 0.12);
+              float distToSun = length(uv - sunCenter);
+              if (distToSun < 0.25) {
+                float yPos = uv.y - sunCenter.y;
+                float mask = step(0.04 + clamp(yPos * 0.6, 0.0, 0.18), mod(yPos * 30.0, 1.0));
+                vec3 sunColorTop = u_primary_color;
+                vec3 sunColorBot = u_tertiary_color;
+                vec3 sunColor = mix(sunColorBot, sunColorTop, (yPos / 0.25) * 0.5 + 0.5);
+                color = mix(color, sunColor * (1.0 + u_bass * 0.3), mask * (1.0 - smoothstep(0.2, 0.25, distToSun)));
+              }
+              
+              float horizonGlow = exp(-abs(uv.y + 0.02) * 20.0);
+              color += u_tertiary_color * horizonGlow * (0.5 + u_bass * 0.5);
+            }
+            
+            color = pow(max(color, vec3(0.0)), vec3(1.15));
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `;
+
+        const fsOrb3D = `
+          precision mediump float;
+          uniform vec2 u_resolution;
+          uniform float u_time;
+          uniform float u_bass;
+          uniform float u_treble;
+          uniform float u_frequencies[16];
+          uniform vec3 u_primary_color;
+          uniform vec3 u_secondary_color;
+          uniform vec3 u_tertiary_color;
+          uniform vec2 u_mouse;
+
+          float noise(vec3 p) {
+            return sin(p.x * 3.0 + u_time * 1.8) * cos(p.y * 2.8 - u_time * 1.4) * sin(p.z * 3.2 + u_time * 1.1) * 0.33 +
+                   sin(p.x * 6.0 - u_time * 2.5) * cos(p.y * 5.5 + u_time * 2.0) * sin(p.z * 6.5 - u_time * 1.8) * 0.17;
+          }
+
+          float map(vec3 p) {
+            vec3 center = vec3((u_mouse.x - 0.5) * 1.6, (u_mouse.y - 0.5) * 1.2, 0.0);
+            float d = length(p - center) - 0.95;
+            float n = noise(p * (1.2 + u_bass * 0.4));
+            d += n * (0.06 + u_bass * 0.26);
+            return d;
+          }
+
+          void main() {
+            float shake = sin(u_time * 60.0) * u_bass * u_bass * 0.012;
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / max(1.0, u_resolution.y) + vec2(shake, -shake);
+            vec3 ro = vec3(0.0, 0.0, -3.0);
+            vec3 rd = normalize(vec3(uv, 1.2));
+            
+            float t = 0.0;
+            float max_d = 5.0;
+            int steps = 0;
+            
+            for (int i = 0; i < 40; i++) {
+              vec3 p = ro + rd * t;
+              float d = map(p);
+              if (d < 0.005 || t > max_d) {
+                steps = i;
+                break;
+              }
+              t += d * 0.85;
+            }
+            
+            vec3 color = vec3(0.0);
+            
+            if (t < max_d) {
+              vec3 p = ro + rd * t;
+              vec2 eps = vec2(0.005, 0.0);
+              vec3 normal = normalize(vec3(
+                map(p + eps.xyy) - map(p - eps.xyy),
+                map(p + eps.yxy) - map(p - eps.yxy),
+                map(p + eps.yyx) - map(p - eps.yyx)
+              ));
+              
+              float Fresnel = pow(1.0 - max(0.0, dot(normal, -rd)), 3.0);
+              
+              vec3 surfaceColor = mix(u_secondary_color, u_primary_color, noise(p * 1.5) * 0.5 + 0.5);
+              surfaceColor = mix(surfaceColor, u_tertiary_color, Fresnel);
+              
+              float filaments = smoothstep(0.4, 0.95, sin(p.x * 12.0 + u_time * 4.0) * cos(p.y * 10.0 - u_time * 3.0) * sin(p.z * 14.0 + u_time * 2.0));
+              color = surfaceColor * (0.2 + Fresnel * 0.8) + vec3(1.0, 0.95, 0.8) * filaments * (0.3 + u_bass * 0.7);
+              color += surfaceColor * (float(steps) * 0.015);
+            } else {
+              vec3 spaceCyan = u_primary_color * 0.08 * (0.5 + u_bass * 0.5);
+              vec3 spaceMagenta = u_secondary_color * 0.07 * (0.5 + u_treble * 0.5);
+              color = mix(spaceCyan, spaceMagenta, uv.y * 0.5 + 0.5);
+            }
+            
+            vec3 center = vec3((u_mouse.x - 0.5) * 1.6, (u_mouse.y - 0.5) * 1.2, 0.0);
+            float halo = exp(-abs(length(uv - center.xy) - 0.7) * 4.5);
+            vec3 haloColor = mix(u_primary_color, u_secondary_color, sin(u_time * 0.5) * 0.5 + 0.5);
+            color += haloColor * halo * (0.12 + u_bass * 0.4) * (0.01 / (abs(length(uv - center.xy) - 0.72) + 0.01));
+            
+            color = pow(max(color, vec3(0.0)), vec3(1.15));
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `;
+
+        const fsWarp3D = `
+          precision mediump float;
+          uniform vec2 u_resolution;
+          uniform float u_time;
+          uniform float u_bass;
+          uniform float u_treble;
+          uniform float u_frequencies[16];
+          uniform vec3 u_primary_color;
+          uniform vec3 u_secondary_color;
+          uniform vec3 u_tertiary_color;
+          uniform vec2 u_mouse;
+
+          float hash(vec3 p) {
+            vec3 q = fract(p * vec3(443.8975, 397.2973, 491.1871));
+            q += dot(q.xyz, q.yzx + 19.19);
+            return fract(q.x * q.y * q.z);
+          }
+
+          void main() {
+            float shake = sin(u_time * 60.0) * u_bass * u_bass * 0.012;
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / max(1.0, u_resolution.y) + vec2(shake, -shake);
+            
+            float speed = u_time * (2.2 + u_bass * 4.5);
+            float stretch = 0.02 + u_bass * 0.15;
+            vec3 color = vec3(0.0);
+            
+            vec2 center = (u_mouse - 0.5) * 0.8;
+            
+            for (float layer = 1.0; layer <= 3.0; layer++) {
+              float z = fract(0.123 * layer - speed * 0.05);
+              float fade = smoothstep(0.0, 0.2, z) * smoothstep(1.0, 0.8, z);
+              
+              vec2 p = (uv - center) * z * 8.0;
+              vec2 gridId = floor(p);
+              vec2 gridUv = fract(p) - 0.5;
+              
+              float seed = hash(vec3(gridId, layer * 17.3));
+              
+              if (seed > 0.85) {
+                vec2 offset = vec2(hash(vec3(gridId, 1.1)), hash(vec3(gridId, 2.2))) - 0.5;
+                vec2 dir = normalize(gridId + offset);
+                float len = stretch * (1.0 - z);
+                vec2 localP = gridUv - offset;
+                float proj = clamp(dot(localP, dir), -len, len);
+                float distToStreak = length(localP - dir * proj);
+                
+                float brightness = (0.0015 / (distToStreak + 0.0015)) * fade;
+                vec3 starColor = mix(u_primary_color, u_secondary_color, hash(vec3(gridId, 9.9)));
+                starColor = mix(starColor, vec3(1.0, 1.0, 1.0), seed * 0.5);
+                
+                int bandIdx = int(mod(seed * 100.0, 16.0));
+                float fVal = 0.0;
+                if (bandIdx == 0) fVal = u_frequencies[0];
+                else if (bandIdx == 1) fVal = u_frequencies[1];
+                else if (bandIdx == 2) fVal = u_frequencies[2];
+                else if (bandIdx == 3) fVal = u_frequencies[3];
+                else if (bandIdx == 4) fVal = u_frequencies[4];
+                else if (bandIdx == 5) fVal = u_frequencies[5];
+                else if (bandIdx == 6) fVal = u_frequencies[6];
+                else if (bandIdx == 7) fVal = u_frequencies[7];
+                else if (bandIdx == 8) fVal = u_frequencies[8];
+                else if (bandIdx == 9) fVal = u_frequencies[9];
+                else if (bandIdx == 10) fVal = u_frequencies[10];
+                else if (bandIdx == 11) fVal = u_frequencies[11];
+                else if (bandIdx == 12) fVal = u_frequencies[12];
+                else if (bandIdx == 13) fVal = u_frequencies[13];
+                else if (bandIdx == 14) fVal = u_frequencies[14];
+                else if (bandIdx == 15) fVal = u_frequencies[15];
+
+                color += starColor * brightness * (0.8 + fVal * 1.5);
+              }
+            }
+            
+            color += u_primary_color * (0.015 / (length(uv - center) + 0.04)) * (0.5 + u_bass * 0.5);
+            color = pow(max(color, vec3(0.0)), vec3(1.2));
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `;
+
+        const fsValley3D = `
+          precision mediump float;
+          uniform vec2 u_resolution;
+          uniform float u_time;
+          uniform float u_bass;
+          uniform float u_treble;
+          uniform float u_frequencies[16];
+          uniform vec3 u_primary_color;
+          uniform vec3 u_secondary_color;
+          uniform vec3 u_tertiary_color;
+          uniform vec2 u_mouse;
+
+          mat2 rot(float a) {
+            float c = cos(a), s = sin(a);
+            return mat2(c, -s, s, c);
+          }
+
+          float height(vec2 p) {
+            float canyon = smoothstep(0.15, 0.85, abs(p.x));
+            float h = (sin(p.x * 2.0) * cos(p.y * 1.2) * 0.35 + sin(p.x * 4.5) * cos(p.y * 2.8) * 0.16) * canyon;
+            float freq = p.x < 0.0 ? u_bass : u_treble;
+            h += canyon * freq * 0.42 * (sin(p.y * 4.0 - u_time * 2.5) * 0.5 + 0.5);
+            return h;
+          }
+
+          float map(vec3 p) {
+            return p.y - height(p.xz);
+          }
+
+          void main() {
+            float shake = sin(u_time * 60.0) * u_bass * u_bass * 0.012;
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / max(1.0, u_resolution.y) + vec2(shake, -shake);
+            
+            vec3 ro = vec3(0.0, 0.28, u_time * 2.0);
+            vec3 rd = normalize(vec3(uv, 0.8));
+            rd = vec3(rd.xy * rot((u_mouse.x - 0.5) * 0.5), rd.z);
+            rd.y += (u_mouse.y - 0.5) * 0.3;
+            
+            float t = 0.0;
+            float max_d = 20.0;
+            int steps = 0;
+            
+            for (int i = 0; i < 40; i++) {
+              vec3 p = ro + rd * t;
+              float d = map(p);
+              if (d < 0.005 || t > max_d) {
+                steps = i;
+                break;
+              }
+              t += d * 0.9;
+            }
+            
+            vec3 color = vec3(0.0);
+            if (t < max_d) {
+              vec3 p = ro + rd * t;
+              float grid = smoothstep(0.9, 0.98, sin(p.x * 3.0)) + smoothstep(0.9, 0.98, sin(p.z * 3.0));
+              
+              vec3 canyonColor = mix(u_secondary_color * 0.3, u_tertiary_color * 0.4, p.y + 0.5);
+              vec3 gridColor = u_primary_color * (0.3 + grid * 0.7) * (0.8 + u_bass * 0.8);
+              color = mix(canyonColor, gridColor, grid);
+              
+              float fog = clamp(1.0 - (t / max_d), 0.0, 1.0);
+              color *= fog * fog;
+            } else {
+              color = mix(u_secondary_color * 0.1, u_tertiary_color * 0.12, clamp(uv.y * 1.5, 0.0, 1.0));
+            }
+            
+            color = pow(max(color, vec3(0.0)), vec3(1.15));
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `;
+
+        const fsMatrix3D = `
+          precision mediump float;
+          uniform vec2 u_resolution;
+          uniform float u_time;
+          uniform float u_bass;
+          uniform float u_treble;
+          uniform float u_frequencies[16];
+          uniform vec3 u_primary_color;
+          uniform vec3 u_secondary_color;
+          uniform vec3 u_tertiary_color;
+          uniform vec2 u_mouse;
+
+          mat2 rot(float a) {
+            float c = cos(a), s = sin(a);
+            return mat2(c, -s, s, c);
+          }
+
+          float box(vec3 p, vec3 b) {
+            vec3 d = abs(p) - b;
+            return min(max(d.x, max(d.y, d.z)), 0.0) + length(max(d, 0.0));
+          }
+
+          float map(vec3 p) {
+            vec3 q = p;
+            q.xz = mod(p.xz, 0.5) - 0.25;
+            vec2 id = floor(p.xz / 0.5);
+            int idx = int(mod(abs(id.x) + abs(id.y), 16.0));
+            
+            float f = 0.0;
+            if (idx == 0) f = u_frequencies[0];
+            else if (idx == 1) f = u_frequencies[1];
+            else if (idx == 2) f = u_frequencies[2];
+            else if (idx == 3) f = u_frequencies[3];
+            else if (idx == 4) f = u_frequencies[4];
+            else if (idx == 5) f = u_frequencies[5];
+            else if (idx == 6) f = u_frequencies[6];
+            else if (idx == 7) f = u_frequencies[7];
+            else if (idx == 8) f = u_frequencies[8];
+            else if (idx == 9) f = u_frequencies[9];
+            else if (idx == 10) f = u_frequencies[10];
+            else if (idx == 11) f = u_frequencies[11];
+            else if (idx == 12) f = u_frequencies[12];
+            else if (idx == 13) f = u_frequencies[13];
+            else if (idx == 14) f = u_frequencies[14];
+            else if (idx == 15) f = u_frequencies[15];
+
+            float h = 0.05 + f * 0.65;
+            return box(q - vec3(0.0, -0.6 + h, 0.0), vec3(0.12, h, 0.12));
+          }
+
+          void main() {
+            float shake = sin(u_time * 60.0) * u_bass * u_bass * 0.012;
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / max(1.0, u_resolution.y) + vec2(shake, -shake);
+            
+            vec3 ro = vec3(0.0, 0.8, u_time * 0.6);
+            vec3 rd = normalize(vec3(uv.x, uv.y - 0.28, 0.95));
+            rd = vec3(rd.xy * rot((u_mouse.x - 0.5) * 0.5), rd.z);
+            rd.y += (u_mouse.y - 0.5) * 0.35;
+            
+            float t = 0.0;
+            float max_d = 16.0;
+            int steps = 0;
+            
+            for (int i = 0; i < 40; i++) {
+              vec3 p = ro + rd * t;
+              float d = map(p);
+              if (d < 0.005 || t > max_d) {
+                steps = i;
+                break;
+              }
+              t += d * 0.9;
+            }
+            
+            vec3 color = vec3(0.0);
+            if (t < max_d) {
+              vec3 p = ro + rd * t;
+              vec3 gridColor = mix(u_primary_color, u_secondary_color, sin(p.z * 0.5) * 0.5 + 0.5);
+              color = gridColor * (0.3 + float(steps) * 0.03) * (0.5 + u_bass * 0.5);
+              
+              float fog = clamp(1.0 - (t / max_d), 0.0, 1.0);
+              color *= fog * fog;
+            } else {
+              color = mix(u_secondary_color * 0.07, u_tertiary_color * 0.08, clamp(uv.y * 1.5, 0.0, 1.0));
+            }
+            
+            color = pow(max(color, vec3(0.0)), vec3(1.15));
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `;
+
+        const fsMandala3D = `
+          precision mediump float;
+          uniform vec2 u_resolution;
+          uniform float u_time;
+          uniform float u_bass;
+          uniform float u_treble;
+          uniform float u_frequencies[16];
+          uniform vec3 u_primary_color;
+          uniform vec3 u_secondary_color;
+          uniform vec3 u_tertiary_color;
+          uniform vec2 u_mouse;
+
+          mat2 rot(float a) {
+            float c = cos(a), s = sin(a);
+            return mat2(c, -s, s, c);
+          }
+
+          void main() {
+            float shake = sin(u_time * 60.0) * u_bass * u_bass * 0.012;
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / max(1.0, u_resolution.y) + vec2(shake, -shake);
+            
+            vec2 center = (u_mouse - 0.5) * 0.8;
+            vec2 p = uv - center;
+            
+            float r = length(p);
+            float a = atan(p.y, p.x);
+            
+            float segments = 8.0 + floor(u_bass * 4.0);
+            a = mod(a, 2.0 * 3.14159 / segments) - 3.14159 / segments;
+            p = vec2(cos(a), sin(a)) * r;
+            
+            for (int i = 0; i < 4; i++) {
+              p = abs(p) - 0.25 - u_bass * 0.08;
+              p = p * (1.4 + u_treble * 0.15);
+              p = p * rot(u_time * 0.18 + float(i) * 0.1);
+            }
+            
+            float d = length(p) - 0.14;
+            
+            vec3 neonColor = mix(u_primary_color, u_tertiary_color, sin(r * 4.0 - u_time) * 0.5 + 0.5);
+            vec3 color = neonColor * (0.012 / abs(d)) + u_secondary_color * (0.15 + u_bass * 0.6) * (1.0 - smoothstep(0.2, 0.6, r));
+            
+            color = pow(max(color, vec3(0.0)), vec3(1.2));
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `;
+
+        function compileShader(source, type) {
+          const s = gl.createShader(type);
+          gl.shaderSource(s, source);
+          gl.compileShader(s);
+          if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            const info = gl.getShaderInfoLog(s);
+            gl.deleteShader(s);
+            throw new Error(`Shader compile failed: ${info}`);
+          }
+          return s;
+        }
+
+        function compileProgram(fsSource) {
+          const vs = compileShader(vsSource, gl.VERTEX_SHADER);
+          const fs = compileShader(fsSource, gl.FRAGMENT_SHADER);
+          const program = gl.createProgram();
+          gl.attachShader(program, vs);
+          gl.attachShader(program, fs);
+          gl.linkProgram(program);
+          if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            const info = gl.getProgramInfoLog(program);
+            throw new Error(`Program link failed: ${info}`);
+          }
+          return {
+            program,
+            uniforms: {
+              u_resolution:      gl.getUniformLocation(program, 'u_resolution'),
+              u_time:            gl.getUniformLocation(program, 'u_time'),
+              u_bass:            gl.getUniformLocation(program, 'u_bass'),
+              u_treble:          gl.getUniformLocation(program, 'u_treble'),
+              u_frequencies:     gl.getUniformLocation(program, 'u_frequencies'),
+              u_primary_color:   gl.getUniformLocation(program, 'u_primary_color'),
+              u_secondary_color: gl.getUniformLocation(program, 'u_secondary_color'),
+              u_tertiary_color:  gl.getUniformLocation(program, 'u_tertiary_color'),
+              u_mouse:           gl.getUniformLocation(program, 'u_mouse')
+            }
+          };
+        }
+
+        webglPrograms = {};
+        webglPrograms.tunnel3d  = compileProgram(fsTunnel3D);
+        webglPrograms.horizon3d = compileProgram(fsHorizon3D);
+        webglPrograms.orb3d     = compileProgram(fsOrb3D);
+        webglPrograms.warp3d    = compileProgram(fsWarp3D);
+        webglPrograms.valley3d  = compileProgram(fsValley3D);
+        webglPrograms.matrix3d  = compileProgram(fsMatrix3D);
+        webglPrograms.mandala3d = compileProgram(fsMandala3D);
+
+        const vertices = new Float32Array([
+          -1, -1,
+           1, -1,
+          -1,  1,
+          -1,  1,
+           1, -1,
+           1,  1,
+        ]);
+
+        positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+        resize();
+        return true;
+      } catch (err) {
+        if (webglCanvas) {
+          try { webglCanvas.remove(); } catch (e) {}
+          webglCanvas = null;
+        }
+        gl = null;
+        webglPrograms = {};
+        Promise.reject(err);
+        return false;
+      }
+    }
+
+    function syncWebGLSize() {
+      if (webglCanvas && canvas && gl) {
+        if (webglCanvas.width !== canvas.width || webglCanvas.height !== canvas.height) {
+          webglCanvas.width = canvas.width;
+          webglCanvas.height = canvas.height;
+          gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+      }
+    }
+
+    function drawWebGL(values, W, H) {
+      if (!initWebGL()) {
+        drawBars(values, W, H);
+        return;
+      }
+
+      syncWebGLSize();
+
+      if (canvas.style.display !== 'none') {
+        canvas.style.display = 'none';
+      }
+      if (webglCanvas && webglCanvas.style.display !== 'block') {
+        webglCanvas.style.display = 'block';
+      }
+
+      const label = VISUALIZER_LABELS[mode] || mode;
+      if (webglCanvas) {
+        webglCanvas.setAttribute('aria-label', `Audio-Visualizer, Modus: ${label}`);
+      }
+
+      let bass = 0.0;
+      let treble = 0.0;
+      for (let i = 0; i < 8; i++) bass += values[i] || 0;
+      bass /= 8;
+      for (let i = BAR_COUNT - 8; i < BAR_COUNT; i++) treble += values[i] || 0;
+      treble /= 8;
+
+      const freq16 = new Float32Array(16);
+      for (let i = 0; i < 16; i++) {
+        const start = Math.floor((i / 16) * BAR_COUNT);
+        const end = Math.floor(((i + 1) / 16) * BAR_COUNT);
+        let sum = 0;
+        for (let j = start; j < end; j++) sum += values[j] || 0;
+        freq16[i] = sum / Math.max(1, end - start);
+      }
+
+      const progInfo = webglPrograms[mode];
+      if (!progInfo) return;
+
+      gl.useProgram(progInfo.program);
+
+      // Re-bind the buffer and re-enable vertex attribute pointers to prevent losing state
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      const posAttr = gl.getAttribLocation(progInfo.program, 'position');
+      gl.enableVertexAttribArray(posAttr);
+      gl.vertexAttribPointer(posAttr, 2, gl.FLOAT, false, 0, 0);
+
+      gl.uniform2f(progInfo.uniforms.u_resolution, webglCanvas.width, webglCanvas.height);
+      gl.uniform1f(progInfo.uniforms.u_time, clock);
+      gl.uniform1f(progInfo.uniforms.u_bass, bass);
+      gl.uniform1f(progInfo.uniforms.u_treble, treble);
+      gl.uniform1fv(progInfo.uniforms.u_frequencies, freq16);
+
+      if (progInfo.uniforms.u_primary_color) {
+        gl.uniform3fv(progInfo.uniforms.u_primary_color, primaryColorVec || [0.0, 0.94, 1.0]);
+      }
+      if (progInfo.uniforms.u_secondary_color) {
+        gl.uniform3fv(progInfo.uniforms.u_secondary_color, secondaryColorVec || [0.44, 0.0, 1.0]);
+      }
+      if (progInfo.uniforms.u_tertiary_color) {
+        gl.uniform3fv(progInfo.uniforms.u_tertiary_color, tertiaryColorVec || [1.0, 0.0, 0.6]);
+      }
+      if (progInfo.uniforms.u_mouse) {
+        gl.uniform2f(progInfo.uniforms.u_mouse, mouseX, mouseY);
+      }
+
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
     function drawMain(values, W, H) {
+      const isWebGL = ['tunnel3d', 'horizon3d', 'orb3d', 'warp3d', 'valley3d', 'matrix3d', 'mandala3d'].includes(mode);
+      if (!isWebGL) {
+        if (canvas.style.display === 'none') {
+          canvas.style.display = 'block';
+        }
+        if (webglCanvas && webglCanvas.style.display !== 'none') {
+          webglCanvas.style.display = 'none';
+        }
+      }
+
       if      (mode === 'mirror')       drawMirror(values, W, H);
       else if (mode === 'oscilloscope') drawOscilloscope(values, W, H);
       else if (mode === 'waterfall')    drawWaterfall(values, W, H);
@@ -751,6 +1545,7 @@
       else if (mode === 'unchained')    drawUnchained(values, W, H);
       else if (mode === 'geiss')        drawGeiss(values, W, H);
       else if (mode === 'idiot')        drawIdiot(values, W, H);
+      else if (isWebGL)                 drawWebGL(values, W, H);
       else                              drawBars(values, W, H);
     }
 
@@ -882,7 +1677,27 @@
     window.addEventListener('resize', onWindowResize);
     resize();
 
-    return { start, stop, drawIdle, toggleMode, resetMode, getMode, setMode, resize };
+    function setColors(c1, c2, c3) {
+      if (!c1) {
+        primaryColorVec = null;
+        secondaryColorVec = null;
+        tertiaryColorVec = null;
+        primaryColorStr = 'rgba(0, 240, 255, 1.0)';
+        secondaryColorStr = 'rgba(112, 0, 255, 1.0)';
+        tertiaryColorStr = 'rgba(255, 0, 153, 1.0)';
+      } else {
+        primaryColorVec = [c1[0] / 255, c1[1] / 255, c1[2] / 255];
+        secondaryColorVec = [c2[0] / 255, c2[1] / 255, c2[2] / 255];
+        tertiaryColorVec = [c3[0] / 255, c3[1] / 255, c3[2] / 255];
+        primaryColorStr = `rgba(${c1[0]}, ${c1[1]}, ${c1[2]}, 1.0)`;
+        secondaryColorStr = `rgba(${c2[0]}, ${c2[1]}, ${c2[2]}, 1.0)`;
+        tertiaryColorStr = `rgba(${c3[0]}, ${c3[1]}, ${c3[2]}, 1.0)`;
+      }
+      const state = getState();
+      if (!state.playing || !running) drawIdle();
+    }
+
+    return { start, stop, drawIdle, toggleMode, resetMode, getMode, setMode, resize, setColors };
   }
 
   exports.create            = create;

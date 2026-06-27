@@ -898,7 +898,7 @@ body.muted-state .live-wave span { background: rgba(240,236,228,0.45); }
 .viz-logo-underlay path {
   stroke: currentColor;
 }
-#visualizer {
+#visualizer, #visualizer-webgl {
   display: block;
   width: 100%;
   height: 100%;

@@ -393,10 +393,14 @@ export function updatePlayerLogo(station) {
   if (!playerIcon || !defaultLogo) return;
   const url = station && safeHttpUrl(station.iconUrl);
   if (url) {
+    const handleUrl = (srcUrl) => {
+      updateDynamicThemeFromIcon(srcUrl);
+    };
     if (iconRendererCache.has(url)) {
       playerIcon.src = iconRendererCache.get(url);
       playerIcon.classList.remove('hidden');
       defaultLogo.classList.add('hidden');
+      handleUrl(playerIcon.src);
     } else {
       api.cacheIcon(url).then(dataUrl => {
         if (dataUrl) {
@@ -404,12 +408,145 @@ export function updatePlayerLogo(station) {
           playerIcon.src = dataUrl;
           playerIcon.classList.remove('hidden');
           defaultLogo.classList.add('hidden');
+          handleUrl(dataUrl);
+        } else {
+          resetDynamicTheme();
         }
-      }).catch(() => {});
+      }).catch(() => {
+        resetDynamicTheme();
+      });
     }
   } else {
     playerIcon.classList.add('hidden');
     defaultLogo.classList.remove('hidden');
+    resetDynamicTheme();
+  }
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) {
+    h = s = 0; // achromatic
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return [h, s, l];
+}
+
+function hslToRgb(h, s, l) {
+  let r, g, b;
+  if (s === 0) {
+    r = g = b = l; // achromatic
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+function updateDynamicThemeFromIcon(iconUrl) {
+  if (!iconUrl) {
+    resetDynamicTheme();
+    return;
+  }
+  const img = new Image();
+  img.crossOrigin = 'Anonymous';
+  img.onload = () => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 16;
+      canvas.height = 16;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, 16, 16);
+      const data = ctx.getImageData(0, 0, 16, 16).data;
+
+      let bestR = 0, bestG = 240, bestB = 255;
+      let maxSat = -1;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
+        if (a < 180) continue; // skip transparent
+
+        const maxVal = Math.max(r, g, b);
+        const minVal = Math.min(r, g, b);
+        const diff = maxVal - minVal;
+        if (maxVal > 40 && maxVal < 235 && diff > maxSat) {
+          maxSat = diff;
+          bestR = r;
+          bestG = g;
+          bestB = b;
+        }
+      }
+
+      if (maxSat < 20) {
+        resetDynamicTheme();
+        return;
+      }
+
+      const [h, s, l] = rgbToHsl(bestR, bestG, bestB);
+      const neonS = Math.max(0.85, s);
+      const neonL1 = 0.52;
+      const neonL2 = 0.48;
+
+      const c1 = hslToRgb(h, neonS, neonL1);
+      const c2 = hslToRgb((h + 0.33) % 1.0, neonS, neonL2);
+      const c3 = hslToRgb((h + 0.67) % 1.0, neonS, neonL1);
+
+      const r = document.documentElement;
+      const hex = (rgb) => '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('');
+      const color1 = hex(c1);
+      const color2 = hex(c2);
+      const color3 = hex(c3);
+
+      r.style.setProperty('--accent', color1);
+      r.style.setProperty('--accent2', color2);
+      r.style.setProperty('--accent3', color3);
+
+      if (state.visualizer && typeof state.visualizer.setColors === 'function') {
+        state.visualizer.setColors(c1, c2, c3);
+      }
+    } catch (e) {
+      console.warn('Failed to extract colors from icon:', e);
+      resetDynamicTheme();
+    }
+  };
+  img.onerror = () => {
+    resetDynamicTheme();
+  };
+  img.src = iconUrl;
+}
+
+function resetDynamicTheme() {
+  const r = document.documentElement;
+  r.style.removeProperty('--accent');
+  r.style.removeProperty('--accent2');
+  r.style.removeProperty('--accent3');
+  
+  if (state.visualizer && typeof state.visualizer.setColors === 'function') {
+    state.visualizer.setColors(null, null, null);
   }
 }
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0
+
+- **Interaktiver & Dynamischer 3D WebGL-Visualizer**:
+  - Hinzufügung von 3 neuen WebGL-Visualisierungsmodi: Infinite Valley (`valley3d`), Audio Matrix (`matrix3d`) und Psychedelic Mandala (`mandala3d`) (insgesamt 7 fortgeschrittene WebGL-3D-Modi).
+  - Dynamischer Color-Sync: Automatisierte Farbthemen-Extraktion aus den Logos der Radiosender zur Echtzeit-Anpassung der Player-UI-CSS-Variablen und der Visualizer-Farbpaletten im HSL-Triaden-Schema.
+  - Bass-Shake: Kameravibrationseffekt auf Basis niedriger Frequenzen.
+
 ## 1.5.0
 
 - **Vollständige Lokalisierung (DE/EN)**: Alle UI-Texte — Tooltips, aria-Labels, Gruppen-Header, Filter-Dropdowns, Modals, Toasts, Onboarding, Tray-Menü — gehen jetzt durch das i18n-System. Sprachwechsel aktualisiert die gesamte Oberfläche sofort inkl. Tray-Menü.
