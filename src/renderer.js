@@ -1,5 +1,5 @@
 import { loadSettings, saveSettings, applyTheme } from './settings.js';
-import { setLang, getLang, t, applyI18n } from './i18n.js';
+import { setLang, getLang, t, applyI18n, displayGenre } from './i18n.js';
 import { state } from './renderer-state.js';
 import {
   LS, loadInt, loadBool, saveBool,
@@ -612,6 +612,15 @@ async function saveAndClose() {
   applyTheme(theme);
   setLang(lang);
   applyI18n();
+  populateFilters();
+  renderStations();
+  updateListenBadge();
+  applyBassBoost();
+  updatePlayUI();
+  if (state.activeStation) {
+    document.getElementById('active-station-subtitle').textContent =
+      `${displayGenre(state.activeStation.genre)} · ${state.activeStation.country}`;
+  }
   api.setAutostart(autostartOn);
 
   document.getElementById('settings-modal')?.classList.add('hidden');
