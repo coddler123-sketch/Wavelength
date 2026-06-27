@@ -162,14 +162,14 @@ export function renderStations() {
           <span class="station-tag">${stationGenre}</span>
           ${stationCountry ? `<span class="station-tag">${stationCountry}</span>` : ''}
           ${gainDb !== 0 ? `<span class="station-tag">${gainDb > 0 ? '+' : ''}${gainDb} dB</span>` : ''}
-          ${today > 0 ? `<span class="station-tag station-tag--today">${Math.ceil(today / 60000)} Min.</span>` : ''}
+          ${today > 0 ? `<span class="station-tag station-tag--today">${t('listen.min', Math.ceil(today / 60000))}</span>` : ''}
         </div>
       </div>
       <div class="item-badges">
         <span class="item-eq-anim${state.playing && state.activeStation && station.id === state.activeStation.id ? '' : ' hidden'}">
           <span></span><span></span><span></span>
         </span>
-        <button class="fav-star-btn ${state.favorites.includes(station.id) ? 'is-fav' : ''}" aria-label="${state.favorites.includes(station.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}" aria-pressed="${state.favorites.includes(station.id)}" data-station-id="${stationId}" type="button"><svg width="10" height="10" viewBox="-2 -2.5 28 28" overflow="visible" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
+        <button class="fav-star-btn ${state.favorites.includes(station.id) ? 'is-fav' : ''}" aria-label="${state.favorites.includes(station.id) ? t('fav.remove') : t('fav.add')}" aria-pressed="${state.favorites.includes(station.id)}" data-station-id="${stationId}" type="button"><svg width="10" height="10" viewBox="-2 -2.5 28 28" overflow="visible" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
       </div>
     `;
 
@@ -237,11 +237,11 @@ export function renderStations() {
   }
 
   if (customStns.length > 0) {
-    appendGroupHeader('✦ Meine Sender');
+    appendGroupHeader(t('group.custom'));
     customStns.forEach(renderStationItem);
   }
   if (favStations.length > 0) {
-    appendGroupHeader('★ Favoriten', true);
+    appendGroupHeader(t('group.favorites'), true);
     favStations.forEach(renderStationItem);
   }
 
@@ -352,7 +352,7 @@ export function updatePlayerFavStar() {
   btn.classList.remove('hidden');
   const isFav = state.favorites.includes(state.activeStation.id);
   btn.classList.toggle('is-fav', isFav);
-  const label = isFav ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen';
+  const label = isFav ? t('fav.remove') : t('fav.add');
   btn.title = label;
   btn.setAttribute('aria-label', label);
   btn.setAttribute('aria-pressed', String(isFav));
@@ -519,7 +519,7 @@ export function openStationEditor(station = null) {
   const iconEl   = document.getElementById('station-editor-icon');
   const errorEl  = document.getElementById('station-editor-error');
   if (!modal) return;
-  title.textContent   = station ? 'Station bearbeiten' : 'Station hinzufügen';
+  title.textContent   = station ? t('editor.title.edit') : t('editor.title.add');
   idInput.value       = station ? station.id : '';
   nameEl.value        = station ? station.name : '';
   urlEl.value         = station ? station.streamUrl : '';
@@ -625,13 +625,13 @@ export function initStationEditor() {
       errorEl.textContent = msg;
       errorEl.classList.remove('hidden');
     };
-    if (!name)       { showErr('Name ist erforderlich.'); document.getElementById('station-editor-name').focus(); return; }
-    if (!streamUrl)  { showErr('Stream-URL ist erforderlich.'); document.getElementById('station-editor-url').focus(); return; }
-    if (!/^https?:\/\//i.test(streamUrl)) { showErr('Stream-URL muss mit http:// oder https:// beginnen.'); document.getElementById('station-editor-url').focus(); return; }
+    if (!name)       { showErr(t('editor.err.name')); document.getElementById('station-editor-name').focus(); return; }
+    if (!streamUrl)  { showErr(t('editor.err.url')); document.getElementById('station-editor-url').focus(); return; }
+    if (!/^https?:\/\//i.test(streamUrl)) { showErr(t('editor.err.url')); document.getElementById('station-editor-url').focus(); return; }
 
     const saveBtn = document.getElementById('station-editor-save-btn');
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Speichern…';
+    saveBtn.textContent = t('editor.saving');
     try {
       const data = { name, streamUrl, genre, iconUrl };
       const newStations = id
@@ -642,11 +642,11 @@ export function initStationEditor() {
       renderStations();
       closeStationEditor();
     } catch (err) {
-      showErr('Fehler beim Speichern.');
+      showErr(t('editor.err.save'));
       console.error('[custom-station] save failed:', err);
     } finally {
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Speichern';
+      saveBtn.textContent = t('editor.save');
     }
   });
 }

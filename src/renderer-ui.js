@@ -338,7 +338,7 @@ export function resetStationGain() {
   if (!state.activeStation) return;
   localStorage.removeItem(stationGainKey(state.activeStation.id));
   applyStationGain();
-  showToast('Sender 0 dB');
+  showToast(t('toast.gain.reset'));
 }
 
 // ── Mini / Pin / Mute ────────────────────────────
@@ -436,7 +436,7 @@ export const showAboutModal = () => {
   const webEl  = document.getElementById('about-website-url');
 
   if (state.activeStation) {
-    if (nameEl) nameEl.textContent = state.activeStation.name || 'Keine Station';
+    if (nameEl) nameEl.textContent = state.activeStation.name || t('no.station');
     if (urlEl) {
       urlEl.textContent = state.activeStation.streamUrl || '-';
       urlEl.title = state.activeStation.streamUrl || '';
@@ -446,7 +446,7 @@ export const showAboutModal = () => {
       webEl.title = state.activeStation.website || '';
     }
   } else {
-    if (nameEl) nameEl.textContent = 'Keine Station';
+    if (nameEl) nameEl.textContent = t('no.station');
     if (urlEl) {
       urlEl.textContent = '-';
       urlEl.title = '';

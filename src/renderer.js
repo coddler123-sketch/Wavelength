@@ -289,7 +289,7 @@ window.addEventListener('wheel', (e) => {
   updateVolSlider(Math.max(0, Math.min(100, vol + (e.deltaY < 0 ? 5 : -5))));
   if (!localStorage.getItem('wl.scrollHintSeen')) {
     localStorage.setItem('wl.scrollHintSeen', '1');
-    showToast('Mausrad = Lautstärke');
+    showToast(t('toast.volume.hint'));
   }
 }, { passive: false });
 
@@ -369,7 +369,7 @@ function showOnboarding() {
   function showSlide(i) {
     slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
     dots.forEach((d, idx)   => d.classList.toggle('active', idx === i));
-    if (nextBtn) nextBtn.textContent = (i === slides.length - 1) ? 'Los geht\'s' : 'Weiter';
+    if (nextBtn) nextBtn.textContent = (i === slides.length - 1) ? t('onboarding.start') : t('onboarding.next');
   }
   nextBtn?.addEventListener('click', () => {
     current++;
@@ -533,7 +533,7 @@ if (historyModalEl) {
     setTimeout(showOnboarding, 600);
   } else if (!isAudit && !localStorage.getItem('wl.shortcutsHintSeen')) {
     localStorage.setItem('wl.shortcutsHintSeen', '1');
-    setTimeout(() => showToast('Tipp: F1 zeigt alle Tastaturkürzel', { duration: 3500 }), 2500);
+    setTimeout(() => showToast(t('toast.shortcuts.hint'), { duration: 3500 }), 2500);
   }
 
   const wantPin   = loadBool(LS.pin);
