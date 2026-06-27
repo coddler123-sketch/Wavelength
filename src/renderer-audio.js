@@ -4,13 +4,13 @@ import {
   updatePlayUI, reportConnectionState, displayTrackInfo,
   showToast, applyStationGain, updateListenBadge,
 } from './renderer-ui.js';
-import { BASS_LABELS, bassTooltip, MEDIA_SESSION_FALLBACK } from './ui-labels.mjs';
+import { bassTooltip, MEDIA_SESSION_FALLBACK } from './ui-labels.mjs';
+import { t } from './i18n.js';
 import {
   RECONNECT_DELAYS, shouldScheduleReconnect,
   reconnectDelayForAttempt, nextReconnectAttempt,
 } from './reconnect-policy.mjs';
 
-export { BASS_LABELS } from './ui-labels.mjs';
 export { RECONNECT_DELAYS } from './reconnect-policy.mjs';
 
 const api = window.electronAPI;
@@ -32,7 +32,8 @@ export function cycleBassBoost() {
   state.bassBoostLevel = (state.bassBoostLevel + 1) % BASS_GAINS.length;
   localStorage.setItem(LS.bass, String(state.bassBoostLevel));
   applyBassBoost();
-  showToast(`Bass ${BASS_LABELS[state.bassBoostLevel]}`);
+  const bassLevelLabel = [t('tooltip.bass.off'), '+6 dB', '+12 dB'][state.bassBoostLevel] ?? t('tooltip.bass.off');
+  showToast(`Bass ${bassLevelLabel}`);
 }
 
 // ── Audio Context ────────────────────────────────

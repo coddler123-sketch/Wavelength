@@ -21,7 +21,7 @@ function htmlEl(source, id) {
   const tag = m[0];
   return {
     attr(name) {
-      const am = tag.match(new RegExp(`\\b${name}="([^"]*)"`));
+      const am = tag.match(new RegExp(`(?<![\\w-])${name}="([^"]*)"`));
       return am ? am[1] : null;
     },
     text() {

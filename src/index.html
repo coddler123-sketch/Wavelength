@@ -33,20 +33,20 @@
         <div class="app-title-label">Wavelength</div>
         <div class="station-title-row">
           <div class="logo-name" id="active-station-name" title="Wavelength"><span class="logo-name-inner" id="active-station-name-inner">Wavelength</span></div>
-          <button class="station-gain-pill" id="station-gain-pill" title="Sender-Trim zurücksetzen" aria-label="Sender-Trim zurücksetzen"></button>
+          <button class="station-gain-pill" id="station-gain-pill" data-i18n-title="tooltip.gain.reset" data-i18n-aria="tooltip.gain.reset" title="Sender-Trim zurücksetzen" aria-label="Sender-Trim zurücksetzen"></button>
         </div>
         <div class="logo-tagline" id="active-station-subtitle">Multi-Sender-Radio</div>
         <div class="status-row">
           <div class="live-badge"><span class="live-wave" aria-hidden="true"><span></span><span></span><span></span></span><span id="live-status" aria-live="polite" aria-atomic="true">Gestoppt</span></div>
           <span class="listen-badge" id="listen-badge" aria-live="polite" aria-atomic="true">Heute 0 min</span>
           <span class="sleep-badge" id="sleep-badge" aria-live="polite" aria-atomic="true"></span>
-          <button class="fav-badge-btn" id="player-fav-btn" title="Zu Favoriten hinzufügen" aria-label="Zu Favoriten hinzufügen" aria-pressed="false"><svg width="12" height="12" viewBox="-2 -2.5 28 28" overflow="visible" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
+          <button class="fav-badge-btn" id="player-fav-btn" data-i18n-title="tooltip.fav.add" data-i18n-aria="tooltip.fav.add" title="Zu Favoriten hinzufügen" aria-label="Zu Favoriten hinzufügen" aria-pressed="false"><svg width="12" height="12" viewBox="-2 -2.5 28 28" overflow="visible" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
         </div>
       </div>
     </div>
   </div>
 
-  <button class="view-toggle-btn" id="btn-view-toggle" aria-pressed="false" aria-label="Senderliste anzeigen" title="Senderliste anzeigen">
+  <button class="view-toggle-btn" id="btn-view-toggle" aria-pressed="false" data-i18n-title="tooltip.view.stations" data-i18n-aria="tooltip.view.stations" aria-label="Senderliste anzeigen" title="Senderliste anzeigen">
     <svg class="icon-list" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <line x1="8" y1="6" x2="21" y2="6"/>
       <line x1="8" y1="12" x2="21" y2="12"/>
@@ -62,14 +62,14 @@
     </svg>
   </button>
 
-  <button class="settings-btn" id="btn-settings" title="Einstellungen" aria-label="Einstellungen">
+  <button class="settings-btn" id="btn-settings" data-i18n-title="settings.title" data-i18n-aria="settings.title" title="Einstellungen" aria-label="Einstellungen">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
   </button>
 
-  <button class="hide-btn" id="btn-hide" title="In Tray minimieren" aria-label="In Tray minimieren">
+  <button class="hide-btn" id="btn-hide" data-i18n-title="tooltip.hide" data-i18n-aria="tooltip.hide" title="In Tray minimieren" aria-label="In Tray minimieren">
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
       <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
     </svg>
@@ -80,12 +80,12 @@
     <div class="search-container">
       <div class="search-row">
         <input type="text" id="station-search" placeholder="Station filtern..." aria-label="Station filtern">
-        <button class="fav-toggle-btn" id="btn-fav-filter" title="Nur Favoriten anzeigen" aria-label="Nur Favoriten anzeigen">
+        <button class="fav-toggle-btn" id="btn-fav-filter" data-i18n-title="tooltip.fav.filter" data-i18n-aria="tooltip.fav.filter" title="Nur Favoriten anzeigen" aria-label="Nur Favoriten anzeigen">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
           </svg>
         </button>
-        <button class="add-station-btn" id="btn-add-station" title="Eigene Station hinzufügen" aria-label="Eigene Station hinzufügen">
+        <button class="add-station-btn" id="btn-add-station" data-i18n-title="tooltip.station.add" data-i18n-aria="tooltip.station.add" title="Eigene Station hinzufügen" aria-label="Eigene Station hinzufügen">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
@@ -120,7 +120,7 @@
     <svg class="viz-logo-underlay" viewBox="0 0 44 44" fill="none" aria-hidden="true" focusable="false">
       <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-    <canvas id="visualizer" role="img" aria-label="Audio-Visualizer, Modus: Bars" title="Linksklick = Modus wechseln · Rechtsklick = Menü"></canvas>
+    <canvas id="visualizer" role="img" aria-label="Audio-Visualizer, Modus: Bars" data-i18n-title="tooltip.visualizer" title="Linksklick = Modus wechseln · Rechtsklick = Menü"></canvas>
     <div class="viz-toast" id="viz-toast" role="status" aria-live="polite" aria-atomic="true"></div>
   </div>
 
@@ -140,13 +140,13 @@
   <div class="controls-group">
   <div class="action-row">
     <div class="ctrl-pill">
-      <button class="action-btn" id="btn-pin" title="Immer im Vordergrund" aria-label="Immer im Vordergrund">
+      <button class="action-btn" id="btn-pin" data-i18n-title="tooltip.pin" data-i18n-aria="tooltip.pin" title="Immer im Vordergrund" aria-label="Immer im Vordergrund">
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9.5 2.5l3 3-3.25 3.25.25 2.25-2 2-1.75-3.25L2.5 8l2-2 2.25.25L9.5 2.5z"/>
           <path d="M5.75 9.75L2 13.5"/>
         </svg>
       </button>
-      <button class="action-btn" id="btn-toggle-mini" title="Mini-Modus" aria-label="Mini-Modus">
+      <button class="action-btn" id="btn-toggle-mini" data-i18n-title="tooltip.mini" data-i18n-aria="tooltip.mini" title="Mini-Modus" aria-label="Mini-Modus">
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="3" width="11" height="9" rx="2"/>
           <path d="M5 6.5h5"/>
@@ -154,18 +154,18 @@
         </svg>
       </button>
     </div>
-    <button class="ctrl-btn lg" id="btn-playstop" aria-label="Abspielen" aria-pressed="false" title="Abspielen">
+    <button class="ctrl-btn lg" id="btn-playstop" data-i18n-title="tooltip.play" data-i18n-aria="tooltip.play" aria-label="Abspielen" aria-pressed="false" title="Abspielen">
       <svg id="main-icon" width="20" height="20" viewBox="0 0 18 18" fill="currentColor">
         <path d="M 3 2 L 15 9 L 3 16 L 3 2 Z"/>
       </svg>
     </button>
     <div class="ctrl-pill">
-      <button class="action-btn" id="btn-sleep" title="Sleeptimer (15 → 30 → 60 → 90 min → aus)" aria-label="Sleeptimer">
+      <button class="action-btn" id="btn-sleep" data-i18n-title="tooltip.sleep" data-i18n-aria="tooltip.sleep" title="Sleeptimer (15 → 30 → 60 → 90 min → aus)" aria-label="Sleeptimer">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
         </svg>
       </button>
-      <button class="action-btn" id="btn-bass" title="Bassverstärkung · B" aria-label="Bassverstärkung">
+      <button class="action-btn" id="btn-bass" data-i18n-title="tooltip.bass" data-i18n-aria="tooltip.bass" title="Bassverstärkung · B" aria-label="Bassverstärkung">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
           <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
@@ -176,13 +176,13 @@
     </div>
   </div>
   <div class="vol-row">
-    <button class="vol-mute-btn" id="btn-mute" aria-label="Stumm" aria-pressed="false" title="M">
+    <button class="vol-mute-btn" id="btn-mute" data-i18n-title="tooltip.mute" data-i18n-aria="tooltip.mute" aria-label="Stumm · M" aria-pressed="false" title="Stumm · M">
       <svg id="mute-icon" width="16" height="16" viewBox="0 0 15 15" fill="currentColor">
         <path d="M2 5h3l4-3v11l-4-3H2V5z"/>
         <path d="M11 5.5a3 3 0 0 1 0 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
       </svg>
     </button>
-    <input type="range" id="vol-slider" min="0" max="100" value="80" title="Lautstärke · Mausrad · ↑↓" aria-label="Lautstärke">
+    <input type="range" id="vol-slider" min="0" max="100" value="80" data-i18n-title="tooltip.volume" data-i18n-aria="tooltip.volume.short" title="Lautstärke · Mausrad · ↑↓" aria-label="Lautstärke">
     <span class="vol-val" id="vol-val">80%</span>
   </div>
   </div>
@@ -210,19 +210,19 @@
       <canvas class="mini-viz" id="mini-visualizer"></canvas>
     </div>
     <div class="mini-ctrls">
-      <button class="mini-btn play-btn" id="mini-playstop" aria-label="Abspielen" aria-pressed="false" title="Abspielen">
+      <button class="mini-btn play-btn" id="mini-playstop" data-i18n-title="tooltip.play" data-i18n-aria="tooltip.play" aria-label="Abspielen" aria-pressed="false" title="Abspielen">
         <svg id="mini-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
           <path d="M 2 1 L 11 6 L 2 11 L 2 1 Z"/>
         </svg>
       </button>
-      <button class="mini-btn" id="mini-expand" title="Vollansicht" aria-label="Vollansicht">
+      <button class="mini-btn" id="mini-expand" data-i18n-title="tooltip.expand" data-i18n-aria="tooltip.expand" title="Vollansicht" aria-label="Vollansicht">
         <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="3" width="11" height="9" rx="2"/>
           <path d="M5 6.5h5"/>
           <path d="M5 9h3"/>
         </svg>
       </button>
-      <button class="mini-btn" id="mini-hide" title="In Tray minimieren" aria-label="In Tray minimieren">
+      <button class="mini-btn" id="mini-hide" data-i18n-title="tooltip.hide" data-i18n-aria="tooltip.hide" title="In Tray minimieren" aria-label="In Tray minimieren">
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
           <line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/>
         </svg>
@@ -234,7 +234,7 @@
       <path d="M2 5h3l4-3v11l-4-3H2V5z"/>
       <path d="M11 5.5a3 3 0 0 1 0 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
     </svg>
-    <input type="range" id="mini-vol" min="0" max="100" value="80" title="Lautstärke" aria-label="Lautstärke">
+    <input type="range" id="mini-vol" min="0" max="100" value="80" data-i18n-title="tooltip.volume.short" data-i18n-aria="tooltip.volume.short" title="Lautstärke" aria-label="Lautstärke">
     <span class="mini-vol-val" id="mini-vol-val">80%</span>
   </div>
 </div>
@@ -245,7 +245,7 @@
 <!-- ── About Modal Overlay ─────────────────────────── -->
 <div id="about-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">
   <div class="modal-content">
-    <button class="modal-close" id="about-close-btn" title="Schließen" aria-label="Schließen">&times;</button>
+    <button class="modal-close" id="about-close-btn" data-i18n-title="tooltip.close" data-i18n-aria="tooltip.close" title="Schließen" aria-label="Schließen">&times;</button>
     <div class="modal-logo-wrap">
       <svg class="modal-logo" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke="url(#modal-logo-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -285,7 +285,7 @@
 
 <div id="shortcuts-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title" aria-hidden="true">
   <div class="modal-content">
-    <button class="modal-close" id="shortcuts-close-btn" title="Schließen" aria-label="Schließen">&times;</button>
+    <button class="modal-close" id="shortcuts-close-btn" data-i18n-title="tooltip.close" data-i18n-aria="tooltip.close" title="Schließen" aria-label="Schließen">&times;</button>
     <h2 class="modal-title" id="shortcuts-modal-title">Tastaturkürzel</h2>
     <div class="modal-info-block shortcuts-list">
       <div class="shortcut-row"><span class="shortcut-label">Play / Pause</span><kbd>Leertaste</kbd></div>
@@ -307,7 +307,7 @@
 
 <div id="station-editor-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="station-editor-title" aria-hidden="true">
   <div class="modal-content">
-    <button class="modal-close" id="station-editor-close-btn" title="Schließen" aria-label="Schließen">&times;</button>
+    <button class="modal-close" id="station-editor-close-btn" data-i18n-title="tooltip.close" data-i18n-aria="tooltip.close" title="Schließen" aria-label="Schließen">&times;</button>
     <h2 class="modal-title" id="station-editor-title">Station hinzufügen</h2>
     <form id="station-editor-form" class="station-editor-form" novalidate>
       <input type="hidden" id="station-editor-id">

@@ -177,14 +177,14 @@ export function renderStations() {
       if (badges) {
         const editBtn = document.createElement('button');
         editBtn.className = 'station-edit-btn';
-        editBtn.title = 'Bearbeiten';
-        editBtn.setAttribute('aria-label', 'Station bearbeiten');
+        editBtn.title = t('tooltip.edit');
+        editBtn.setAttribute('aria-label', t('tooltip.station.edit'));
         editBtn.type = 'button';
         editBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
         const delBtn = document.createElement('button');
         delBtn.className = 'station-delete-btn';
-        delBtn.title = 'Löschen';
-        delBtn.setAttribute('aria-label', 'Station löschen');
+        delBtn.title = t('tooltip.delete');
+        delBtn.setAttribute('aria-label', t('tooltip.station.delete'));
         delBtn.type = 'button';
         delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
         badges.insertBefore(delBtn, badges.firstChild);
@@ -445,7 +445,7 @@ export function populateRecents() {
     const item = document.createElement('button');
     item.className = 'recent-item';
     item.type = 'button';
-    item.setAttribute('aria-label', `Zuletzt: ${station.name}`);
+    item.setAttribute('aria-label', t('tooltip.recent', station.name));
     item.title = station.name;
 
     const img = document.createElement('img');

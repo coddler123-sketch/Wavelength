@@ -451,7 +451,7 @@ function hideHistoryModal() {
 safeAddListener('track-info-container', 'click', showHistoryModal);
 const tic = document.getElementById('track-info-container');
 if (tic) {
-  tic.title = 'Wiedergabeverlauf öffnen (F4)';
+  tic.title = t('tooltip.history');
   tic.setAttribute('role', 'button');
   tic.setAttribute('tabindex', '0');
   tic.addEventListener('keydown', (e) => {

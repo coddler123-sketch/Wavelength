@@ -81,7 +81,7 @@ export function updateListenBadge() {
   if (!badge) return;
   if (!state.activeStation) {
     badge.textContent = 'Heute 0 min';
-    badge.title = 'Keine Station aktiv';
+    badge.title = t('tooltip.no.station');
     return;
   }
   const today   = parseInt(localStorage.getItem(stationTodayKey(state.activeStation.id)) || '0', 10);
@@ -365,7 +365,8 @@ export function setMuted(on) {
   document.getElementById('mute-icon').innerHTML = on ? MUTED_SVG : speakerSVG(vol);
   const muteBtn = document.getElementById('btn-mute');
   if (muteBtn) {
-    muteBtn.setAttribute('aria-label', on ? 'Stumm aufheben' : 'Stumm');
+    muteBtn.setAttribute('aria-label', on ? t('tooltip.unmute') : t('tooltip.mute'));
+    muteBtn.title = on ? t('tooltip.unmute') : t('tooltip.mute');
     muteBtn.setAttribute('aria-pressed', String(on));
   }
   saveBool(LS.muted, on);
@@ -501,8 +502,8 @@ export function switchView(view) {
   if (toggleBtn) {
     toggleBtn.classList.toggle('active', isList);
     toggleBtn.setAttribute('aria-pressed', String(isList));
-    toggleBtn.setAttribute('aria-label', isList ? 'Player-Ansicht' : 'Senderliste anzeigen');
-    toggleBtn.setAttribute('title', isList ? 'Player-Ansicht' : 'Senderliste anzeigen');
+    toggleBtn.setAttribute('aria-label', isList ? t('tooltip.view.player') : t('tooltip.view.stations'));
+    toggleBtn.setAttribute('title', isList ? t('tooltip.view.player') : t('tooltip.view.stations'));
   }
   if (state.activeStation) setActiveStationName(state.activeStation.name);
   if (isList) {
