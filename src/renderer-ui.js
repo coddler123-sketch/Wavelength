@@ -160,8 +160,10 @@ export function setThemeLevel(level) {
 
 // ── Play UI ──────────────────────────────────────
 export function updateItemEqualizer() {
+  const activeId = state.activeStation?.id;
   document.querySelectorAll('.item-eq-anim').forEach(eq => {
-    eq.classList.toggle('hidden', !state.playing);
+    const stationId = eq.closest('[data-id]')?.dataset.id;
+    eq.classList.toggle('hidden', !state.playing || stationId !== activeId);
   });
 }
 
