@@ -322,6 +322,13 @@ export function applyStationGain() {
   }
 }
 
+function updateSubtitleGain(gainDb) {
+  const el = document.getElementById('active-station-subtitle');
+  if (!el || !state.activeStation) return;
+  const text = el.textContent.replace(/\s·\s[+-]?\d+ dB$/, '');
+  el.textContent = gainDb !== 0 ? `${text} · ${gainDb > 0 ? '+' : ''}${gainDb} dB` : text;
+}
+
 export function adjustStationGain(deltaDb) {
   if (!state.activeStation) return;
   const next = nextStationGainDb(currentStationGainDb(), deltaDb);
@@ -331,6 +338,7 @@ export function adjustStationGain(deltaDb) {
     localStorage.setItem(stationGainKey(state.activeStation.id), String(next));
   }
   applyStationGain();
+  updateSubtitleGain(next);
   showToast(t('toast.gain', `${next > 0 ? '+' : ''}${next} dB`));
 }
 
@@ -338,6 +346,7 @@ export function resetStationGain() {
   if (!state.activeStation) return;
   localStorage.removeItem(stationGainKey(state.activeStation.id));
   applyStationGain();
+  updateSubtitleGain(0);
   showToast(t('toast.gain.reset'));
 }
 
