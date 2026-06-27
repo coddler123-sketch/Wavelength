@@ -331,7 +331,7 @@ export function adjustStationGain(deltaDb) {
     localStorage.setItem(stationGainKey(state.activeStation.id), String(next));
   }
   applyStationGain();
-  showToast(`Sender ${next > 0 ? '+' : ''}${next} dB`);
+  showToast(t('toast.gain', `${next > 0 ? '+' : ''}${next} dB`));
 }
 
 export function resetStationGain() {

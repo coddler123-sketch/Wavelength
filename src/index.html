@@ -99,7 +99,7 @@
           <option value="">Alle Sprachen</option>
         </select>
         <select id="bitrate-filter" aria-label="Mindestbitrate">
-          <option value="0">Bitrate</option>
+          <option value="0" data-i18n="filter.bitrate">Bitrate</option>
           <option value="64">≥ 64 kbps</option>
           <option value="128">≥ 128 kbps</option>
           <option value="192">≥ 192 kbps</option>
@@ -263,22 +263,22 @@
     
     <div class="modal-info-block">
       <div class="modal-info-item">
-        <span class="modal-info-label">Aktive Station</span>
-        <span class="modal-info-val" id="about-station-name">Keine Station</span>
+        <span class="modal-info-label" data-i18n="about.station">Aktive Station</span>
+        <span class="modal-info-val" id="about-station-name" data-i18n="about.no.station">Keine Station</span>
       </div>
       <div class="modal-info-item">
-        <span class="modal-info-label">Stream-URL</span>
+        <span class="modal-info-label" data-i18n="about.stream">Stream-URL</span>
         <span class="modal-info-val box" id="about-stream-url">-</span>
       </div>
       <div class="modal-info-item">
-        <span class="modal-info-label">Website</span>
+        <span class="modal-info-label" data-i18n="about.website">Website</span>
         <span class="modal-info-val box" id="about-website-url">-</span>
       </div>
     </div>
     
     <div class="modal-buttons modal-buttons--full">
-      <button class="modal-btn primary" id="about-web-btn">Website öffnen</button>
-      <button class="modal-btn" id="about-ok-btn">Schließen</button>
+      <button class="modal-btn primary" id="about-web-btn" data-i18n="about.open.website">Website öffnen</button>
+      <button class="modal-btn" id="about-ok-btn" data-i18n="about.close">Schließen</button>
     </div>
   </div>
 </div>
@@ -286,21 +286,21 @@
 <div id="shortcuts-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title" aria-hidden="true">
   <div class="modal-content">
     <button class="modal-close" id="shortcuts-close-btn" data-i18n-title="tooltip.close" data-i18n-aria="tooltip.close" title="Schließen" aria-label="Schließen">&times;</button>
-    <h2 class="modal-title" id="shortcuts-modal-title">Tastaturkürzel</h2>
+    <h2 class="modal-title" id="shortcuts-modal-title" data-i18n="shortcuts.title">Tastaturkürzel</h2>
     <div class="modal-info-block shortcuts-list">
-      <div class="shortcut-row"><span class="shortcut-label">Play / Pause</span><kbd>Leertaste</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label">Stummschalten</span><kbd>M</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label">Bassverstärkung wechseln</span><kbd>B</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label">Visualizer-Modus</span><kbd>V</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label">Lautstärke</span><span><kbd>↑</kbd> <kbd>↓</kbd></span></div>
-      <div class="shortcut-row"><span class="shortcut-label">Station-Gain</span><span><kbd>Alt</kbd>+<kbd>↑</kbd> <kbd>↓</kbd></span></div>
-      <div class="shortcut-row"><span class="shortcut-label">Lautstärke (Mausrad)</span><kbd>Scrollen</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label">Hilfe öffnen</span><span><kbd>?</kbd> / <kbd>F1</kbd></span></div>
-      <div class="shortcut-row"><span class="shortcut-label">Wiedergabeverlauf</span><kbd>F4</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label">Modal schließen</span><kbd>Esc</kbd></div>
+      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.play">Play / Pause</span><kbd data-i18n="shortcut.key.space">Leertaste</kbd></div>
+      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.mute">Stummschalten</span><kbd>M</kbd></div>
+      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.bass">Bassverstärkung wechseln</span><kbd>B</kbd></div>
+      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.visualizer">Visualizer-Modus</span><kbd>V</kbd></div>
+      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.volume">Lautstärke</span><span><kbd>↑</kbd> <kbd>↓</kbd></span></div>
+      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.gain">Station-Gain</span><span><kbd>Alt</kbd>+<kbd>↑</kbd> <kbd>↓</kbd></span></div>
+      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.scroll">Lautstärke (Mausrad)</span><kbd data-i18n="shortcut.scroll.key">Scrollen</kbd></div>
+      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.help">Hilfe öffnen</span><span><kbd>?</kbd> / <kbd>F1</kbd></span></div>
+      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.history">Wiedergabeverlauf</span><kbd>F4</kbd></div>
+      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.close">Modal schließen</span><kbd>Esc</kbd></div>
     </div>
     <div class="modal-buttons modal-buttons--full">
-      <button class="modal-btn" id="shortcuts-ok-btn">Schließen</button>
+      <button class="modal-btn" id="shortcuts-ok-btn" data-i18n="about.close">Schließen</button>
     </div>
   </div>
 </div>
@@ -312,25 +312,25 @@
     <form id="station-editor-form" class="station-editor-form" novalidate>
       <input type="hidden" id="station-editor-id">
       <div class="form-field">
-        <label for="station-editor-name">Name <span class="field-required">*</span></label>
+        <label for="station-editor-name"><span data-i18n="editor.label.name">Name</span> <span class="field-required">*</span></label>
         <input type="text" id="station-editor-name" placeholder="z.B. Mein Lieblingssender" autocomplete="off">
       </div>
       <div class="form-field">
-        <label for="station-editor-url">Stream-URL <span class="field-required">*</span></label>
+        <label for="station-editor-url"><span data-i18n="editor.label.url">Stream-URL</span> <span class="field-required">*</span></label>
         <input type="text" id="station-editor-url" placeholder="https://stream.beispiel.de/live" autocomplete="off">
       </div>
       <div class="form-field">
-        <label for="station-editor-genre">Kategorie</label>
+        <label for="station-editor-genre" data-i18n="editor.label.genre">Kategorie</label>
         <input type="text" id="station-editor-genre" placeholder="z.B. Pop, Rock, Jazz …" autocomplete="off">
       </div>
       <div class="form-field">
-        <label for="station-editor-icon">Icon-URL</label>
+        <label for="station-editor-icon" data-i18n="editor.label.icon">Icon-URL</label>
         <input type="text" id="station-editor-icon" placeholder="https://..." autocomplete="off">
       </div>
       <p id="station-editor-error" class="form-error hidden"></p>
       <div class="modal-buttons modal-buttons--full">
-        <button type="button" class="modal-btn modal-btn-ghost" id="station-editor-cancel-btn">Abbrechen</button>
-        <button type="submit" class="modal-btn" id="station-editor-save-btn">Speichern</button>
+        <button type="button" class="modal-btn modal-btn-ghost" id="station-editor-cancel-btn" data-i18n="editor.cancel">Abbrechen</button>
+        <button type="submit" class="modal-btn" id="station-editor-save-btn" data-i18n="editor.save">Speichern</button>
       </div>
     </form>
   </div>
@@ -339,11 +339,11 @@
 <!-- ── Confirmation Modal Overlay ─────────────────── -->
 <div id="confirm-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
   <div class="modal-content">
-    <h2 class="modal-title" id="confirm-modal-title">Station löschen?</h2>
+    <h2 class="modal-title" id="confirm-modal-title" data-i18n="confirm.title">Station löschen?</h2>
     <p class="modal-subtitle" id="confirm-modal-body"></p>
     <div class="modal-buttons modal-buttons--full">
-      <button class="modal-btn modal-btn-ghost" id="confirm-cancel-btn">Abbrechen</button>
-      <button class="modal-btn danger" id="confirm-ok-btn">Löschen</button>
+      <button class="modal-btn modal-btn-ghost" id="confirm-cancel-btn" data-i18n="confirm.cancel">Abbrechen</button>
+      <button class="modal-btn danger" id="confirm-ok-btn" data-i18n="confirm.ok">Löschen</button>
     </div>
   </div>
 </div>
@@ -351,11 +351,11 @@
 <!-- ── Track History Modal Overlay ─────────────── -->
 <div id="history-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
   <div class="modal-content history-modal">
-    <h2 class="modal-title" id="history-modal-title">Wiedergabeverlauf</h2>
+    <h2 class="modal-title" id="history-modal-title" data-i18n="history.title">Wiedergabeverlauf</h2>
     <div id="history-list" class="history-list" aria-live="polite"></div>
     <div class="modal-buttons modal-buttons--full">
-      <button class="modal-btn modal-btn-ghost" id="history-clear-btn">Verlauf löschen</button>
-      <button class="modal-btn" id="history-close-btn">Schließen</button>
+      <button class="modal-btn modal-btn-ghost" id="history-clear-btn" data-i18n="history.clear">Verlauf löschen</button>
+      <button class="modal-btn" id="history-close-btn" data-i18n="about.close">Schließen</button>
     </div>
   </div>
 </div>
@@ -372,11 +372,11 @@
         <div class="settings-row">
           <span class="settings-label" data-i18n="settings.theme">Design</span>
           <div class="theme-picker" id="theme-picker">
-            <button class="theme-btn" data-theme="nacht"><span class="theme-swatch" style="--sw:#34d6d0"></span>Nacht</button>
-            <button class="theme-btn" data-theme="ozean"><span class="theme-swatch" style="--sw:#4f7cff"></span>Ozean</button>
+            <button class="theme-btn" data-theme="nacht"><span class="theme-swatch" style="--sw:#34d6d0"></span><span data-i18n="theme.nacht">Nacht</span></button>
+            <button class="theme-btn" data-theme="ozean"><span class="theme-swatch" style="--sw:#4f7cff"></span><span data-i18n="theme.ozean">Ozean</span></button>
             <button class="theme-btn" data-theme="sunset"><span class="theme-swatch" style="--sw:#ffbf69"></span>Sunset</button>
             <button class="theme-btn" data-theme="aurora"><span class="theme-swatch" style="--sw:#34d98c"></span>Aurora</button>
-            <button class="theme-btn" data-theme="daemmerung"><span class="theme-swatch" style="--sw:#b47cff"></span>Dämmerung</button>
+            <button class="theme-btn" data-theme="daemmerung"><span class="theme-swatch" style="--sw:#b47cff"></span><span data-i18n="theme.daemmerung">Dämmerung</span></button>
           </div>
         </div>
 
