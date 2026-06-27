@@ -280,8 +280,10 @@ export function selectStation(station, options = {}) {
   }
 
   setActiveStationName(station.name);
+  const gainDb = loadInt(stationGainKey(station.id), 0);
+  const gainStr = gainDb !== 0 ? ` · ${gainDb > 0 ? '+' : ''}${gainDb} dB` : '';
   document.getElementById('active-station-subtitle').textContent =
-    `${displayGenre(station.genre)} · ${station.country}`;
+    `${displayGenre(station.genre)} · ${station.country}${gainStr}`;
   document.getElementById('mini-station-name').textContent = station.name;
   document.getElementById('mini-station-name').title = station.name;
   updateMiniLogo(station);

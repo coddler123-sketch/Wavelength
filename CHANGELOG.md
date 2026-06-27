@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.0
+
+- **Vollständige Lokalisierung (DE/EN)**: Alle UI-Texte — Tooltips, aria-Labels, Gruppen-Header, Filter-Dropdowns, Modals, Toasts, Onboarding, Tray-Menü — gehen jetzt durch das i18n-System. Sprachwechsel aktualisiert die gesamte Oberfläche sofort inkl. Tray-Menü.
+- **Kategorie-Filter lokalisiert**: Genre-Kategorien und „Alle Kategorien / All categories" werden übersetzt angezeigt; interne Filterwerte bleiben Deutsch für konsistentes Matching.
+- **Equalizer-Animation-Fix**: Balken-Icon erscheint jetzt nur noch beim aktiv spielenden Sender, nicht bei allen.
+- **Gain-Anzeige in Hauptansicht**: Sender-Subtitle zeigt `+X dB` wenn ein manueller Gain gesetzt ist (z.B. `Pop/Rock · DE · +4 dB`).
+
 ## 1.4.0
 
 - **Icon-Proxy & lokales Caching**: Stationsicons werden über den Main-Prozess geladen (`net.request`), auf Disk gecacht (`userData/icons/<sha1>.<ext>`) und als `data:`-URL an den Renderer zurückgegeben. In-Memory-Map, 5 s Timeout, 200 KB-Limit, max. 300 Dateien. CSP verschärft: `img-src *` entfernt, nur noch `img-src 'self' data:` erlaubt.

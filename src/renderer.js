@@ -620,8 +620,10 @@ async function saveAndClose() {
   applyBassBoost();
   updatePlayUI();
   if (state.activeStation) {
+    const gainDb = loadInt(stationGainKey(state.activeStation.id), 0);
+    const gainStr = gainDb !== 0 ? ` · ${gainDb > 0 ? '+' : ''}${gainDb} dB` : '';
     document.getElementById('active-station-subtitle').textContent =
-      `${displayGenre(state.activeStation.genre)} · ${state.activeStation.country}`;
+      `${displayGenre(state.activeStation.genre)} · ${state.activeStation.country}${gainStr}`;
   }
   api.setAutostart(autostartOn);
 
