@@ -681,7 +681,7 @@
       ctx.fillStyle = 'rgba(0,0,0,0.12)';
       ctx.fillRect(0, 0, W, H);
       for (let i = 0; i < n; i++) {
-        const a   = (i / n) * Math.PI * 2 + clock * 0.15;
+        const a   = (i / n) * Math.PI * 2;
         const fi  = Math.floor((i / n) * values.length);
         const v   = values[fi] || 0;
         const len = (0.06 + v * 0.42) * Math.min(W, H);
