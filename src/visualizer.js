@@ -687,7 +687,7 @@
         const fi  = Math.min(Math.floor(t * values.length), values.length - 1);
         const v   = values[fi] || 0;
         const len = (0.06 + v * 0.42) * Math.min(W, H);
-        const hue = (i / n * 280 + clock * 40) % 360;
+        const hue = (pos / quarter * 280 + clock * 20) % 360;
         ctx.strokeStyle = `hsla(${hue},100%,68%,${0.5 + v * 0.5})`;
         ctx.shadowColor = `hsla(${hue},100%,68%,0.8)`;
         ctx.shadowBlur  = 6 + v * 16;
