@@ -2,21 +2,17 @@
 (function (exports) {
   const BAR_COUNT = 44;
   const VISUALIZER_MODES = [
-    'bars', 'oscilloscope', 'waterfall',
-    'wave', 'dna', 'particles', 'tunnel', 'scanner', 'medwaves', 'neonpulse',
-    'flexi', 'unchained', 'geiss', 'idiot', 'tunnel3d',
-    'horizon3d', 'orb3d', 'warp3d', 'valley3d', 'matrix3d', 'mandala3d'
+    'bars', 'oscilloscope',
+    'wave', 'particles', 'tunnel', 'medwaves', 'neonpulse',
+    'flexi', 'unchained', 'geiss', 'idiot',
+    'tunnel3d', 'valley3d', 'matrix3d', 'mandala3d'
   ];
   const VISUALIZER_LABELS = {
     bars:        'Bars',
-    mirror:      'Mirror',
     oscilloscope:'Oscilloscope',
-    waterfall:   'Waterfall',
     wave:        'Waveform',
-    dna:         'DNA Helix',
     particles:   'Particles',
     tunnel:      'Tunnel',
-    scanner:     'Signal Scanner',
     medwaves:    'Wavelength Waves',
     neonpulse:   'Neon Pulse',
     flexi:       'Flexi',
@@ -24,9 +20,6 @@
     geiss:       'Geiss',
     idiot:       'Idiot',
     tunnel3d:    '3D Neon Tunnel (WebGL)',
-    horizon3d:   '3D Retrowave Horizon (WebGL)',
-    orb3d:       '3D Audio Plasmakugel (WebGL)',
-    warp3d:      '3D Hyperspace Warp (WebGL)',
     valley3d:    '3D Infinite Valley (WebGL)',
     matrix3d:    '3D Audio Matrix (WebGL)',
     mandala3d:   '3D Psychedelic Mandala (WebGL)',
@@ -1415,9 +1408,6 @@
 
         webglPrograms = {};
         webglPrograms.tunnel3d  = compileProgram(fsTunnel3D);
-        webglPrograms.horizon3d = compileProgram(fsHorizon3D);
-        webglPrograms.orb3d     = compileProgram(fsOrb3D);
-        webglPrograms.warp3d    = compileProgram(fsWarp3D);
         webglPrograms.valley3d  = compileProgram(fsValley3D);
         webglPrograms.matrix3d  = compileProgram(fsMatrix3D);
         webglPrograms.mandala3d = compileProgram(fsMandala3D);
@@ -1531,7 +1521,7 @@
     }
 
     function drawMain(values, W, H) {
-      const isWebGL = ['tunnel3d', 'horizon3d', 'orb3d', 'warp3d', 'valley3d', 'matrix3d', 'mandala3d'].includes(mode);
+      const isWebGL = ['tunnel3d', 'valley3d', 'matrix3d', 'mandala3d'].includes(mode);
       if (!isWebGL) {
         if (canvas.style.display === 'none') {
           canvas.style.display = 'block';
@@ -1545,10 +1535,8 @@
       else if (mode === 'oscilloscope') drawOscilloscope(values, W, H);
       else if (mode === 'waterfall')    drawWaterfall(values, W, H);
       else if (mode === 'wave')         drawWave(values, W, H);
-      else if (mode === 'dna')          drawDNA(values, W, H);
       else if (mode === 'particles')    drawParticles(values, W, H);
       else if (mode === 'tunnel')       drawTunnel(values, W, H);
-      else if (mode === 'scanner')      drawScanner(values, W, H);
       else if (mode === 'medwaves')     drawMedWaves(values, W, H);
       else if (mode === 'neonpulse')    drawNeonPulse(values, W, H);
       else if (mode === 'flexi')        drawFlexi(values, W, H);
