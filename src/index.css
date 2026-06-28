@@ -355,10 +355,10 @@ body.mini-mode #mini-view { display: flex; }
 .logo-info { flex: 1; min-width: 0; }
 .app-title-label {
   font-family: 'Syne', sans-serif;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--accent2);
+  color: var(--accent);
   letter-spacing: 0.18em;
   line-height: 1;
   margin-bottom: 4px;
