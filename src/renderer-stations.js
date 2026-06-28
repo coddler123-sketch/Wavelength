@@ -493,7 +493,7 @@ function updateDynamicThemeFromIcon(iconUrl) {
         const maxVal = Math.max(r, g, b);
         const minVal = Math.min(r, g, b);
         const diff = maxVal - minVal;
-        if (maxVal > 40 && maxVal < 235 && diff > maxSat) {
+        if (maxVal > 40 && diff > maxSat) {
           maxSat = diff;
           bestR = r;
           bestG = g;
