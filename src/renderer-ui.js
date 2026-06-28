@@ -220,18 +220,20 @@ export function buildTrayIconDataURL(dotColor) {
   x.arcTo(0, 0, size, 0, r);
   x.closePath(); x.stroke();
 
-  x.strokeStyle = '#f3efe6';
+  // Smooth sine wave matching the app logo shape
+  const grad = x.createLinearGradient(8 * s, 0, 56 * s, 0);
+  grad.addColorStop(0,   dotColor);
+  grad.addColorStop(0.5, '#f3efe6');
+  grad.addColorStop(1,   dotColor);
+  x.strokeStyle = grad;
   x.lineWidth = 5 * s; x.lineCap = 'round'; x.lineJoin = 'round';
   x.beginPath();
-  x.moveTo(12 * s, 16 * s);
-  x.lineTo(22 * s, 48 * s);
-  x.lineTo(32 * s, 28 * s);
-  x.lineTo(42 * s, 48 * s);
-  x.lineTo(52 * s, 16 * s);
+  x.moveTo(8 * s, 32 * s);
+  x.bezierCurveTo(14 * s, 32 * s, 16 * s, 50 * s, 22 * s, 50 * s);
+  x.bezierCurveTo(28 * s, 50 * s, 30 * s, 32 * s, 32 * s, 32 * s);
+  x.bezierCurveTo(34 * s, 32 * s, 36 * s, 50 * s, 42 * s, 50 * s);
+  x.bezierCurveTo(48 * s, 50 * s, 50 * s, 32 * s, 56 * s, 32 * s);
   x.stroke();
-
-  x.fillStyle = dotColor;
-  x.beginPath(); x.arc(51 * s, 13 * s, 6 * s, 0, Math.PI * 2); x.fill();
   return c.toDataURL('image/png');
 }
 
