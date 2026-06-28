@@ -4,7 +4,7 @@
   const VISUALIZER_MODES = [
     'bars', 'oscilloscope',
     'wave', 'particles', 'tunnel', 'medwaves', 'neonpulse',
-    'flexi', 'unchained', 'geiss', 'idiot',
+    'flexi', 'unchained', 'starburst', 'geiss', 'idiot',
     'tunnel3d', 'valley3d', 'matrix3d', 'mandala3d'
   ];
   const VISUALIZER_LABELS = {
@@ -17,6 +17,7 @@
     neonpulse:   'Neon Pulse',
     flexi:       'Flexi',
     unchained:   'Unchained',
+    starburst:   'Starburst',
     geiss:       'Geiss',
     idiot:       'Idiot',
     tunnel3d:    '3D Neon Tunnel (WebGL)',
@@ -728,6 +729,35 @@
         ctx.shadowColor = `hsla(${hue},100%,65%,0.7)`;
         ctx.shadowBlur  = 4 + v * 14;
         ctx.lineWidth   = 1.2 + v * 2;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawStarburst(values, W, H) {
+      const ctx = canvasCtx;
+      const cx = W / 2, cy = H / 2;
+      const n  = 64;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.fillRect(0, 0, W, H);
+      const quarter = n / 4;
+      for (let i = 0; i < n; i++) {
+        const a   = (i / n) * Math.PI * 2;
+        const pos = i % quarter;
+        const t   = pos / quarter;
+        const fi  = Math.min(Math.floor(t * values.length), values.length - 1);
+        const v   = values[fi] || 0;
+        const len = Math.min((0.06 + v * 0.38) * Math.min(W, H), Math.min(W, H) * 0.42);
+        const hue = (pos / quarter * 280 + clock * 20) % 360;
+        ctx.strokeStyle = `hsla(${hue},100%,68%,${0.5 + v * 0.5})`;
+        ctx.shadowColor = `hsla(${hue},100%,68%,0.8)`;
+        ctx.shadowBlur  = 6 + v * 16;
+        ctx.lineWidth   = 1 + v * 2.5;
+        ctx.lineCap     = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len);
         ctx.stroke();
       }
       ctx.restore();
@@ -1578,6 +1608,7 @@
       else if (mode === 'neonpulse')    drawNeonPulse(values, W, H);
       else if (mode === 'flexi')        drawFlexi(values, W, H);
       else if (mode === 'unchained')    drawUnchained(values, W, H);
+      else if (mode === 'starburst')    drawStarburst(values, W, H);
       else if (mode === 'geiss')        drawGeiss(values, W, H);
       else if (mode === 'idiot')        drawIdiot(values, W, H);
       else if (isWebGL)                 drawWebGL(values, W, H);
