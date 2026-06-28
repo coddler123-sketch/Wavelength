@@ -638,21 +638,23 @@
       }
 
       ctx.save();
+      ctx.lineJoin = 'round';
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
       ctx.fillRect(0, 0, W, H);
       for (let layer = 0; layer < 3; layer++) {
         const hue = (clock * 30 + layer * 120) % 360;
         ctx.beginPath();
-        for (let i = 0; i < steps; i++) {
-          const a    = (i / steps) * Math.PI * 2;
-          const v    = ring[i];
+        // Loop steps+1 so last point == first point — avoids closePath() seam artifact
+        for (let i = 0; i <= steps; i++) {
+          const ii   = i % steps;
+          const a    = (ii / steps) * Math.PI * 2;
+          const v    = ring[ii];
           const warp = Math.sin(a * 3 + clock * 1.2) * 0.15 + Math.sin(a * 5 - clock * 0.8) * 0.1;
           const r    = (baseR + v * baseR * 0.9 + warp * baseR) * (1 - layer * 0.18);
           const x    = cx + Math.cos(a) * r;
           const y    = cy + Math.sin(a) * r;
           i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         }
-        ctx.closePath();
         if (layer === 0) {
           const fill = ctx.createRadialGradient(cx, cy, 0, cx, cy, baseR * 1.8);
           fill.addColorStop(0, `hsla(${hue},70%,40%,0.18)`);
