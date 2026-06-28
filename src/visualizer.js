@@ -189,7 +189,10 @@
       canvasCtx.shadowBlur  = 7;
       for (let i = 0; i < BAR_COUNT; i++) {
         const x    = i * (barW + gap);
-        const barH = Math.max(2, values[i] * H * 0.84);
+        // Mirror: bass in center, highs on both sides
+        const half = BAR_COUNT / 2;
+        const si   = i < half ? Math.floor(half - 1 - i) : Math.floor(i - half);
+        const barH = Math.max(2, values[si] * H * 0.84);
         const y    = H - barH;
         canvasCtx.fillStyle = grad;
         canvasCtx.beginPath();
@@ -197,8 +200,8 @@
         else canvasCtx.rect(x, y, barW, barH);
         canvasCtx.fill();
 
-        if (peaks[i] > 0.04) {
-          const peakY = H - peaks[i] * H * 0.84 - 2.5;
+        if (peaks[si] > 0.04) {
+          const peakY = H - peaks[si] * H * 0.84 - 2.5;
           canvasCtx.shadowColor = primaryColorStrAlpha(0.55);
           canvasCtx.shadowBlur  = 5;
           canvasCtx.fillStyle   = 'rgba(255, 255, 255, 0.85)';
