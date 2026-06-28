@@ -10,7 +10,7 @@ import {
   adjustStationGain, resetStationGain, STATION_GAIN_STEP_DB,
   setMini, setPinned, setMuted, setAppVersion,
   setSleepEndsAt, showToast, updateTimeTheme, setThemeLevel,
-  sendTrayIcons, switchView,
+  switchView,
   showAboutModal, hideAboutModal,
   showShortcutsModal, hideShortcutsModal,
 } from './renderer-ui.js';
@@ -512,7 +512,6 @@ if (historyModalEl) {
   applyBassBoost();
   updatePlayUI();
 
-  sendTrayIcons();
   state.visualizer.drawIdle();
 
   updateTimeTheme();

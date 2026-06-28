@@ -30,9 +30,7 @@ const startedHidden = process.argv.includes('--hidden');
 let showOnLoad = !startedHidden;
 let connectionState = 'stopped';
 let dockMini = true;
-const trayIconImages = new Map();   // state → colored PNG icon rendered by the renderer
-const TRAY_ICON_STATES = new Set(['playing', 'reconnecting', 'muted', 'stopped']);
-let fallbackTrayIcon = null;        // static icon.ico
+let fallbackTrayIcon = null;
 const APP_ID = 'com.wavelength.player';
 const APP_VERSION = app.getVersion();
 const APP_USER_AGENT = `WavelengthRadioPlayer/${APP_VERSION} (Windows Electron App)`;
@@ -164,8 +162,8 @@ function getFallbackTrayIcon() {
   return fallbackTrayIcon;
 }
 
-function getTrayIcon(state = trayState()) {
-  return trayIconImages.get(state) || getFallbackTrayIcon();
+function getTrayIcon() {
+  return getFallbackTrayIcon();
 }
 
 function updateTrayIcon() {
@@ -666,21 +664,6 @@ ipcMain.on('cycle-sleep-timer', () => {
 });
 ipcMain.on('connection-state',  (_, state) => setConnectionState(state));
 ipcMain.on('select-station',    (_, station, noPlay) => selectStationInternal(station, noPlay));
-ipcMain.on('tray-icons',        (_, icons) => {
-  for (const [state, dataUrl] of Object.entries(icons || {})) {
-    if (!TRAY_ICON_STATES.has(state)) continue;
-    if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/png;base64,')) continue;
-    if (dataUrl.length > 50_000) continue;
-    try {
-      const img = nativeImage.createFromDataURL(dataUrl).resize({ width: 16, height: 16 });
-      if (!img.isEmpty()) trayIconImages.set(state, img);
-    } catch (err) {
-      log('tray-icon-rejected', err.message || String(err));
-    }
-  }
-  updateTrayIcon();
-  updateTrayMenu();
-});
 
 ipcMain.handle('get-stations', async () => {
   try {

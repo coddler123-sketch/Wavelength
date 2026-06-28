@@ -81,7 +81,6 @@ for (const channel of [
   'toggle-mute',
   'cycle-sleep-timer',
   'connection-state',
-  'tray-icons',
   'get-stations',
   'select-station',
 ]) {

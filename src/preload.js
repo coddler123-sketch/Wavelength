@@ -16,7 +16,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   quitApp:           () => ipcRenderer.send('quit-app'),
   cycleSleepTimer:   () => ipcRenderer.send('cycle-sleep-timer'),
   setConnectionState: (state) => ipcRenderer.send('connection-state', state),
-  sendTrayIcons:      (icons) => ipcRenderer.send('tray-icons', icons),
   openExternal:       (url) => ipcRenderer.send('open-external', url),
   selectStation:      (station, noPlay) => ipcRenderer.send('select-station', station, noPlay),
   logRendererError:   (info) => ipcRenderer.send('renderer-error', info),

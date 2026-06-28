@@ -190,60 +190,7 @@ export function updatePlayUI() {
       btn.title = playLabel;
     }
   }
-  sendTrayIcons();
   updateItemEqualizer();
-}
-
-// ── Tray Status Icons ────────────────────────────
-export function buildTrayIconDataURL(dotColor) {
-  const size = 32, s = size / 64, r = 14 * s;
-  const c = document.createElement('canvas');
-  c.width = size; c.height = size;
-  const x = c.getContext('2d');
-
-  x.fillStyle = '#07090d';
-  x.beginPath();
-  x.moveTo(r, 0);
-  x.arcTo(size, 0, size, size, r);
-  x.arcTo(size, size, 0, size, r);
-  x.arcTo(0, size, 0, 0, r);
-  x.arcTo(0, 0, size, 0, r);
-  x.closePath(); x.fill();
-
-  x.strokeStyle = dotColor;
-  x.lineWidth = 1.5 * s;
-  x.beginPath();
-  x.moveTo(r, 0);
-  x.arcTo(size, 0, size, size, r);
-  x.arcTo(size, size, 0, size, r);
-  x.arcTo(0, size, 0, 0, r);
-  x.arcTo(0, 0, size, 0, r);
-  x.closePath(); x.stroke();
-
-  // Smooth sine wave matching the app logo shape
-  const grad = x.createLinearGradient(8 * s, 0, 56 * s, 0);
-  grad.addColorStop(0,   dotColor);
-  grad.addColorStop(0.5, '#f3efe6');
-  grad.addColorStop(1,   dotColor);
-  x.strokeStyle = grad;
-  x.lineWidth = 5 * s; x.lineCap = 'round'; x.lineJoin = 'round';
-  x.beginPath();
-  x.moveTo(8 * s, 32 * s);
-  x.bezierCurveTo(14 * s, 32 * s, 16 * s, 50 * s, 22 * s, 50 * s);
-  x.bezierCurveTo(28 * s, 50 * s, 30 * s, 32 * s, 32 * s, 32 * s);
-  x.bezierCurveTo(34 * s, 32 * s, 36 * s, 50 * s, 42 * s, 50 * s);
-  x.bezierCurveTo(48 * s, 50 * s, 50 * s, 32 * s, 56 * s, 32 * s);
-  x.stroke();
-  return c.toDataURL('image/png');
-}
-
-export function sendTrayIcons() {
-  const colors = {
-    playing: '#34d6d0', reconnecting: '#4f7cff', muted: '#ffbf69', stopped: '#4a4a4a',
-  };
-  const icons = {};
-  for (const [st, color] of Object.entries(colors)) icons[st] = buildTrayIconDataURL(color);
-  api.sendTrayIcons(icons);
 }
 
 // ── Volume ───────────────────────────────────────
