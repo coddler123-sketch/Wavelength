@@ -2,7 +2,7 @@
 (function (exports) {
   const BAR_COUNT = 44;
   const VISUALIZER_MODES = [
-    'bars', 'mirror', 'oscilloscope', 'waterfall',
+    'bars', 'oscilloscope', 'waterfall',
     'wave', 'dna', 'particles', 'tunnel', 'scanner', 'medwaves', 'neonpulse',
     'flexi', 'unchained', 'geiss', 'idiot', 'tunnel3d',
     'horizon3d', 'orb3d', 'warp3d', 'valley3d', 'matrix3d', 'mandala3d'
