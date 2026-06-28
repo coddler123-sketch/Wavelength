@@ -410,51 +410,70 @@ function toggleMute() {
   updateTrayIcon();
 }
 
-function toggleMini() {
-  isMini = !isMini;
-  const [x, y]  = mainWindow.getPosition();
-  const prevW = isMini ? fullWidth : SIZES.mini.width;
-  const newW = isMini ? SIZES.mini.width : fullWidth;
-  const newH = isMini ? SIZES.mini.height : fullHeight;
-  let newX = x + (prevW - newW);
-  let newY = y;
+let miniTransitionActive = false;
 
-  if (isMini) {
-    mainWindow.setMinimumSize(SIZES.mini.width, SIZES.mini.height);
-  } else {
-    mainWindow.setMaximumSize(SIZES.full.width, SIZES.full.height);
-  }
+async function toggleMini() {
+  if (miniTransitionActive || !mainWindow || mainWindow.isDestroyed()) return;
+  miniTransitionActive = true;
+  const fade = mainWindow.isVisible();
 
-  mainWindow.setResizable(false);
+  try {
+    if (fade) mainWindow.setOpacity(0.01);
+    isMini = !isMini;
+    const [x, y]  = mainWindow.getPosition();
+    const prevW = isMini ? fullWidth : SIZES.mini.width;
+    const newW = isMini ? SIZES.mini.width : fullWidth;
+    const newH = isMini ? SIZES.mini.height : fullHeight;
+    let newX = x + (prevW - newW);
+    let newY = y;
 
-  if (isMini && dockMini) {
-    const display = screen.getDisplayMatching({ x: newX, y: newY, width: newW, height: newH }).workArea;
-    const distances = [
-      { edge: 'left', value: Math.abs(newX - display.x) },
-      { edge: 'right', value: Math.abs((newX + newW) - (display.x + display.width)) },
-      { edge: 'top', value: Math.abs(newY - display.y) },
-      { edge: 'bottom', value: Math.abs((newY + newH) - (display.y + display.height)) },
-    ].sort((a, b) => a.value - b.value);
-    
-    if (distances[0].value <= 28) {
-      if (distances[0].edge === 'left') newX = display.x;
-      if (distances[0].edge === 'right') newX = display.x + display.width - newW;
-      if (distances[0].edge === 'top') newY = display.y;
-      if (distances[0].edge === 'bottom') newY = display.y + display.height - newH;
+    if (isMini) {
+      mainWindow.setMinimumSize(SIZES.mini.width, SIZES.mini.height);
+    } else {
+      mainWindow.setMaximumSize(SIZES.full.width, SIZES.full.height);
     }
+
+    mainWindow.setResizable(false);
+
+    if (isMini && dockMini) {
+      const display = screen.getDisplayMatching({ x: newX, y: newY, width: newW, height: newH }).workArea;
+      const distances = [
+        { edge: 'left', value: Math.abs(newX - display.x) },
+        { edge: 'right', value: Math.abs((newX + newW) - (display.x + display.width)) },
+        { edge: 'top', value: Math.abs(newY - display.y) },
+        { edge: 'bottom', value: Math.abs((newY + newH) - (display.y + display.height)) },
+      ].sort((a, b) => a.value - b.value);
+
+      if (distances[0].value <= 28) {
+        if (distances[0].edge === 'left') newX = display.x;
+        if (distances[0].edge === 'right') newX = display.x + display.width - newW;
+        if (distances[0].edge === 'top') newY = display.y;
+        if (distances[0].edge === 'bottom') newY = display.y + display.height - newH;
+      }
+    }
+
+    mainWindow.setBounds({ x: newX, y: newY, width: newW, height: newH }, false);
+
+    if (isMini) {
+      mainWindow.setMaximumSize(SIZES.mini.width, SIZES.mini.height);
+    } else {
+      mainWindow.setMinimumSize(SIZES.full.width, SIZES.full.height);
+    }
+
+    mainWindow.setResizable(false);
+    sendStateToRenderer();
+    updateTrayMenu();
+
+    if (fade) {
+      await new Promise(resolve => setTimeout(resolve, 16));
+      mainWindow.setOpacity(1);
+    }
+  } catch (err) {
+    log('mini-transition-error', err.message);
+  } finally {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setOpacity(1);
+    miniTransitionActive = false;
   }
-
-  mainWindow.setBounds({ x: newX, y: newY, width: newW, height: newH }, false);
-
-  if (isMini) {
-    mainWindow.setMaximumSize(SIZES.mini.width, SIZES.mini.height);
-  } else {
-    mainWindow.setMinimumSize(SIZES.full.width, SIZES.full.height);
-  }
-
-  mainWindow.setResizable(false);
-  sendStateToRenderer();
-  updateTrayMenu();
 }
 
 function toggleMiniDock() {

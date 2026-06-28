@@ -270,15 +270,15 @@ body::before {
 }
 
 /* â”€â”€ Mini mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-body.mini-mode { width: 290px; height: 82px; }
+body.mini-mode { width: 100%; height: 100%; }
 body.mini-mode #full-view {
-  position: absolute;
-  top: -9999px;
-  left: -9999px;
-  width: 520px;
-  height: 560px;
+  display: none;
 }
-body.mini-mode #mini-view { display: flex; }
+body.mini-mode #mini-view {
+  display: flex;
+  width: 290px;
+  margin-left: auto;
+}
 
 /* â”€â”€ Full view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 #full-view {
@@ -1861,7 +1861,6 @@ body.view-list-active .track-info-container {
   box-shadow: 0 6px 16px rgba(224, 80, 80, 0.35);
   transform: translateY(-0.5px);
 }
-
 
 
 

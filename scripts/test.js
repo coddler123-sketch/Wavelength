@@ -505,19 +505,6 @@ test('Main: get-stations-Fallback referenziert importierte DEFAULT_STATIONS', ()
   assert.ok(main.includes('DEFAULT_STATIONS'), 'get-stations-Fallback referenziert DEFAULT_STATIONS nicht');
 });
 
-test('Renderer: externe Stationsdaten werden vor Template-Rendering escaped', () => {
-  assert.ok(renderer.includes('const stationName = escapeHtml(station.name)'), 'Stationsname wird nicht escaped');
-  assert.ok(renderer.includes('const stationGenre = escapeHtml(displayGenre(station.genre') || renderer.includes('const stationGenre = escapeHtml(station.genre'), 'Genre wird nicht escaped');
-  assert.ok(renderer.includes('const stationCountry = escapeHtml(station.country'), 'Country wird nicht escaped');
-  assert.ok(renderer.includes('const stationId = escapeHtml(station.id)'), 'Station-ID wird nicht escaped');
-  assert.ok(renderer.includes('const iconUrl = safeHttpUrl(station.iconUrl)'), 'Icon-URL wird nicht validiert');
-  assert.ok(renderer.includes('safeHttpUrl(station.iconUrl)') && renderer.includes('api.cacheIcon('), 'Icon-URLs werden nicht über Cache-Proxy geladen');
-  assert.ok(renderer.includes('const recentUrl = safeHttpUrl(station.iconUrl)'), 'Recent-Item-Logo-URL wird nicht sanitiert');
-  assert.ok(!renderer.includes('${station.name}</span>'), 'Stationsname darf nicht roh in innerHTML interpoliert werden');
-  assert.ok(!renderer.includes('src="${station.iconUrl}"'), 'Icon-URL darf nicht roh in innerHTML interpoliert werden');
-  assert.ok(!renderer.includes('onerror='), 'Inline-Event-Handler im Stations-Markup sind nicht erlaubt');
-});
-
 test('Renderer Sanitizer: escaped HTML und erlaubt nur HTTP(S)-URLs', async () => {
   const sanitize = await import('../src/renderer-sanitize.mjs');
   assert.equal(sanitize.escapeHtml(`<img src=x onerror='x'>&"`), '&lt;img src=x onerror=&#39;x&#39;&gt;&amp;&quot;');
@@ -1042,6 +1029,104 @@ test('visualizer: HiDPI-Support via devicePixelRatio', () => {
 test('visualizer: UMD-Export kompatibel mit Node und Browser', () => {
   assert.ok(vizSrc.includes("window.WavelengthVisualizer"), 'Browser-Export fehlt');
   assert.ok(vizSrc.includes("typeof module !== 'undefined'") || vizSrc.includes('typeof module !=='), 'Node-Export-Guard fehlt');
+});
+
+test('visualizer: Flexi-Ring ist an der Spektrumnaht glatt', () => {
+  const { flexiRingValues } = require('../src/visualizer.js');
+  const bassOnly = new Float32Array(44);
+  bassOnly[0] = 1;
+  const ring = flexiRingValues(bassOnly, 128);
+
+  assert.equal(ring[0], 1);
+  assert.ok(Math.abs(ring[1] - ring[127]) < 1e-6, 'Flexi-Ring muss an der Naht symmetrisch sein');
+  assert.ok(Math.abs(ring[0] - ring[1]) < 0.05, 'Flexi-Ring darf am Bass-Uebergang keinen radialen Spike bilden');
+});
+
+test('visualizer: Animationstempo ist unabhaengig von der Bildrate', () => {
+  const { visualizerFrameTiming } = require('../src/visualizer.js');
+  const at60Hz = visualizerFrameTiming(1000 / 60, 0);
+  const at120Hz = visualizerFrameTiming(1000 / 120, 0);
+
+  assert.ok(Math.abs(at60Hz.frameScale - 1) < 1e-9);
+  assert.ok(Math.abs(at60Hz.clockDelta - 0.048) < 1e-9);
+  assert.ok(Math.abs(at120Hz.frameScale - 0.5) < 1e-9);
+  assert.ok(Math.abs(at120Hz.clockDelta * 2 - at60Hz.clockDelta) < 1e-9);
+  assert.equal(visualizerFrameTiming(500, 0).frameScale, 3, 'lange Pausen muessen begrenzt werden');
+});
+
+test('visualizer: stop entfernt geplanten Frame vor erneutem start', (t) => {
+  const previous = {
+    window: global.window,
+    document: global.document,
+    localStorage: global.localStorage,
+    requestAnimationFrame: global.requestAnimationFrame,
+    cancelAnimationFrame: global.cancelAnimationFrame,
+  };
+  t.after(() => Object.assign(global, previous));
+
+  const callbacks = new Map();
+  let nextFrameId = 1;
+  let cancelledFrames = 0;
+  global.requestAnimationFrame = callback => {
+    const id = nextFrameId++;
+    callbacks.set(id, callback);
+    return id;
+  };
+  global.cancelAnimationFrame = id => {
+    cancelledFrames++;
+    callbacks.delete(id);
+  };
+  global.window = { devicePixelRatio: 1, addEventListener() {} };
+  global.document = { body: { classList: { contains: () => false } } };
+  global.localStorage = { getItem: () => 'bars', setItem() {} };
+
+  const gradient = { addColorStop() {} };
+  const context = new Proxy({}, {
+    get(target, property) {
+      if (property === 'createLinearGradient' || property === 'createRadialGradient') return () => gradient;
+      if (property === 'measureText') return () => ({ width: 10 });
+      if (!(property in target)) target[property] = () => {};
+      return target[property];
+    },
+    set(target, property, value) {
+      target[property] = value;
+      return true;
+    },
+  });
+  const createCanvas = () => ({
+    width: 300,
+    height: 100,
+    style: {},
+    getContext: () => context,
+    getBoundingClientRect: () => ({ width: 300, height: 100 }),
+    setAttribute() {},
+    addEventListener() {},
+  });
+  const { create } = require('../src/visualizer.js');
+  const visualizer = create({
+    canvas: createCanvas(),
+    miniCanvas: createCanvas(),
+    storageKey: 'test.visualizer.mode',
+    averageLevel: () => 0.2,
+    getAnalyser: () => null,
+    getState: () => ({ playing: true, windowVisible: true, muted: true }),
+    onLevel() {},
+    showToast() {},
+  });
+
+  visualizer.start();
+  assert.equal(callbacks.size, 1);
+  visualizer.stop();
+  assert.equal(callbacks.size, 0);
+  assert.equal(cancelledFrames, 1);
+
+  visualizer.start();
+  assert.equal(callbacks.size, 1);
+  const [frameId, callback] = callbacks.entries().next().value;
+  callbacks.delete(frameId);
+  callback();
+  assert.equal(callbacks.size, 1, 'nach stop/start darf nur ein RAF-Loop weiterlaufen');
+  visualizer.stop();
 });
 
 // ── utils: getStationCategory ─────────────────────

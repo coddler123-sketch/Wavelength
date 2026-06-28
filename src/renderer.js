@@ -101,9 +101,7 @@ safeAddListener('mini-vol',         'input', (e) => updateVolSlider(parseInt(e.t
 safeAddListener('btn-pin',          'click', () => api.togglePin());
 function triggerToggleMini() {
   if (state.visualizer) state.visualizer.stop();
-  setTimeout(() => {
-    api.toggleMini();
-  }, 16);
+  api.toggleMini();
 }
 
 safeAddListener('btn-toggle-mini',  'click', () => triggerToggleMini());

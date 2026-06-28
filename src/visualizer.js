@@ -26,6 +26,32 @@
     mandala3d:   '3D Psychedelic Mandala (WebGL)',
   };
 
+  function flexiRingValues(values, steps) {
+    const ring = new Float32Array(steps);
+    if (!values.length || steps < 1) return ring;
+    const maxIndex = values.length - 1;
+    for (let i = 0; i < steps; i++) {
+      const angle = (i / steps) * Math.PI * 2;
+      const position = ((1 - Math.cos(angle)) * 0.5) * maxIndex;
+      const lo = Math.floor(position);
+      const hi = Math.min(lo + 1, maxIndex);
+      const mix = position - lo;
+      ring[i] = values[lo] * (1 - mix) + values[hi] * mix;
+    }
+    return ring;
+  }
+
+  function visualizerFrameTiming(timestamp, previousTimestamp) {
+    const nominalFrameMs = 1000 / 60;
+    const elapsedMs = previousTimestamp === null
+      ? nominalFrameMs
+      : Math.max(0, Math.min(50, timestamp - previousTimestamp));
+    return {
+      frameScale: elapsedMs / nominalFrameMs,
+      clockDelta: elapsedMs * 0.00288,
+    };
+  }
+
   function create(options) {
     const canvas     = options.canvas;
     const canvasCtx  = canvas.getContext('2d');
@@ -39,6 +65,9 @@
     const showToast    = options.showToast;
 
     let running = false;
+    let animationFrameId = null;
+    let previousFrameTimestamp = null;
+    let frameScale = 1;
     let clock   = 0;
     let mode    = localStorage.getItem(storageKey) || 'bars';
 
@@ -54,8 +83,11 @@
     let wfallHead     = 0;
     let tunnelHistory = null; // tunnel ring buffer
     let tunnelHead    = 0;
+    let tunnelNextSampleAt = 0;
     let particles     = [];
+    let particleSpawnCarry = 0;
     let idiotFlashes  = [];
+    let idiotSpawnCarry = 0;
 
     // WebGL state
     let webglCanvas   = null;
@@ -427,7 +459,9 @@
     function drawParticles(values, W, H) {
       const avg = averageLevel(values);
 
-      const spawnN = Math.floor(avg * 7);
+      particleSpawnCarry += avg * 7 * frameScale;
+      const spawnN = Math.floor(particleSpawnCarry);
+      particleSpawnCarry -= spawnN;
       for (let k = 0; k < spawnN && particles.length < MAX_PARTICLES; k++) {
         const fi = Math.floor(Math.random() * values.length);
         const v  = values[fi];
@@ -446,11 +480,11 @@
 
       canvasCtx.save();
       particles = particles.filter(p => {
-        p.x  += p.vx;
-        p.y  += p.vy;
-        p.vy *= 0.982;
-        p.vx *= 0.994;
-        p.life -= p.decay;
+        p.x  += p.vx * frameScale;
+        p.y  += p.vy * frameScale;
+        p.vy *= Math.pow(0.982, frameScale);
+        p.vx *= Math.pow(0.994, frameScale);
+        p.life -= p.decay * frameScale;
         if (p.life <= 0) return false;
 
         const a = p.life * 0.82;
@@ -473,9 +507,10 @@
         tunnelHead = 0;
       }
 
-      if (Math.round(clock / 0.048) % 3 === 0) {
+      if (clock >= tunnelNextSampleAt) {
         tunnelHistory[tunnelHead].set(values);
         tunnelHead = (tunnelHead + 1) % TUNNEL_RINGS;
+        tunnelNextSampleAt = clock + 0.144;
       }
 
       const cx = W / 2, cy = H / 2;
@@ -627,16 +662,7 @@
       const bass = values.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
       const baseR = Math.min(W, H) * (0.18 + bass * 0.12);
       const steps = 128;
-      const n = values.length;
-
-      // Build a circular-interpolated value ring so index wraps without a jump
-      const ring = new Float32Array(steps);
-      for (let i = 0; i < steps; i++) {
-        const f  = (i / steps) * n;
-        const lo = Math.floor(f) % n;
-        const hi = (lo + 1) % n;
-        ring[i]  = values[lo] * (1 - (f - Math.floor(f))) + values[hi] * (f - Math.floor(f));
-      }
+      const ring = flexiRingValues(values, steps);
 
       ctx.save();
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
@@ -794,13 +820,20 @@
       ctx.save();
       ctx.fillStyle = 'rgba(0,0,0,0.15)';
       ctx.fillRect(0, 0, W, H);
-      if (bass > 0.55 && idiotFlashes.length < 14) {
-        const hue = Math.random() * 360;
-        idiotFlashes.push({
-          x1: Math.random() * W, y1: Math.random() * H,
-          x2: Math.random() * W, y2: Math.random() * H,
-          hue, life: 1.0, width: 1 + Math.random() * 3,
-        });
+      if (bass > 0.55) {
+        idiotSpawnCarry += frameScale;
+        const spawnN = Math.floor(idiotSpawnCarry);
+        idiotSpawnCarry -= spawnN;
+        for (let i = 0; i < spawnN && idiotFlashes.length < 14; i++) {
+          const hue = Math.random() * 360;
+          idiotFlashes.push({
+            x1: Math.random() * W, y1: Math.random() * H,
+            x2: Math.random() * W, y2: Math.random() * H,
+            hue, life: 1.0, width: 1 + Math.random() * 3,
+          });
+        }
+      } else {
+        idiotSpawnCarry = 0;
       }
       idiotFlashes = idiotFlashes.filter(f => f.life > 0);
       ctx.lineCap = 'round';
@@ -813,7 +846,7 @@
         ctx.moveTo(f.x1, f.y1);
         ctx.lineTo(f.x2, f.y2);
         ctx.stroke();
-        f.life -= 0.04;
+        f.life -= 0.04 * frameScale;
       }
       ctx.globalAlpha = bass * 0.55;
       const grd = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * 0.4);
@@ -853,11 +886,26 @@
       ctx.restore();
     }
 
+    function resetWebGL() {
+      if (webglCanvas) {
+        try { webglCanvas.remove(); } catch (err) { void err; }
+      }
+      webglCanvas = null;
+      gl = null;
+      positionBuffer = null;
+      webglPrograms = {};
+    }
+
     function initWebGL() {
       if (webglCanvas) return true;
       try {
-        const isAudit = window.location.search.includes('audit=1');
-        if (isAudit) return false;
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('audit') === '1' && params.get('webglAudit') !== '1') return false;
+        const contextOptions = {
+          antialias: true,
+          alpha: false,
+          preserveDrawingBuffer: params.get('webglAudit') === '1',
+        };
 
         webglCanvas = document.createElement('canvas');
         webglCanvas.id = 'visualizer-webgl';
@@ -883,11 +931,14 @@
         });
         canvas.parentNode.insertBefore(webglCanvas, canvas.nextSibling);
 
-        gl = webglCanvas.getContext('webgl', { antialias: true, alpha: false });
+        gl = webglCanvas.getContext('webgl', contextOptions);
         if (!gl) {
-          gl = webglCanvas.getContext('experimental-webgl', { antialias: true, alpha: false });
+          gl = webglCanvas.getContext('experimental-webgl', contextOptions);
         }
-        if (!gl) return false;
+        if (!gl) {
+          resetWebGL();
+          return false;
+        }
 
         const vsSource = `
           attribute vec2 position;
@@ -1495,13 +1546,8 @@
         resize();
         return true;
       } catch (err) {
-        if (webglCanvas) {
-          try { webglCanvas.remove(); } catch (e) {}
-          webglCanvas = null;
-        }
-        gl = null;
-        webglPrograms = {};
-        Promise.reject(err);
+        resetWebGL();
+        void err;
         return false;
       }
     }
@@ -1642,8 +1688,8 @@
         if (values[i] >= peaks[i]) {
           peaks[i] = values[i]; peakVel[i] = 0;
         } else {
-          peakVel[i] += 0.0018;
-          peaks[i] = Math.max(0, peaks[i] - peakVel[i]);
+          peakVel[i] += 0.0018 * frameScale;
+          peaks[i] = Math.max(0, peaks[i] - peakVel[i] * frameScale);
         }
       }
     }
@@ -1658,7 +1704,8 @@
       drawMiniSignal(idleData);
     }
 
-    function drawFrame() {
+    function drawFrame(timestamp) {
+      animationFrameId = null;
       if (!running) return;
       const dpr = window.devicePixelRatio || 1;
       const W   = canvas.width  / dpr;
@@ -1667,12 +1714,17 @@
 
       if (!state.playing || !state.windowVisible) {
         running = false;
+        previousFrameTimestamp = null;
         if (!state.playing) drawIdle();
         return;
       }
 
-      requestAnimationFrame(drawFrame);
-      clock += 0.048;
+      animationFrameId = requestAnimationFrame(drawFrame);
+      const currentTimestamp = Number.isFinite(timestamp) ? timestamp : performance.now();
+      const timing = visualizerFrameTiming(currentTimestamp, previousFrameTimestamp);
+      previousFrameTimestamp = currentTimestamp;
+      frameScale = timing.frameScale;
+      clock += timing.clockDelta;
       const values = state.muted ? idleData : getBarData();
       updatePeaks(values);
       onLevel(averageLevel(values));
@@ -1688,11 +1740,27 @@
     function start() {
       if (running) return;
       running = true;
+      previousFrameTimestamp = null;
       drawFrame();
     }
 
     function stop() {
       running = false;
+      previousFrameTimestamp = null;
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    }
+
+    function resetModeState() {
+      wfallBuf = null;
+      tunnelHistory = null;
+      tunnelNextSampleAt = clock;
+      particles = [];
+      particleSpawnCarry = 0;
+      idiotFlashes = [];
+      idiotSpawnCarry = 0;
     }
 
     function toggleMode() {
@@ -1700,7 +1768,7 @@
       mode = VISUALIZER_MODES[(index + 1) % VISUALIZER_MODES.length];
       localStorage.setItem(storageKey, mode);
       showToast(VISUALIZER_LABELS[mode] || mode);
-      wfallBuf = null; tunnelHistory = null; particles = [];
+      resetModeState();
       const label = VISUALIZER_LABELS[mode] || mode;
       canvas.setAttribute('aria-label', `Audio-Visualizer, Modus: ${label}`);
       const state = getState();
@@ -1710,7 +1778,7 @@
     function resetMode() {
       mode = 'bars';
       localStorage.setItem(storageKey, mode);
-      wfallBuf = null; tunnelHistory = null; particles = [];
+      resetModeState();
       const label = VISUALIZER_LABELS[mode] || mode;
       canvas.setAttribute('aria-label', `Audio-Visualizer, Modus: ${label}`);
       drawIdle();
@@ -1725,7 +1793,7 @@
       mode = newMode;
       localStorage.setItem(storageKey, mode);
       showToast(VISUALIZER_LABELS[mode] || mode);
-      wfallBuf = null; tunnelHistory = null; particles = [];
+      resetModeState();
       const label = VISUALIZER_LABELS[mode] || mode;
       canvas.setAttribute('aria-label', `Audio-Visualizer, Modus: ${label}`);
       const state = getState();
@@ -1769,4 +1837,6 @@
   exports.create            = create;
   exports.VISUALIZER_MODES  = VISUALIZER_MODES;
   exports.VISUALIZER_LABELS = VISUALIZER_LABELS;
+  exports.flexiRingValues    = flexiRingValues;
+  exports.visualizerFrameTiming = visualizerFrameTiming;
 })(typeof module !== 'undefined' ? module.exports : (window.WavelengthVisualizer = {}));

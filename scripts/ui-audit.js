@@ -1,10 +1,22 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeImage } = require('electron');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
 const root = path.join(__dirname, '..');
 const outDir = path.join(root, 'tmp', 'ui-audit');
+const webglAudit = process.env.WAVELENGTH_WEBGL_AUDIT === '1';
+const AUDIT_STATION = {
+  id: 'audit-unsafe',
+  name: 'A<i id=x>',
+  streamUrl: 'https://example.com/audit.mp3',
+  iconUrl: 'javascript:alert(1)',
+  genre: 'Ambient',
+  country: '<b id=y>',
+  language: 'Auditisch',
+  bitrate: 192,
+  codec: 'MP3',
+};
 const state = {
   isPlaying: false,
   isPinned: false,
@@ -15,9 +27,10 @@ const state = {
   connectionState: 'stopped',
   activeStation: null,
   stationSelections: [],
+  cachedIconUrls: [],
 };
 
-app.disableHardwareAcceleration();
+if (!webglAudit) app.disableHardwareAcceleration();
 app.setPath('userData', path.join(os.tmpdir(), `wavelength-ui-audit-${Date.now()}`));
 
 function send(win, channel, value) {
@@ -26,12 +39,16 @@ function send(win, channel, value) {
 
 function wireIpc(win) {
   const { DEFAULT_STATIONS } = require(path.join(root, 'src', 'stations.js'));
+  const auditStations = [...DEFAULT_STATIONS, AUDIT_STATION];
   state.activeStation = DEFAULT_STATIONS[0];
 
-  ipcMain.handle('get-stations', () => DEFAULT_STATIONS);
+  ipcMain.handle('get-stations', () => auditStations);
   ipcMain.handle('get-state', () => ({ ...state }));
   ipcMain.handle('check-stream', () => ({ ok: true }));
-  ipcMain.handle('cache-icon', () => null);
+  ipcMain.handle('cache-icon', (_event, url) => {
+    state.cachedIconUrls.push(url);
+    return null;
+  });
 
   ipcMain.on('play-pause', (_event, forceState) => {
     state.isPlaying = typeof forceState === 'boolean' ? forceState : !state.isPlaying;
@@ -64,7 +81,8 @@ function wireIpc(win) {
 }
 
 async function waitForReady(win) {
-  await win.loadFile(path.join(root, 'src', 'index.html'), { query: { audit: '1' } });
+  const query = webglAudit ? { audit: '1', webglAudit: '1' } : { audit: '1' };
+  await win.loadFile(path.join(root, 'src', 'index.html'), { query });
   await win.webContents.executeJavaScript(`
     new Promise(resolve => {
       const done = () => document.querySelectorAll('.station-item').length > 0;
@@ -81,6 +99,59 @@ async function waitForReady(win) {
       }, 5000);
     })
   `);
+}
+
+async function auditWebGLModes(win) {
+  const modes = await win.webContents.executeJavaScript(`
+    (() => {
+      const wrapper = document.createElement('div');
+      wrapper.id = 'webgl-audit-wrapper';
+      wrapper.style.cssText = 'position:fixed;left:0;top:0;width:320px;height:120px;background:#05070a;z-index:99999;overflow:hidden;';
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 120;
+      canvas.style.cssText = 'width:320px;height:120px;';
+      wrapper.appendChild(canvas);
+      document.body.appendChild(wrapper);
+      window.__wavelengthWebGLAudit = window.WavelengthVisualizer.create({
+        canvas,
+        miniCanvas: null,
+        storageKey: 'wl.webglAuditMode',
+        averageLevel: window.utils.averageLevel,
+        getAnalyser: () => null,
+        getState: () => ({ playing: false, windowVisible: true, muted: false }),
+        onLevel: () => {},
+        showToast: () => {},
+      });
+      return window.WavelengthVisualizer.VISUALIZER_MODES.filter(mode => mode.endsWith('3d'));
+    })()
+  `);
+
+  await new Promise(resolve => setTimeout(resolve, 150));
+  await win.webContents.capturePage({ x: 0, y: 0, width: 320, height: 120 });
+
+  const results = [];
+  for (const mode of modes) {
+    const dataUrl = await win.webContents.executeJavaScript(`
+      window.__wavelengthWebGLAudit.setMode(${JSON.stringify(mode)});
+      window.__wavelengthWebGLAudit.drawIdle();
+      document.getElementById('visualizer-webgl')?.toDataURL('image/png') || '';
+    `);
+    const image = nativeImage.createFromDataURL(dataUrl);
+    fs.writeFileSync(path.join(outDir, `visualizer-${mode}-webgl.png`), image.toPNG());
+    const bitmap = image.toBitmap();
+    let litPixels = 0;
+    for (let i = 0; i < bitmap.length; i += 4) {
+      if (bitmap[i] + bitmap[i + 1] + bitmap[i + 2] > 18) litPixels++;
+    }
+    results.push({ mode, litPixels });
+  }
+
+  await win.webContents.executeJavaScript(`document.getElementById('webgl-audit-wrapper')?.remove()`);
+  const issues = results.filter(result => result.litPixels < 20);
+  console.log(`webgl-audit ${issues.length === 0 ? 'ok' : 'found issues'}: ${issues.length} issue(s)`);
+  console.log(results.map(result => `${result.mode}: ${result.litPixels} lit pixels`).join('\n'));
+  return issues.length;
 }
 
 async function audit(win, label) {
@@ -256,10 +327,111 @@ async function auditPlayTooltip(win) {
   };
 }
 
-async function auditVisualizerModes(win) {
-  return win.webContents.executeJavaScript(`
+async function auditMiniModeTransition(win) {
+  state.isMini = false;
+  send(win, 'set-mini', false);
+  await new Promise(resolve => setTimeout(resolve, 50));
+
+  const result = await win.webContents.executeJavaScript(`
     (async () => {
-      const sleepFrame = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+      const read = () => ({
+        miniMode: document.body.classList.contains('mini-mode'),
+        fullDisplay: getComputedStyle(document.getElementById('full-view')).display,
+        miniDisplay: getComputedStyle(document.getElementById('mini-view')).display,
+      });
+
+      document.getElementById('btn-toggle-mini').click();
+      await sleep(100);
+      const enterSettled = read();
+      document.getElementById('mini-expand').click();
+      await sleep(100);
+      const exitSettled = read();
+      return { enterSettled, exitSettled };
+    })()
+  `);
+
+  const interactionIssues = [];
+  if (!result.enterSettled.miniMode || result.enterSettled.fullDisplay !== 'none' || result.enterSettled.miniDisplay !== 'flex') {
+    interactionIssues.push('mini layout was not exclusive after the mode switch');
+  }
+  if (result.exitSettled.miniMode || result.exitSettled.fullDisplay === 'none' || result.exitSettled.miniDisplay !== 'none') {
+    interactionIssues.push('full layout was not restored after leaving mini mode');
+  }
+
+  return {
+    label: 'mini-mode-transition',
+    result,
+    interactionIssues,
+  };
+}
+
+async function auditStationRenderingAndFilters(win) {
+  const result = await win.webContents.executeJavaScript(`
+    (async () => {
+      const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+      const auditItem = Array.from(document.querySelectorAll('.station-item'))
+        .find(item => item.dataset.id === 'audit-unsafe');
+      const initial = {
+        found: !!auditItem,
+        name: auditItem?.querySelector('.station-item-name')?.textContent || '',
+        tags: Array.from(auditItem?.querySelectorAll('.station-tag') || []).map(tag => tag.textContent),
+        injectedElement: !!document.querySelector('#x, #y'),
+        iconSrc: auditItem?.querySelector('img.station-icon')?.getAttribute('src') || '',
+      };
+
+      const language = document.getElementById('lang-filter');
+      language.value = 'Auditisch';
+      language.dispatchEvent(new Event('change', { bubbles: true }));
+      await sleep(100);
+      const languageIds = Array.from(document.querySelectorAll('.station-item')).map(item => item.dataset.id);
+
+      language.value = '';
+      language.dispatchEvent(new Event('change', { bubbles: true }));
+      const search = document.getElementById('station-search');
+      search.value = '__wavelength_no_match__';
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+      await sleep(150);
+      const empty = {
+        stationCount: document.querySelectorAll('.station-item').length,
+        title: document.querySelector('.station-empty-title')?.textContent?.trim() || '',
+      };
+
+      search.value = '';
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+      await sleep(150);
+      return {
+        initial,
+        languageIds,
+        empty,
+        restoredCount: document.querySelectorAll('.station-item').length,
+      };
+    })()
+  `);
+
+  const interactionIssues = [];
+  if (!result.initial.found) interactionIssues.push('unsafe audit station was not rendered');
+  if (result.initial.name !== AUDIT_STATION.name) interactionIssues.push('station name was not rendered as literal text');
+  if (!result.initial.tags.includes(AUDIT_STATION.country)) interactionIssues.push('station country was not rendered as literal text');
+  if (result.initial.injectedElement) interactionIssues.push('station data created executable DOM elements');
+  if (result.initial.iconSrc) interactionIssues.push(`unsafe icon URL reached img src: ${result.initial.iconSrc}`);
+  if (state.cachedIconUrls.includes(AUDIT_STATION.iconUrl)) interactionIssues.push('unsafe icon URL reached cache-icon IPC');
+  if (result.languageIds.length !== 1 || result.languageIds[0] !== AUDIT_STATION.id) {
+    interactionIssues.push(`language filter returned ${result.languageIds.join(', ') || 'no stations'}`);
+  }
+  if (result.empty.stationCount !== 0 || !result.empty.title) interactionIssues.push('empty search result was not rendered');
+  if (result.restoredCount < 2) interactionIssues.push('station list did not recover after clearing filters');
+
+  return {
+    label: 'station-rendering-and-filters',
+    result,
+    interactionIssues,
+  };
+}
+
+async function auditVisualizerModes(win) {
+  const result = await win.webContents.executeJavaScript(`
+    (async () => {
       const countLitPixels = (canvas) => {
         if (!canvas || canvas.width <= 0 || canvas.height <= 0) return 0;
         const ctx = canvas.getContext('2d');
@@ -276,6 +448,42 @@ async function auditVisualizerModes(win) {
       const miniCanvas = document.createElement('canvas');
       const issues = [];
       const results = [];
+      const snapshots = {};
+      let auditPlaying = false;
+      let syntheticFrame = 0;
+      const nativeRequestAnimationFrame = window.requestAnimationFrame;
+      const nativeCancelAnimationFrame = window.cancelAnimationFrame;
+      const frameQueue = new Map();
+      let nextFrameId = 1;
+      let auditTimestamp = performance.now();
+      window.requestAnimationFrame = callback => {
+        const id = nextFrameId++;
+        frameQueue.set(id, callback);
+        return id;
+      };
+      window.cancelAnimationFrame = id => frameQueue.delete(id);
+      const runFrame = () => {
+        const callbacks = Array.from(frameQueue.values());
+        frameQueue.clear();
+        auditTimestamp += 1000 / 60;
+        callbacks.forEach(callback => callback(auditTimestamp));
+      };
+      const analyser = {
+        frequencyBinCount: 256,
+        getByteFrequencyData(buffer) {
+          syntheticFrame++;
+          for (let i = 0; i < buffer.length; i++) {
+            const falloff = 1 - (i / buffer.length) * 0.72;
+            const pulse = 0.58 + Math.sin(syntheticFrame * 0.35 + i * 0.16) * 0.28;
+            buffer[i] = Math.max(0, Math.min(255, Math.round(255 * falloff * pulse)));
+          }
+        },
+        getByteTimeDomainData(buffer) {
+          for (let i = 0; i < buffer.length; i++) {
+            buffer[i] = Math.round(128 + Math.sin(syntheticFrame * 0.3 + i * 0.18) * 82);
+          }
+        },
+      };
       mainCanvas.style.cssText = 'position:fixed;left:-1000px;top:-1000px;width:320px;height:120px;';
       miniCanvas.style.cssText = 'position:fixed;left:-1000px;top:-850px;width:120px;height:28px;';
       document.body.append(mainCanvas, miniCanvas);
@@ -284,8 +492,8 @@ async function auditVisualizerModes(win) {
         miniCanvas,
         storageKey: 'wl.auditVisualizerMode',
         averageLevel: window.utils.averageLevel,
-        getAnalyser: () => null,
-        getState: () => ({ playing: false, windowVisible: true, muted: false }),
+        getAnalyser: () => analyser,
+        getState: () => ({ playing: auditPlaying, windowVisible: true, muted: false }),
         onLevel: () => {},
         showToast: () => {},
       });
@@ -293,32 +501,46 @@ async function auditVisualizerModes(win) {
       auditVisualizer.resize();
       for (const mode of modes) {
         auditVisualizer.setMode(mode);
-        auditVisualizer.drawIdle();
-        await sleepFrame();
+        auditPlaying = true;
+        auditVisualizer.start();
+        for (let frame = 0; frame < 8; frame++) runFrame();
+        auditVisualizer.stop();
+        auditPlaying = false;
         const litPixels = countLitPixels(mainCanvas);
         const aria = mainCanvas?.getAttribute('aria-label') || '';
+        snapshots[mode] = mainCanvas.toDataURL('image/png');
         results.push({ mode, litPixels, aria });
         if (litPixels < 20) issues.push(mode + ' rendered only ' + litPixels + ' lit pixels');
         if (!aria || !aria.toLowerCase().includes('modus')) issues.push(mode + ' did not update visualizer aria label');
       }
 
       auditVisualizer.drawIdle();
-      await sleepFrame();
+      runFrame();
       const miniLitPixels = countLitPixels(miniCanvas);
       if (miniLitPixels < 8) issues.push('mini visualizer rendered only ' + miniLitPixels + ' lit pixels');
       mainCanvas.remove();
       miniCanvas.remove();
+      window.requestAnimationFrame = nativeRequestAnimationFrame;
+      window.cancelAnimationFrame = nativeCancelAnimationFrame;
 
       return {
         label: 'visualizer-modes',
         modes,
         modeCount: modes.length,
         results,
+        snapshots,
         miniLitPixels,
         interactionIssues: issues,
       };
     })()
   `);
+
+  for (const [mode, dataUrl] of Object.entries(result.snapshots)) {
+    const encoded = dataUrl.replace(/^data:image\/png;base64,/, '');
+    fs.writeFileSync(path.join(outDir, `visualizer-${mode}.png`), Buffer.from(encoded, 'base64'));
+  }
+  delete result.snapshots;
+  return result;
 }
 
 async function auditButtonOverlap(win) {
@@ -366,12 +588,19 @@ async function main() {
       preload: path.join(root, 'src', 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      backgroundThrottling: false,
     },
   });
 
   await win.webContents.session.clearStorageData({ storages: ['localstorage'] });
   wireIpc(win);
   await waitForReady(win);
+  if (webglAudit) {
+    const issues = await auditWebGLModes(win);
+    win.destroy();
+    app.exit(issues > 0 ? 1 : 0);
+    return;
+  }
   send(win, 'app-version', app.getVersion());
   send(win, 'set-station', state.activeStation);
   await new Promise(resolve => setTimeout(resolve, 200));
@@ -380,9 +609,11 @@ async function main() {
   const full = await audit(win, 'full-player');
   full.meta = await viewMeta(win);
   results.push(full);
+  results.push(await auditMiniModeTransition(win));
   results.push(await auditPlayTooltip(win));
   results.push(await auditButtonOverlap(win));
   results.push(await auditVisualizerModes(win));
+  results.push(await auditStationRenderingAndFilters(win));
   await win.webContents.executeJavaScript(`
     document.body.classList.add('view-list-active');
     const toggleBtn = document.getElementById('btn-view-toggle');
