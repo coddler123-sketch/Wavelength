@@ -630,26 +630,33 @@
       const bass = values.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
       const baseR = Math.min(W, H) * (0.18 + bass * 0.12);
       const steps = 128;
+      const n = values.length;
+
+      // Build a circular-interpolated value ring so index wraps without a jump
+      const ring = new Float32Array(steps);
+      for (let i = 0; i < steps; i++) {
+        const f  = (i / steps) * n;
+        const lo = Math.floor(f) % n;
+        const hi = (lo + 1) % n;
+        ring[i]  = values[lo] * (1 - (f - Math.floor(f))) + values[hi] * (f - Math.floor(f));
+      }
+
       ctx.save();
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
       ctx.fillRect(0, 0, W, H);
       for (let layer = 0; layer < 3; layer++) {
         const hue = (clock * 30 + layer * 120) % 360;
         ctx.beginPath();
-        let firstX = 0, firstY = 0;
-        for (let i = 0; i <= steps; i++) {
-          const a  = (i / steps) * Math.PI * 2;
-          // wrap fi so last point uses same frequency band as first → no radius jump
-          const fi = Math.floor((i % steps) / steps * (values.length - 1));
-          const v  = values[fi] || 0;
+        for (let i = 0; i < steps; i++) {
+          const a    = (i / steps) * Math.PI * 2;
+          const v    = ring[i];
           const warp = Math.sin(a * 3 + clock * 1.2) * 0.15 + Math.sin(a * 5 - clock * 0.8) * 0.1;
-          const r = (baseR + v * baseR * 0.9 + warp * baseR) * (1 - layer * 0.18);
-          const x = cx + Math.cos(a) * r;
-          const y = cy + Math.sin(a) * r;
-          if (i === 0) { firstX = x; firstY = y; ctx.moveTo(x, y); }
-          else ctx.lineTo(x, y);
+          const r    = (baseR + v * baseR * 0.9 + warp * baseR) * (1 - layer * 0.18);
+          const x    = cx + Math.cos(a) * r;
+          const y    = cy + Math.sin(a) * r;
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
         }
-        ctx.lineTo(firstX, firstY);
+        ctx.closePath();
         if (layer === 0) {
           const fill = ctx.createRadialGradient(cx, cy, 0, cx, cy, baseR * 1.8);
           fill.addColorStop(0, `hsla(${hue},70%,40%,0.18)`);
