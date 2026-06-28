@@ -678,12 +678,13 @@
       ctx.save();
       ctx.fillStyle = 'rgba(0,0,0,0.12)';
       ctx.fillRect(0, 0, W, H);
-      const half = n / 2;
+      const quarter = n / 4;
       for (let i = 0; i < n; i++) {
         const a   = (i / n) * Math.PI * 2;
-        // Mirror: bass at 0° and 180°, highs at 90° and 270° → symmetric starburst
-        const t   = i < half ? i / half : (n - i) / half;
-        const fi  = Math.floor(t * values.length);
+        // 4-fold symmetry: bass at 0°/90°/180°/270°, highs between → starburst
+        const pos = i % quarter;
+        const t   = pos / quarter;
+        const fi  = Math.min(Math.floor(t * values.length), values.length - 1);
         const v   = values[fi] || 0;
         const len = (0.06 + v * 0.42) * Math.min(W, H);
         const hue = (i / n * 280 + clock * 40) % 360;
