@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Wavelength** is a Windows Electron tray-only radio player supporting multiple customizable stations. Similar architecture to Zucca Radio but designed for multiple stations from curated local defaults plus Radio Browser integration. The app runs minimally in the system tray with a 460×480 main UI, compact mini mode, and expandable visualizer.
+**Wavelength** is a Windows Electron tray-only radio player supporting multiple customizable stations. Similar architecture to Zucca Radio but designed for multiple stations from curated local defaults plus Radio Browser integration. The app runs minimally in the system tray with a 460×520 main UI, compact mini mode, and expandable visualizer.
 
 **Key characteristics:**
 - Single-instance Electron app with system tray integration
 - IPC-based main/renderer communication with strict contracts
-- Main player window (460×480px) with compact mini mode that can minimize to tray
-- Audio visualization with 9 modes
+- Main player window (460×520px) with compact mini mode that can minimize to tray
+- Audio visualization with 16 modes (10 Canvas 2D + 4 WebGL 3D + 2 hybrid)
 - Station management via curated local defaults, Radio Browser loading, and disk cache
 - Windows-only NSIS installer build
 
@@ -88,7 +88,7 @@ Tests verify:
 | `src/stations.js` | Curated stations + Radio Browser loading with disk cache |
 | `src/tray-menu.js` | Pure tray station menu builders |
 | `src/utils.js` | Shared UMD utilities (formatListen, averageLevel, trayState, fakeBar) |
-| `src/visualizer.js` | Canvas-based audio visualization (9 modes: bars, mirror, oscilloscope, waterfall, wave, dna, particles, tunnel, scanner) |
+| `src/visualizer.js` | Canvas-based audio visualization (16 modes: bars, oscilloscope, wave, particles, tunnel, medwaves, neonpulse, flexi, unchained, starburst, geiss, idiot + 4 WebGL: tunnel3d, valley3d, matrix3d, mandala3d) |
 | `src/window-state.js` | Window position/size persistence (localStorage) |
 
 ### IPC Contract Pattern

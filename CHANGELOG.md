@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.7.0
+
+- **Dynamisches Accent-Color-System**: Alle UI-Farben (Borders, Glows, Hover-States, Play-Button, Volume-Slider, Logo-Pulsieren) reagieren jetzt per CSS `color-mix()` und relativer Farbsyntax live auf den aktiven Sender — keine hardcodierten Hex-Werte mehr.
+- **Play-Button-Gradient**: Monochromatischer Gradient aus der Hauptfarbe des Senders (`color-mix` hell → Accent → dunkel).
+- **Farbextraktion verbessert**: `maxVal < 235`-Filter entfernt — reine Farben (z.B. `#FF0000`) werden jetzt korrekt erkannt. Radio Hamburg und ähnliche Sender mit reinem Rot/Grün/Blau werden endlich eingefärbt.
+- **Visualizer überarbeitet**:
+  - *Flexi*: Seam-Artefakt behoben — Fill/Stroke getrennte Pfade, `closePath()` durch `lineTo(pts[0])` ersetzt.
+  - *Unchained*: Komplett neu als **Sonnenkorona** — 96 Stacheln wachsen von einem leuchtenden Innenring nach außen, langsame Rotation, 2-fach gespiegelte Frequenzmapping.
+  - *Starburst*: Neuer Modus — 4-fach symmetrischer Strahlen-Burst aus dem Zentrum (ehemalige Unchained-Variante, mit Length-Cap).
+  - *Mandala 3D*: Kamera-Shake entfernt, Segmentanzahl fixiert (8), Bass/Treble-Einfluss stark gedämpft — deutlich ruhigere Animation.
+  - *Bars*: Bass zentriert, Höhen außen (gespiegeltes Layout).
+  - Mehrere schwache Modi entfernt: Waterfall, DNA Helix, Scanner, Retrowave, Plasmakugel, Hyperspace, Mirror.
+- **Tray-Icon**: Wellenform aus dem App-Logo als Bezier-Kurve — kein Sprung mehr beim Start zwischen statischem und gerendertem Icon.
+- **Theme-Picker entfernt**: Festes Nacht-Theme als Basis; Accent-Farben kommen dynamisch vom Sender.
+- **Favoriten-Stern**: Fest auf Gold `#ffb700` — ändert sich nicht mit dem Sender.
+- **Kontext-Menü**: Bullet-Zeichen (`•`) Encoding-Bug behoben (`\2022` CSS-Escape).
+- **WAVELENGTH-Label**: 13 px, Accent-Farbe, volle Sichtbarkeit.
+- **Mini-Modus**: Fade-Transition beim Wechsel zwischen Mini und Vollansicht.
+- **Tests**: Erweiterte Test-Suite und UI-Audit-Abdeckung.
+
 ## 1.6.0
 
 - **Interaktiver & Dynamischer 3D WebGL-Visualizer**:

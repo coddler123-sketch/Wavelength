@@ -45,3 +45,7 @@ Current status after project review: the core app is implemented and tests pass.
 
 - [x] Branding pass for icon and color system
 - [x] Station maintenance workflow for curated defaults
+- [x] Dynamic accent-color system — all UI colors follow station logo color
+- [x] Visualizer overhaul — 16 modes, removed weak modes, fixed Flexi/Unchained/Mandala
+- [x] Tray icon wave shape matches app logo
+- [x] Mini-mode fade transition
