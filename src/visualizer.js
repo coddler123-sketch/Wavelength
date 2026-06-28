@@ -686,30 +686,48 @@
     }
 
     function drawUnchained(values, W, H) {
-      const ctx = canvasCtx;
-      const cx = W / 2, cy = H / 2;
-      const n  = 64;
+      const ctx  = canvasCtx;
+      const cx   = W / 2, cy = H / 2;
+      const size = Math.min(W, H);
+      const n    = 96;
+      const R0   = size * 0.2;   // inner corona circle radius
+      const maxSpike = size * 0.28;
+
       ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.12)';
+      ctx.fillStyle = 'rgba(0,0,0,0.14)';
       ctx.fillRect(0, 0, W, H);
-      const quarter = n / 4;
+
+      // Draw base glow ring
+      const bass = values.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R0 + bass * size * 0.04, 0, Math.PI * 2);
+      ctx.strokeStyle = `hsla(${(clock * 18) % 360},80%,60%,0.25)`;
+      ctx.lineWidth   = 2 + bass * 6;
+      ctx.shadowColor = `hsla(${(clock * 18) % 360},80%,60%,0.4)`;
+      ctx.shadowBlur  = 10 + bass * 20;
+      ctx.stroke();
+
+      // Spikes from corona perimeter outward — symmetric freq mapping
+      const half = n / 2;
+      ctx.lineCap = 'round';
       for (let i = 0; i < n; i++) {
-        const a   = (i / n) * Math.PI * 2;
-        // 4-fold symmetry: bass at 0°/90°/180°/270°, highs between → starburst
-        const pos = i % quarter;
-        const t   = pos / quarter;
-        const fi  = Math.min(Math.floor(t * values.length), values.length - 1);
-        const v   = values[fi] || 0;
-        const len = (0.06 + v * 0.42) * Math.min(W, H);
-        const hue = (pos / quarter * 280 + clock * 20) % 360;
-        ctx.strokeStyle = `hsla(${hue},100%,68%,${0.5 + v * 0.5})`;
-        ctx.shadowColor = `hsla(${hue},100%,68%,0.8)`;
-        ctx.shadowBlur  = 6 + v * 16;
-        ctx.lineWidth   = 1 + v * 2.5;
-        ctx.lineCap     = 'round';
+        const a    = (i / n) * Math.PI * 2 + clock * 0.04; // slow drift
+        const t    = i < half ? i / half : (n - i) / half; // 2-fold mirror
+        const fi   = Math.min(Math.floor(t * values.length), values.length - 1);
+        const v    = values[fi] || 0;
+        const spike = v * maxSpike;
+        const hue  = (i / n * 320 + clock * 18) % 360;
+        const x0   = cx + Math.cos(a) * R0;
+        const y0   = cy + Math.sin(a) * R0;
+        const x1   = cx + Math.cos(a) * (R0 + spike);
+        const y1   = cy + Math.sin(a) * (R0 + spike);
         ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len);
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.strokeStyle = `hsla(${hue},100%,65%,${0.4 + v * 0.6})`;
+        ctx.shadowColor = `hsla(${hue},100%,65%,0.7)`;
+        ctx.shadowBlur  = 4 + v * 14;
+        ctx.lineWidth   = 1.2 + v * 2;
         ctx.stroke();
       }
       ctx.restore();
