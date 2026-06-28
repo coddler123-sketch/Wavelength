@@ -638,30 +638,44 @@
       }
 
       ctx.save();
-      ctx.lineJoin = 'round';
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
       ctx.fillRect(0, 0, W, H);
-      for (let layer = 0; layer < 3; layer++) {
-        const hue = (clock * 30 + layer * 120) % 360;
-        ctx.beginPath();
-        // Loop steps+1 so last point == first point — avoids closePath() seam artifact
-        for (let i = 0; i <= steps; i++) {
-          const ii   = i % steps;
-          const a    = (ii / steps) * Math.PI * 2;
-          const v    = ring[ii];
+
+      // Pre-compute blob points once per layer set
+      function blobPoints(scale) {
+        const pts = [];
+        for (let i = 0; i < steps; i++) {
+          const a    = (i / steps) * Math.PI * 2;
+          const v    = ring[i];
           const warp = Math.sin(a * 3 + clock * 1.2) * 0.15 + Math.sin(a * 5 - clock * 0.8) * 0.1;
-          const r    = (baseR + v * baseR * 0.9 + warp * baseR) * (1 - layer * 0.18);
-          const x    = cx + Math.cos(a) * r;
-          const y    = cy + Math.sin(a) * r;
-          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          const r    = (baseR + v * baseR * 0.9 + warp * baseR) * scale;
+          pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
         }
+        return pts;
+      }
+
+      for (let layer = 0; layer < 3; layer++) {
+        const hue  = (clock * 30 + layer * 120) % 360;
+        const pts  = blobPoints(1 - layer * 0.18);
+
         if (layer === 0) {
+          // Fill: use closePath (fine for fill, no stroke seam)
+          ctx.beginPath();
+          pts.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+          ctx.closePath();
           const fill = ctx.createRadialGradient(cx, cy, 0, cx, cy, baseR * 1.8);
           fill.addColorStop(0, `hsla(${hue},70%,40%,0.18)`);
           fill.addColorStop(1, 'transparent');
           ctx.fillStyle = fill;
           ctx.fill();
         }
+
+        // Stroke: repeat first point at end — no closePath, no join artifact
+        ctx.beginPath();
+        ctx.lineJoin = 'round';
+        ctx.lineCap  = 'round';
+        pts.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+        ctx.lineTo(pts[0][0], pts[0][1]); // explicit close with lineTo
         ctx.strokeStyle = `hsla(${hue},90%,65%,${0.75 - layer * 0.2})`;
         ctx.shadowColor = `hsla(${hue},90%,65%,0.6)`;
         ctx.shadowBlur  = 12 + bass * 20;

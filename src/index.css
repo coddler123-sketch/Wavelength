@@ -1267,7 +1267,7 @@ input[type=range]::-webkit-slider-thumb {
   font-weight: 600;
 }
 .context-menu-item.active::after {
-  content: "â€¢";
+  content: "\2022";
   margin-left: 8px;
   color: var(--accent);
 }
