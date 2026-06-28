@@ -476,7 +476,7 @@ if (historyModalEl) {
 // ── Init ─────────────────────────────────────────
 (async () => {
   const settings = loadSettings();
-  applyTheme(settings.theme);
+  applyTheme('nacht');
   setLang(settings.lang);
   api.setLang(settings.lang);
 
@@ -573,10 +573,6 @@ function initSettingsModal() {
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
   saveBtn?.addEventListener('click', saveAndClose);
 
-  document.getElementById('theme-picker')?.addEventListener('click', (e) => {
-    const btn = e.target.closest('.theme-btn');
-    if (btn) highlightPicker('theme-picker', btn.dataset.theme, 'data-theme');
-  });
   document.getElementById('lang-picker')?.addEventListener('click', (e) => {
     const btn = e.target.closest('.lang-btn');
     if (btn) highlightPicker('lang-picker', btn.dataset.lang, 'data-lang');
@@ -588,7 +584,6 @@ function showSettingsModal() {
   if (!modal) return;
   const s = loadSettings();
 
-  highlightPicker('theme-picker', s.theme, 'data-theme');
   highlightPicker('lang-picker',  s.lang,  'data-lang');
   document.getElementById('setting-autoplay').checked  = s.autoplayOnStart;
   document.getElementById('setting-startmini').checked = s.startMini;
@@ -603,14 +598,12 @@ function showSettingsModal() {
 }
 
 async function saveAndClose() {
-  const theme        = document.querySelector('#theme-picker .theme-btn.active')?.dataset.theme || 'nacht';
   const lang         = document.querySelector('#lang-picker .lang-btn.active')?.dataset.lang   || 'de';
   const autoplayOn   = document.getElementById('setting-autoplay').checked;
   const startMini    = document.getElementById('setting-startmini').checked;
   const autostartOn  = document.getElementById('setting-autostart').checked;
 
-  saveSettings({ theme, lang, autoplayOnStart: autoplayOn, startMini });
-  applyTheme(theme);
+  saveSettings({ lang, autoplayOnStart: autoplayOn, startMini });
   setLang(lang);
   api.setLang(lang);
   applyI18n();

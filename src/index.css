@@ -490,7 +490,7 @@ body.sleep-active .listen-badge { display: none; }
 .fav-badge-btn.is-fav {
   background: rgba(255, 183, 0, 0.1);
   border-color: rgba(255, 183, 0, 0.3);
-  color: var(--accent3);
+  color: #ffb700;
 }
 .fav-badge-btn.is-fav svg {
   fill: currentColor;
@@ -1811,7 +1811,7 @@ body.view-list-active .track-info-container {
   color: var(--accent3);
 }
 .fav-star-btn.is-fav {
-  color: var(--accent3);
+  color: #ffb700;
 }
 .fav-star-btn.is-fav svg {
   fill: currentColor;
