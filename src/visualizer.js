@@ -1343,23 +1343,22 @@
           }
 
           void main() {
-            float shake = sin(u_time * 60.0) * u_bass * u_bass * 0.012;
-            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / max(1.0, u_resolution.y) + vec2(shake, -shake);
-            
-            vec2 center = (u_mouse - 0.5) * 0.8;
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / max(1.0, u_resolution.y);
+
+            vec2 center = (u_mouse - 0.5) * 0.5;
             vec2 p = uv - center;
-            
+
             float r = length(p);
             float a = atan(p.y, p.x);
-            
-            float segments = 8.0 + floor(u_bass * 4.0);
+
+            float segments = 8.0;
             a = mod(a, 2.0 * 3.14159 / segments) - 3.14159 / segments;
             p = vec2(cos(a), sin(a)) * r;
-            
+
             for (int i = 0; i < 4; i++) {
-              p = abs(p) - 0.25 - u_bass * 0.08;
-              p = p * (1.4 + u_treble * 0.15);
-              p = p * rot(u_time * 0.18 + float(i) * 0.1);
+              p = abs(p) - 0.25 - u_bass * 0.03;
+              p = p * (1.4 + u_treble * 0.08);
+              p = p * rot(u_time * 0.07 + float(i) * 0.1);
             }
             
             float d = length(p) - 0.14;
