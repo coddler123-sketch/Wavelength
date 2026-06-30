@@ -1,37 +1,53 @@
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
-const version = pkg.version;
+function extractReleaseNotes(changelog, version) {
+  const lines = changelog.split(/\r?\n/);
+  const startIndex = lines.findIndex(line => line.trim() === `## ${version}`);
+  if (startIndex === -1) throw new Error(`No CHANGELOG.md entry for v${version}`);
 
-const changelog = fs.readFileSync(path.join(__dirname, '..', 'CHANGELOG.md'), 'utf8');
-const lines = changelog.split(/\r?\n/);
-
-const startIndex = lines.findIndex(line => line.trim() === `## ${version}`);
-if (startIndex === -1) {
-  console.error(`No CHANGELOG.md entry for v${version}`);
-  process.exit(1);
+  const nextHeading = lines.slice(startIndex + 1).findIndex(line => /^## /.test(line));
+  const endIndex = nextHeading === -1 ? lines.length : startIndex + 1 + nextHeading;
+  return lines.slice(startIndex + 1, endIndex).join('\n').trim();
 }
 
-const endIndex = lines.slice(startIndex + 1).findIndex(line => /^## /.test(line));
-const notes = lines
-  .slice(startIndex + 1, endIndex === -1 ? lines.length : startIndex + 1 + endIndex)
-  .join('\n')
-  .trim();
-
-if (process.argv[2] === '--gh-release') {
-  const { execSync } = require('child_process');
+function githubReleaseArgs(version, notes, assets) {
   const tag = `v${version}`;
-  const installer = path.join('dist', `Wavelength Setup ${version}.exe`);
-  const portable = path.join('dist', `Wavelength-${version}-portable.exe`);
-  const assets = [installer, portable].filter(p => fs.existsSync(p));
-  if (assets.length === 0) {
-    console.error(`No build artifacts found in dist/. Run "npm run build" first.`);
-    process.exit(1);
-  }
-  const cmd = ['gh', 'release', 'create', tag, '--title', `Wavelength ${tag}`, '--notes', notes, ...assets];
-  execSync(cmd.map(a => `"${a.replace(/"/g, '\\"')}"`).join(' '), { stdio: 'inherit' });
-  console.log(`Created GitHub release ${tag}`);
-} else {
-  process.stdout.write(notes + '\n');
+  return ['release', 'create', tag, '--title', `Wavelength ${tag}`, '--notes', notes, ...assets];
 }
+
+function main(argv = process.argv.slice(2)) {
+  const root = path.join(__dirname, '..');
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  const changelog = fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8');
+  const notes = extractReleaseNotes(changelog, pkg.version);
+
+  if (argv[0] !== '--gh-release') {
+    process.stdout.write(notes + '\n');
+    return;
+  }
+
+  const assets = [
+    path.join(root, 'dist', `Wavelength Setup ${pkg.version}.exe`),
+    path.join(root, 'dist', `Wavelength-${pkg.version}-portable.exe`),
+  ].filter(asset => fs.existsSync(asset));
+
+  if (assets.length !== 2) {
+    throw new Error('Release requires both installer and portable build artifacts in dist/.');
+  }
+
+  execFileSync('gh', githubReleaseArgs(pkg.version, notes, assets), { stdio: 'inherit' });
+  console.log(`Created GitHub release v${pkg.version}`);
+}
+
+if (require.main === module) {
+  try {
+    main();
+  } catch (err) {
+    console.error(err.message);
+    process.exitCode = 1;
+  }
+}
+
+module.exports = { extractReleaseNotes, githubReleaseArgs };

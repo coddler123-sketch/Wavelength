@@ -10,6 +10,7 @@ const { formatListen, averageLevel, trayState, fakeBar, mediaSessionFields } = r
 const { createIcyMetadataClient } = require('../src/icy-metadata-client.js');
 const { buildTrayStationMenuItems, stationSwitcherSubmenu, trayStationGroupLabel } = require('../src/tray-menu.js');
 const { validateStations } = require('./validate-stations.js');
+const { extractReleaseNotes, githubReleaseArgs } = require('./release-notes.js');
 
 const src  = (f) => fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8');
 
@@ -1029,6 +1030,23 @@ test('visualizer: HiDPI-Support via devicePixelRatio', () => {
 test('visualizer: UMD-Export kompatibel mit Node und Browser', () => {
   assert.ok(vizSrc.includes("window.WavelengthVisualizer"), 'Browser-Export fehlt');
   assert.ok(vizSrc.includes("typeof module !== 'undefined'") || vizSrc.includes('typeof module !=='), 'Node-Export-Guard fehlt');
+});
+
+test('Release Notes: extrahiert nur den Abschnitt der aktuellen Version', () => {
+  const changelog = '# Changelog\n\n## 2.0.0\n\n- Neu\n\n## 1.0.0\n\n- Alt\n';
+  assert.equal(extractReleaseNotes(changelog, '2.0.0'), '- Neu');
+  assert.throws(() => extractReleaseNotes(changelog, '3.0.0'), /No CHANGELOG/);
+});
+
+test('GitHub Release: Build-Artefakte bleiben einzelne Argumente', () => {
+  const installer = path.join('dist', 'Wavelength Setup 2.0.0.exe');
+  const portable = path.join('dist', 'Wavelength-2.0.0-portable.exe');
+  const args = githubReleaseArgs('2.0.0', '- Neu', [installer, portable]);
+
+  assert.deepEqual(args, [
+    'release', 'create', 'v2.0.0', '--title', 'Wavelength v2.0.0',
+    '--notes', '- Neu', installer, portable,
+  ]);
 });
 
 test('visualizer: Flexi-Ring ist an der Spektrumnaht glatt', () => {
