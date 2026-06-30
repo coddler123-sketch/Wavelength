@@ -1,14 +1,17 @@
 const { test, expect } = require('@playwright/test');
 const { _electron: electron } = require('playwright');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..', '..');
 
-let app, win;
+let app, win, userDataDir;
 
 test.beforeAll(async () => {
+  userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wavelength-e2e-'));
   app = await electron.launch({
-    args: [ROOT],
+    args: [ROOT, `--user-data-dir=${userDataDir}`],
     env: { ...process.env, NODE_ENV: 'test' },
   });
   win = await app.firstWindow();
@@ -33,6 +36,8 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   try { await app.evaluate(() => process.exit(0)); } catch (_) {}
+  await new Promise(resolve => setTimeout(resolve, 500));
+  fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 });
 
 test('Fenster öffnet und Visualizer ist im DOM', async () => {
@@ -133,24 +138,20 @@ test('Sleep-Timer-Button zeigt Badge nach Klick', async () => {
 });
 
 test('Track-History-Modal öffnet und schließt sich', async () => {
-  await win.evaluate(() => {
-    const m = document.getElementById('history-modal');
-    if (m) m.classList.remove('hidden');
-  });
-  await win.waitForTimeout(200);
-  const visible = await win.evaluate(() => !document.getElementById('history-modal')?.classList.contains('hidden'));
-  expect(visible).toBe(true);
-  await win.evaluate(() => document.getElementById('history-close-btn')?.click());
-  await win.waitForTimeout(200);
-  const hidden = await win.evaluate(() => document.getElementById('history-modal')?.classList.contains('hidden'));
-  expect(hidden).toBe(true);
+  const modal = win.locator('#history-modal');
+  await win.locator('#track-info-container').click();
+  await expect(modal).toBeVisible();
+  await win.locator('#history-close-btn').click();
+  await expect(modal).toBeHidden();
 });
 
 test('Mini-Modus umschalten zeigt Mini-View', async () => {
-  await win.evaluate(() => document.querySelector('#btn-mini')?.click());
-  await win.waitForTimeout(500);
-  expect(await win.locator('#mini-view').count()).toBe(1);
-  // Reset zurück zu Full-View
-  await win.evaluate(() => document.querySelector('#mini-btn-back')?.click());
-  await win.waitForTimeout(300);
+  const body = win.locator('body');
+  const miniView = win.locator('#mini-view');
+  await win.locator('#btn-toggle-mini').click();
+  await expect(body).toHaveClass(/mini-mode/);
+  await expect(miniView).toBeVisible();
+  await win.locator('#mini-expand').click();
+  await expect(body).not.toHaveClass(/mini-mode/);
+  await expect(miniView).toBeHidden();
 });

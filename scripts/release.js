@@ -1,4 +1,4 @@
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 
 const type = process.argv[2];
@@ -7,45 +7,74 @@ if (!['patch', 'minor', 'major'].includes(type)) {
   process.exit(1);
 }
 
-// 1. Bump version
-execSync(`node scripts/bump-version.js ${type}`, { stdio: 'inherit' });
+const run = (command, args, options = {}) => execFileSync(command, args, {
+  stdio: 'inherit',
+  ...options,
+});
+const capture = (command, args) => execFileSync(command, args, {
+  encoding: 'utf8',
+  stdio: ['ignore', 'pipe', 'ignore'],
+}).trim();
 
-const version = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
-console.log(`\nReleasing v${version}...\n`);
+if (capture('git', ['status', '--porcelain'])) {
+  console.error('Release aborted: working tree is not clean.');
+  process.exit(1);
+}
 
-// 2. Auto-generate changelog entry from commits since last release
-const lastRelease = execSync(
-  'git log --oneline --format="%H" -- CHANGELOG.md | head -1',
-  { encoding: 'utf8' }
-).trim();
+const branch = capture('git', ['branch', '--show-current']);
+if (branch !== 'main') {
+  console.error(`Release aborted: expected branch main, found ${branch || 'detached HEAD'}.`);
+  process.exit(1);
+}
 
-const logCmd = lastRelease
-  ? `git log ${lastRelease}..HEAD --format="- %s" --no-merges`
-  : 'git log -10 --format="- %s" --no-merges';
+const currentVersion = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
+const [major, minor, patch] = currentVersion.split('.').map(Number);
+const version = type === 'major'
+  ? `${major + 1}.0.0`
+  : type === 'minor'
+    ? `${major}.${minor + 1}.0`
+    : `${major}.${minor}.${patch + 1}`;
+const tag = `v${version}`;
 
-const commits = execSync(logCmd, { encoding: 'utf8' }).trim();
+try {
+  capture('git', ['rev-parse', '--verify', '--quiet', `refs/tags/${tag}`]);
+  console.error(`Release aborted: tag ${tag} already exists.`);
+  process.exit(1);
+} catch (_) {}
+
+run(process.execPath, ['scripts/bump-version.js', type]);
+console.log(`\nPreparing ${tag}...\n`);
+
+let lastRelease = '';
+try {
+  lastRelease = capture('git', ['describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*']);
+} catch (_) {}
+
+const logArgs = ['log'];
+if (lastRelease) logArgs.push(`${lastRelease}..HEAD`);
+else logArgs.push('-10');
+logArgs.push('--format=- %s', '--no-merges');
+const commits = capture('git', logArgs);
 
 const changelogPath = 'CHANGELOG.md';
 const existing = fs.readFileSync(changelogPath, 'utf8');
-
-// Skip if entry already exists
 if (!existing.includes(`## ${version}`)) {
   const entry = `## ${version}\n\n${commits || '- Bugfixes und Verbesserungen'}\n\n`;
   fs.writeFileSync(changelogPath, existing.replace('# Changelog\n\n', `# Changelog\n\n${entry}`));
-  console.log(`Changelog entry for v${version} generated.`);
+  console.log(`Changelog entry for ${tag} generated.`);
 }
 
-// 3. Verify
-console.log('Running verify...');
-execSync('npm run verify', { stdio: 'inherit' });
+const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+console.log('\nRunning release checks...');
+run(npm, ['run', 'verify']);
+run(npm, ['run', 'e2e']);
 
-// 4. Commit + push
-execSync('git add -A', { stdio: 'inherit' });
-execSync(`git commit -m "chore: release v${version}"`, { stdio: 'inherit' });
-execSync('git push origin main', { stdio: 'inherit' });
-
-// 5. Build
 console.log('\nBuilding installer...');
-execSync('npm run build', { stdio: 'inherit' });
+run(npm, ['run', 'build']);
 
-console.log(`\nDone! v${version} released and built.`);
+run('git', ['add', 'package.json', 'package-lock.json', 'src/index.html', 'CHANGELOG.md']);
+run('git', ['commit', '-m', `chore: release ${tag}`]);
+run('git', ['tag', '-a', tag, '-m', `Wavelength ${tag}`]);
+run('git', ['push', '--atomic', 'origin', 'main', `refs/tags/${tag}`]);
+
+console.log(`\nDone! ${tag} built, tagged, and pushed.`);
