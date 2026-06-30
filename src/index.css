@@ -1067,13 +1067,20 @@ input[type=range] {
   height: 4px; border-radius: 2px;
   background: var(--surface2); cursor: pointer;
   -webkit-app-region: no-drag;
+  margin: 8px 0;
 }
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 14px; height: 14px; border-radius: 50%;
   background: var(--accent2);
-  box-shadow: 0 0 0 3px rgba(47, 125, 246, 0.16);
+  box-shadow: none;
   cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+input[type=range]:hover::-webkit-slider-thumb,
+input[type=range]:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 /* â”€â”€ Action buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
