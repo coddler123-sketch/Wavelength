@@ -231,7 +231,8 @@ export function updateVolSlider(val, persist = true) {
   document.getElementById('vol-slider').value = val;
   document.getElementById('vol-val').textContent = val + '%';
   document.getElementById('mini-vol').value = val;
-  document.getElementById('mini-vol-val').textContent = val + '%';
+  const miniVolVal = document.getElementById('mini-vol-val');
+  if (miniVolVal) miniVolVal.textContent = val + '%';
   const sliderFill = (el, thumbPx) => {
     const w = el.offsetWidth;
     const pct = w > thumbPx ? ((thumbPx / w) * 100).toFixed(2) + '%' : val + '%';
@@ -494,7 +495,7 @@ export function displayTrackInfo(title) {
 
   if (state.playing && cleanTitle) {
     textEl.textContent = cleanTitle;
-    if (miniStationName) miniStationName.textContent = cleanTitle;
+    if (miniStationName) { miniStationName.textContent = cleanTitle; miniStationName.title = cleanTitle; }
     void textEl.offsetWidth;
     const diff = wrap.clientWidth - textEl.scrollWidth;
     if (diff < 0) {

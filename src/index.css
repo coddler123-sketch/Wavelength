@@ -1120,20 +1120,19 @@ input[type=range]:active::-webkit-slider-thumb {
 /* â”€â”€ Mini view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 #mini-view {
   display: none; flex-direction: column;
-  height: 82px; -webkit-app-region: drag;
+  height: 72px; -webkit-app-region: drag;
 }
 .mini-bar {
   display: flex; align-items: center;
   gap: 10px; padding: 0 10px;
-  height: 56px;
+  flex: 1;
   background:
-    radial-gradient(circle at 16% 50%, color-mix(in srgb, var(--accent) 3.4%, transparent), transparent 38%),
+    radial-gradient(circle at 16% 50%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 45%),
     linear-gradient(180deg, #10171d, #07090d);
-  border-bottom: 1px solid var(--border);
   -webkit-app-region: drag;
 }
 .mini-logo {
-  width: 36px; height: 36px;
+  width: 48px; height: 48px;
   border-radius: 8px;
   background:
     radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--accent) 4.5%, transparent), transparent 55%),
@@ -1157,17 +1156,11 @@ input[type=range]:active::-webkit-slider-thumb {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 3px;
   -webkit-app-region: no-drag;
 }
 .mini-name { font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
-.mini-viz {
-  width: 100%;
-  height: 13px;
-  opacity: 0.88;
-  border-radius: 5px;
-  background: rgba(255,255,255,0.022);
-}
+.mini-subtitle { font-size: 10px; color: var(--text-dim); text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 .mini-ctrls { display: flex; gap: 4px; align-items: center; -webkit-app-region: no-drag; }
 .mini-btn {
   width: 30px; height: 30px;
@@ -1192,29 +1185,24 @@ input[type=range]:active::-webkit-slider-thumb {
 }
 .mini-btn.play-btn:hover {
   transform: scale(1.035);
-  box-shadow: 0 4px 12px rgba(52, 214, 208, 0.16);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent);
 }
-.mini-vol-row {
-  display: flex; align-items: center;
-  gap: 8px; padding: 0 12px;
-  height: 26px;
-  background: rgba(0, 0, 0, 0.18);
-  border-top: 1px solid rgba(255, 255, 255, 0.035);
+.mini-vol-strip {
+  height: 4px;
+  padding: 0 16px;
   -webkit-app-region: no-drag;
-  opacity: 0.72;
-  transition: opacity 0.14s;
+  background: rgba(255,255,255,0.04);
 }
-#mini-view:hover .mini-vol-row { opacity: 1; }
-.mini-vol-row input[type=range] { height: 3px; }
-.mini-vol-row input[type=range]::-webkit-slider-thumb { width: 11px; height: 11px; }
-.mini-vol-icon { color: var(--text-dim); flex-shrink: 0; display: flex; align-items: center; }
-.mini-vol-val {
-  font-size: 11px;
-  color: var(--text-dim);
-  width: 28px;
-  text-align: right;
-  flex-shrink: 0;
+.mini-vol-strip input[type=range] {
+  display: block; width: 100%; height: 4px;
+  margin: 0; padding: 0;
+  border-radius: 2px; background: transparent;
+  background-image: none;
 }
+.mini-vol-strip input[type=range]::-webkit-slider-thumb {
+  width: 10px; height: 10px; opacity: 0; transition: opacity 0.15s;
+}
+.mini-vol-strip:hover input[type=range]::-webkit-slider-thumb { opacity: 1; }
 
 /* â”€â”€ Visualizer Context Menu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .context-menu {

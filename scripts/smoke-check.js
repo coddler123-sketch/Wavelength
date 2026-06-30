@@ -63,7 +63,7 @@ assert(duplicateIds.length === 0, `duplicate HTML ids: ${duplicateIds.join(', ')
 for (const id of [
   'audio',
   'visualizer',
-  'mini-visualizer',
+  'mini-station-subtitle',
   'viz-toast',
   'live-status',
   'listen-badge',

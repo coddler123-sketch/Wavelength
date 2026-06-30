@@ -286,6 +286,10 @@ export function selectStation(station, options = {}) {
     `${displayGenre(station.genre)} · ${station.country}${gainStr}`;
   document.getElementById('mini-station-name').textContent = station.name;
   document.getElementById('mini-station-name').title = station.name;
+  const miniLogoWrap = document.getElementById('mini-logo-wrap');
+  if (miniLogoWrap) miniLogoWrap.title = station.name;
+  const miniSub = document.getElementById('mini-station-subtitle');
+  if (miniSub) miniSub.textContent = [displayGenre(station.genre), station.country].filter(Boolean).join(' · ');
   updateMiniLogo(station);
   updatePlayerLogo(station);
 

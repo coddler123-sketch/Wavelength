@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.1
+
+- **Mini-Player Redesign**: Logo 48×48 dominant links, Sendername + Genre/Land als Subtitle, Vol-Strip als 4px-Leiste am Boden mit seitlichem Padding.
+- **Tooltips im Mini-Mode**: Hover über Logo zeigt Sendernamen, Hover über Tracktitel zeigt vollen Tracktitel.
+- **Volume Slider**: Thumb immer sichtbar (14px), Hover-Scale + Accent-Glow; hardcodierter Box-Shadow-Blau durch `color-mix(var(--accent))` ersetzt.
+- **Mini-Mode Play-Button Hover-Glow**: Hardcodiertes Teal durch dynamische Accent-Farbe ersetzt.
+
 ## 1.7.0
 
 - **Dynamisches Accent-Color-System**: Alle UI-Farben (Borders, Glows, Hover-States, Play-Button, Volume-Slider, Logo-Pulsieren) reagieren jetzt per CSS `color-mix()` und relativer Farbsyntax live auf den aktiven Sender — keine hardcodierten Hex-Werte mehr.

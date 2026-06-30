@@ -207,7 +207,7 @@
     </div>
     <div class="mini-info">
       <div class="mini-name" id="mini-station-name">Wavelength</div>
-      <canvas class="mini-viz" id="mini-visualizer"></canvas>
+      <div class="mini-subtitle" id="mini-station-subtitle"></div>
     </div>
     <div class="mini-ctrls">
       <button class="mini-btn play-btn" id="mini-playstop" data-i18n-title="tooltip.play" data-i18n-aria="tooltip.play" aria-label="Abspielen" aria-pressed="false" title="Abspielen">
@@ -229,13 +229,8 @@
       </button>
     </div>
   </div>
-  <div class="mini-vol-row">
-    <svg class="mini-vol-icon" width="13" height="13" viewBox="0 0 15 15" fill="currentColor" aria-hidden="true">
-      <path d="M2 5h3l4-3v11l-4-3H2V5z"/>
-      <path d="M11 5.5a3 3 0 0 1 0 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-    </svg>
+  <div class="mini-vol-strip">
     <input type="range" id="mini-vol" min="0" max="100" value="80" data-i18n-title="tooltip.volume.short" data-i18n-aria="tooltip.volume.short" title="Lautstärke" aria-label="Lautstärke">
-    <span class="mini-vol-val" id="mini-vol-val">80%</span>
   </div>
 </div>
 
@@ -259,7 +254,7 @@
       </svg>
     </div>
     <h2 class="modal-title" id="about-modal-title">Wavelength</h2>
-    <p class="modal-subtitle" id="about-version">v1.7.0</p>
+    <p class="modal-subtitle" id="about-version">v1.7.1</p>
     
     <div class="modal-info-block">
       <div class="modal-info-item">
