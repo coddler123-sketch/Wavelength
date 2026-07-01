@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.4
+
+- **Volume Slider**: Klickfläche des Vol-Row-Reglers erweitert (`-webkit-app-region: no-drag` auf die gesamte Pille statt nur den Slider selbst) — verhindert versehentliches Fenster-Verschieben beim Bedienen.
+- **Mini-Player Bugfix**: Volume-Slider-Füllfarbe und Marquee-Breite wurden beim Start bzw. Moduswechsel nicht berechnet, wenn die Mini-Ansicht zu dem Zeitpunkt `display:none` war (`offsetWidth`/`clientWidth` = 0). Beide werden jetzt beim Umschalten in den Mini-Mode neu berechnet.
+- **Marquee-Scroll überarbeitet**: Sendername/Tracktitel (Full-View und Mini-View) scrollen jetzt als nahtloser Endlos-Ticker (Text dupliziert, Loop-Distanz = eine Textbreite) statt der alten "scrollen → schnell zurückspringen"-Animation. Geschwindigkeit an Textlänge gekoppelt (26 px/s).
+
 ## 1.7.3
 
 - fix(release): harden release script and auto-update README version in bump-version.js

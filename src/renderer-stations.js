@@ -2,7 +2,7 @@ import { state } from './renderer-state.js';
 import {
   setActiveStationName, updateListenBadge, switchView,
   stationGainKey, loadInt, stationTodayKey, applyStationGain,
-  showToast,
+  showToast, applyMarquee,
 } from './renderer-ui.js';
 import { startPlay, stopPlay } from './renderer-audio.js';
 import { escapeHtml, safeHttpUrl } from './renderer-sanitize.mjs';
@@ -284,8 +284,9 @@ export function selectStation(station, options = {}) {
   const gainStr = gainDb !== 0 ? ` · ${gainDb > 0 ? '+' : ''}${gainDb} dB` : '';
   document.getElementById('active-station-subtitle').textContent =
     `${displayGenre(station.genre)} · ${station.country}${gainStr}`;
-  document.getElementById('mini-station-name').textContent = station.name;
-  document.getElementById('mini-station-name').title = station.name;
+  const miniStationName = document.getElementById('mini-station-name');
+  miniStationName.title = station.name;
+  applyMarquee(miniStationName, station.name);
   const miniLogoWrap = document.getElementById('mini-logo-wrap');
   if (miniLogoWrap) miniLogoWrap.title = station.name;
   const miniSub = document.getElementById('mini-station-subtitle');

@@ -375,11 +375,8 @@ body.mini-mode #mini-view {
   white-space: nowrap;
 }
 .logo-name-inner {
-  display: inline-block;
+  display: inline-flex;
   transform: translate3d(0, 0, 0);
-}
-.logo-name-inner.marquee-active {
-  animation: marquee 12s linear infinite;
 }
 .station-title-row {
   display: flex;
@@ -1028,6 +1025,7 @@ body.reconnecting #mini-playstop { animation: reconnect-pulse 1.5s ease-in-out i
   border: 1px solid rgba(255,255,255,0.065);
   border-radius: 8px;
   padding: 3px 10px;
+  -webkit-app-region: no-drag;
 }
 .vol-row .vol-mute-btn { padding: 3px; }
 .vol-row input[type=range] { flex: 1; min-width: 60px; }
@@ -1159,7 +1157,8 @@ input[type=range]:active::-webkit-slider-thumb {
   gap: 3px;
   -webkit-app-region: no-drag;
 }
-.mini-name { font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+.mini-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; position: relative; }
+.mini-name-inner { display: inline-flex; transform: translate3d(0, 0, 0); }
 .mini-subtitle { font-size: 10px; color: var(--text-dim); text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 .mini-ctrls { display: flex; gap: 4px; align-items: center; -webkit-app-region: no-drag; }
 .mini-btn {
@@ -1556,7 +1555,7 @@ input[type=range]:active::-webkit-slider-thumb {
   white-space: nowrap;
 }
 .track-info-text {
-  display: inline-block;
+  display: inline-flex;
   font-size: 9.5px;
   font-weight: 600;
   color: var(--text-dim);
@@ -1565,14 +1564,13 @@ input[type=range]:active::-webkit-slider-thumb {
   transform: translate3d(0, 0, 0);
 }
 @keyframes marquee {
-  0% { transform: translate3d(0, 0, 0); }
-  10% { transform: translate3d(0, 0, 0); }
-  90% { transform: translate3d(var(--marquee-dist, -50%), 0, 0); }
-  100% { transform: translate3d(0, 0, 0); }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(var(--marquee-loop, -50%), 0, 0); }
 }
 .marquee-active {
-  animation: marquee 10s linear infinite;
+  animation: marquee var(--marquee-duration, 10s) linear infinite;
 }
+.marquee-gap { display: inline-block; flex-shrink: 0; width: 48px; }
 
 /* â”€â”€ View Toggle (single icon button, top-right) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .view-toggle-btn {

@@ -39,20 +39,45 @@ export function loadBool(key) { return localStorage.getItem(key) === '1'; }
 export const saveBool = (key, v) => { localStorage.setItem(key, v ? '1' : '0'); };
 
 // ── Station Name + Marquee ───────────────────────
+// Builds a seamless, one-directional ticker: the text is duplicated with a
+// gap and scrolled by exactly one copy's width, so the loop point is
+// invisible (no scroll-back snap like a plain "scroll left, jump right" would give).
+const MARQUEE_PX_PER_SECOND = 26;
+
+export function applyMarquee(inner, text) {
+  const wrap = inner.parentElement;
+  inner.classList.remove('marquee-active');
+  inner.style.removeProperty('--marquee-duration');
+  inner.style.removeProperty('--marquee-loop');
+  inner.replaceChildren();
+  const single = document.createElement('span');
+  single.textContent = text;
+  inner.appendChild(single);
+  void inner.offsetWidth;
+
+  if (single.scrollWidth <= wrap.clientWidth) return;
+
+  const gap = document.createElement('span');
+  gap.className = 'marquee-gap';
+  const copy = document.createElement('span');
+  copy.textContent = text;
+  inner.appendChild(gap);
+  inner.appendChild(copy);
+  void inner.offsetWidth;
+
+  const loopWidth = single.offsetWidth + gap.offsetWidth;
+  const duration = Math.max(6, loopWidth / MARQUEE_PX_PER_SECOND);
+  inner.style.setProperty('--marquee-duration', `${duration}s`);
+  inner.style.setProperty('--marquee-loop', `-${loopWidth}px`);
+  inner.classList.add('marquee-active');
+}
+
 export function setActiveStationName(name) {
   const wrap = document.getElementById('active-station-name');
   const inner = document.getElementById('active-station-name-inner');
   if (!wrap || !inner) return;
-  inner.textContent = name;
   wrap.setAttribute('title', name);
-  inner.classList.remove('marquee-active');
-  inner.style.removeProperty('--marquee-dist');
-  void wrap.offsetWidth;
-  const diff = wrap.clientWidth - inner.scrollWidth;
-  if (diff < 0) {
-    inner.style.setProperty('--marquee-dist', `${diff - 16}px`);
-    inner.classList.add('marquee-active');
-  }
+  applyMarquee(inner, name);
 }
 
 window.addEventListener('resize', () => {
@@ -310,6 +335,15 @@ export function setMini(on) {
     requestAnimationFrame(() => state.visualizer.resize());
   }
   if (!state.playing && state.visualizer) requestAnimationFrame(() => state.visualizer.drawIdle());
+  // Slider fill and marquee width both rely on offsetWidth/clientWidth, which
+  // are 0 while the mini view is display:none. Recompute once it becomes visible.
+  if (on) {
+    requestAnimationFrame(() => {
+      updateVolSlider(parseInt(document.getElementById('vol-slider').value, 10), false);
+      const miniStationName = document.getElementById('mini-station-name');
+      if (miniStationName) applyMarquee(miniStationName, miniStationName.title);
+    });
+  }
 }
 
 export function setPinned(on) {
@@ -483,28 +517,25 @@ export function switchView(view) {
 export function displayTrackInfo(title) {
   const container = document.getElementById('track-info-container');
   const textEl = document.getElementById('track-info-text');
-  const wrap = document.getElementById('track-info-text-wrap');
   const miniStationName = document.getElementById('mini-station-name');
-  if (!textEl || !wrap || !container) return;
+  if (!textEl || !container) return;
 
   const cleanTitle = title ? title.trim() : '';
+  const textChanged = cleanTitle !== state.currentTrackInfoText;
   state.currentTrackInfoText = cleanTitle;
 
-  textEl.classList.remove('marquee-active');
-  textEl.style.removeProperty('--marquee-dist');
+  const text = state.playing && cleanTitle
+    ? cleanTitle
+    : (state.activeStation ? state.activeStation.name : 'Wavelength');
 
-  if (state.playing && cleanTitle) {
-    textEl.textContent = cleanTitle;
-    if (miniStationName) { miniStationName.textContent = cleanTitle; miniStationName.title = cleanTitle; }
-    void textEl.offsetWidth;
-    const diff = wrap.clientWidth - textEl.scrollWidth;
-    if (diff < 0) {
-      textEl.style.setProperty('--marquee-dist', `${diff - 16}px`);
-      textEl.classList.add('marquee-active');
-    }
-  } else {
-    const defaultText = state.activeStation ? state.activeStation.name : 'Wavelength';
-    textEl.textContent = defaultText;
-    if (miniStationName) miniStationName.textContent = defaultText;
+  // Skip re-running the marquee animation when the text hasn't actually
+  // changed (e.g. repeated ICY metadata pings) — restarting it looks jumpy.
+  if (!textChanged && state.currentTrackInfoDisplayText === text) return;
+  state.currentTrackInfoDisplayText = text;
+
+  applyMarquee(textEl, text);
+  if (miniStationName) {
+    miniStationName.title = text;
+    applyMarquee(miniStationName, text);
   }
 }
