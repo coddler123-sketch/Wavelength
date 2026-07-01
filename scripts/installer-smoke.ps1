@@ -14,6 +14,14 @@ $installDir = Join-Path $env:TEMP "wavelength-installer-smoke-$PID"
 $userDataDir = Join-Path $env:TEMP "wavelength-profile-smoke-$PID"
 $appProcess = $null
 
+function Stop-InstalledProcesses {
+  Get-CimInstance Win32_Process | Where-Object {
+    $_.ExecutablePath -and $_.ExecutablePath.StartsWith($installDir, [System.StringComparison]::OrdinalIgnoreCase)
+  } | ForEach-Object {
+    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+  }
+}
+
 try {
   $installer = Start-Process -FilePath $InstallerPath -ArgumentList '/S', "/D=$installDir" -Wait -PassThru -WindowStyle Hidden
   if ($installer.ExitCode -ne 0) { throw "Installer exited with code $($installer.ExitCode)" }
@@ -29,11 +37,7 @@ try {
   $appProcess.WaitForExit()
   $appProcess = $null
 
-  Get-CimInstance Win32_Process | Where-Object {
-    $_.ExecutablePath -and $_.ExecutablePath.StartsWith($installDir, [System.StringComparison]::OrdinalIgnoreCase)
-  } | ForEach-Object {
-    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
-  }
+  Stop-InstalledProcesses
 
   $uninstaller = Join-Path $installDir 'Uninstall Wavelength.exe'
   if (-not (Test-Path -LiteralPath $uninstaller)) { throw "Uninstaller not found: $uninstaller" }
@@ -50,6 +54,7 @@ try {
   if ($appProcess -and -not $appProcess.HasExited) {
     Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue
   }
+  Stop-InstalledProcesses
   Remove-Item -LiteralPath $installDir -Recurse -Force -ErrorAction SilentlyContinue
   Remove-Item -LiteralPath $userDataDir -Recurse -Force -ErrorAction SilentlyContinue
 }
