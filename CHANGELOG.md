@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.3
+
+- fix(release): harden release script and auto-update README version in bump-version.js
+- fix: installer-smoke no longer force-deletes exe, masking failed uninstalls
+- ci(release): Verify GitHub assets and NSIS installer
+
 ## 1.7.2
 
 - ci(release): Verify GitHub assets and NSIS installer
