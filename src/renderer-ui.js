@@ -333,6 +333,11 @@ export function setMini(on) {
   saveBool(LS.mini, on);
   if (state.visualizer) {
     requestAnimationFrame(() => state.visualizer.resize());
+    // The Electron window physically resizes BEFORE the IPC set-mini arrives, so
+    // window.resize fires while #full-view is still display:none (offsetWidth=0) and
+    // is skipped. A deferred second resize ensures correct dimensions once the window
+    // has settled at its new size and the canvas is visible again.
+    if (!on) setTimeout(() => { state.visualizer?.resize(); if (!state.playing) state.visualizer?.drawIdle(); }, 200);
   }
   if (!state.playing && state.visualizer) requestAnimationFrame(() => state.visualizer.drawIdle());
   // Slider fill and marquee width both rely on offsetWidth/clientWidth, which
