@@ -64,15 +64,17 @@ if (!existing.includes(`## ${version}`)) {
   console.log(`Changelog entry for ${tag} generated.`);
 }
 
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const npmCli = process.env.npm_execpath;
+if (!npmCli) throw new Error('npm_execpath is unavailable; run releases through npm.');
+const runNpm = (script) => run(process.execPath, [npmCli, 'run', script]);
 console.log('\nRunning release checks...');
-run(npm, ['run', 'verify']);
-run(npm, ['run', 'e2e']);
+runNpm('verify');
+runNpm('e2e');
 
 console.log('\nBuilding installer...');
-run(npm, ['run', 'build']);
+runNpm('build');
 
-run('git', ['add', 'package.json', 'package-lock.json', 'src/index.html', 'CHANGELOG.md']);
+run('git', ['add', 'package.json', 'package-lock.json', 'src/index.html', 'README.md', 'CHANGELOG.md']);
 run('git', ['commit', '-m', `chore: release ${tag}`]);
 run('git', ['tag', '-a', tag, '-m', `Wavelength ${tag}`]);
 run('git', ['push', '--atomic', 'origin', 'main', `refs/tags/${tag}`]);

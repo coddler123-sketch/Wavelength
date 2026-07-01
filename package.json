@@ -1,6 +1,6 @@
 {
   "name": "wavelength",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "Wavelength - Multi-Station Radio Player for Windows",
   "author": "Wavelength",
   "main": "src/main.js",

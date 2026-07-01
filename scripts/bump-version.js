@@ -38,4 +38,15 @@ fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n');
 fs.writeFileSync(htmlPath, updatedHtml);
 
+const readmePath = path.join(__dirname, '..', 'README.md');
+const readme = fs.readFileSync(readmePath, 'utf8');
+const updatedReadme = readme.replace(
+  /Current version: `[^`]+`/,
+  `Current version: \`${next}\``
+);
+if (updatedReadme === readme) {
+  console.error('Warning: current version not found in README.md');
+}
+fs.writeFileSync(readmePath, updatedReadme);
+
 console.log(`${prev} → ${next} (${type})`);

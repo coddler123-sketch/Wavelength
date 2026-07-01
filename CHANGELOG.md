@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.2
+
+- ci(release): Verify GitHub assets and NSIS installer
+
 ## 1.7.1
 
 - **Mini-Player Redesign**: Logo 48×48 dominant links, Sendername + Genre/Land als Subtitle, Vol-Strip als 4px-Leiste am Boden mit seitlichem Padding.
