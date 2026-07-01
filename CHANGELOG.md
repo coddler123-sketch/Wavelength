@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.7.5
+
+- style: apply prettier formatting
+- feat: add ESLint + Prettier, reconnect E2E test, fix ui-audit regex escapes
+
 ## 1.7.4
 
 - **Volume Slider**: Klickfläche des Vol-Row-Reglers erweitert (`-webkit-app-region: no-drag` auf die gesamte Pille statt nur den Slider selbst) — verhindert versehentliches Fenster-Verschieben beim Bedienen.
