@@ -35,8 +35,10 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  try { await app.evaluate(() => process.exit(0)); } catch (_) {}
-  await new Promise(resolve => setTimeout(resolve, 500));
+  try {
+    await app.evaluate(() => process.exit(0));
+  } catch (_) {}
+  await new Promise((resolve) => setTimeout(resolve, 500));
   fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 });
 
@@ -126,7 +128,9 @@ test('Favoriten-Stern markiert eine Station', async () => {
 test('Sleep-Timer-Button zeigt Badge nach Klick', async () => {
   await win.evaluate(() => document.querySelector('#btn-sleep')?.click());
   await win.waitForTimeout(300);
-  const badgeText = await win.evaluate(() => document.querySelector('#sleep-badge')?.textContent?.trim() ?? '');
+  const badgeText = await win.evaluate(
+    () => document.querySelector('#sleep-badge')?.textContent?.trim() ?? ''
+  );
   expect(badgeText.length).toBeGreaterThan(0);
   // Zyklus bis Badge leer (max 4 weitere Klicks)
   for (let i = 0; i < 4; i++) {
@@ -149,7 +153,7 @@ test('Stream-Abbruch löst Reconnect-Status aus und Stop bricht ihn ab', async (
   const btn = win.locator('#btn-playstop');
 
   // Ensure we start in playing state (aria-pressed="true" means playing)
-  const isAlreadyPlaying = await btn.evaluate(el => el.getAttribute('aria-pressed') === 'true');
+  const isAlreadyPlaying = await btn.evaluate((el) => el.getAttribute('aria-pressed') === 'true');
   if (!isAlreadyPlaying) {
     await btn.click({ force: true });
     await expect(btn).toHaveAttribute('aria-pressed', 'true', { timeout: 3000 });

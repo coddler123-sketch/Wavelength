@@ -127,7 +127,7 @@ async function auditWebGLModes(win) {
     })()
   `);
 
-  await new Promise(resolve => setTimeout(resolve, 150));
+  await new Promise((resolve) => setTimeout(resolve, 150));
   await win.webContents.capturePage({ x: 0, y: 0, width: 320, height: 120 });
 
   const results = [];
@@ -148,9 +148,9 @@ async function auditWebGLModes(win) {
   }
 
   await win.webContents.executeJavaScript(`document.getElementById('webgl-audit-wrapper')?.remove()`);
-  const issues = results.filter(result => result.litPixels < 20);
+  const issues = results.filter((result) => result.litPixels < 20);
   console.log(`webgl-audit ${issues.length === 0 ? 'ok' : 'found issues'}: ${issues.length} issue(s)`);
-  console.log(results.map(result => `${result.mode}: ${result.litPixels} lit pixels`).join('\n'));
+  console.log(results.map((result) => `${result.mode}: ${result.litPixels} lit pixels`).join('\n'));
   return issues.length;
 }
 
@@ -266,11 +266,18 @@ async function auditStationSwitch(win) {
   const latest = state.stationSelections[state.stationSelections.length - 1] || null;
   const interactionIssues = [];
   if (!result.ok) interactionIssues.push(result.reason || 'station switch click failed');
-  if (result.ok && result.activeId !== result.targetId) interactionIssues.push(`active list item stayed on ${result.activeId || 'none'} instead of ${result.targetId}`);
-  if (result.ok && result.headerName !== result.targetName) interactionIssues.push(`header shows ${result.headerName || 'empty'} instead of ${result.targetName}`);
-  if (result.ok && result.miniName !== result.targetName) interactionIssues.push(`mini player shows ${result.miniName || 'empty'} instead of ${result.targetName}`);
-  if (state.stationSelections.length !== beforeCount + 1) interactionIssues.push('select-station IPC was not emitted exactly once');
-  if (latest && latest.id !== result.targetId) interactionIssues.push(`select-station IPC used ${latest.id || 'empty'} instead of ${result.targetId}`);
+  if (result.ok && result.activeId !== result.targetId)
+    interactionIssues.push(
+      `active list item stayed on ${result.activeId || 'none'} instead of ${result.targetId}`
+    );
+  if (result.ok && result.headerName !== result.targetName)
+    interactionIssues.push(`header shows ${result.headerName || 'empty'} instead of ${result.targetName}`);
+  if (result.ok && result.miniName !== result.targetName)
+    interactionIssues.push(`mini player shows ${result.miniName || 'empty'} instead of ${result.targetName}`);
+  if (state.stationSelections.length !== beforeCount + 1)
+    interactionIssues.push('select-station IPC was not emitted exactly once');
+  if (latest && latest.id !== result.targetId)
+    interactionIssues.push(`select-station IPC used ${latest.id || 'empty'} instead of ${result.targetId}`);
 
   return {
     label: 'station-switch',
@@ -281,7 +288,8 @@ async function auditStationSwitch(win) {
 }
 
 async function auditPlayTooltip(win) {
-  const read = () => win.webContents.executeJavaScript(`
+  const read = () =>
+    win.webContents.executeJavaScript(`
     (() => ({
       main: document.getElementById('btn-playstop')?.getAttribute('title') || '',
       mini: document.getElementById('mini-playstop')?.getAttribute('title') || '',
@@ -292,15 +300,15 @@ async function auditPlayTooltip(win) {
 
   const before = await read();
   send(win, 'set-playing', true);
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   const playing = await read();
   send(win, 'set-mini', true);
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   const playingMini = await read();
   send(win, 'set-mini', false);
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   send(win, 'set-playing', false);
-  await new Promise(resolve => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
   const stopped = await read();
 
   const interactionIssues = [];
@@ -308,13 +316,19 @@ async function auditPlayTooltip(win) {
     interactionIssues.push(`initial play tooltip is ${before.main || 'empty'} / ${before.mini || 'empty'}`);
   }
   if (playing.main !== 'Stoppen' || playing.mini !== 'Stoppen' || playing.aria !== 'Stoppen') {
-    interactionIssues.push(`playing tooltip/aria is ${playing.main || 'empty'} / ${playing.mini || 'empty'} / ${playing.aria || 'empty'}`);
+    interactionIssues.push(
+      `playing tooltip/aria is ${playing.main || 'empty'} / ${playing.mini || 'empty'} / ${playing.aria || 'empty'}`
+    );
   }
   if (!playing.miniIcon.includes('2.5 2.5') || !playingMini.miniIcon.includes('2.5 2.5')) {
-    interactionIssues.push(`mini play icon did not switch to stop square: ${playing.miniIcon || 'empty'} / ${playingMini.miniIcon || 'empty'}`);
+    interactionIssues.push(
+      `mini play icon did not switch to stop square: ${playing.miniIcon || 'empty'} / ${playingMini.miniIcon || 'empty'}`
+    );
   }
   if (stopped.main !== 'Abspielen' || stopped.mini !== 'Abspielen' || stopped.aria !== 'Abspielen') {
-    interactionIssues.push(`stopped tooltip/aria is ${stopped.main || 'empty'} / ${stopped.mini || 'empty'} / ${stopped.aria || 'empty'}`);
+    interactionIssues.push(
+      `stopped tooltip/aria is ${stopped.main || 'empty'} / ${stopped.mini || 'empty'} / ${stopped.aria || 'empty'}`
+    );
   }
 
   return {
@@ -330,7 +344,7 @@ async function auditPlayTooltip(win) {
 async function auditMiniModeTransition(win) {
   state.isMini = false;
   send(win, 'set-mini', false);
-  await new Promise(resolve => setTimeout(resolve, 50));
+  await new Promise((resolve) => setTimeout(resolve, 50));
 
   const result = await win.webContents.executeJavaScript(`
     (async () => {
@@ -352,10 +366,18 @@ async function auditMiniModeTransition(win) {
   `);
 
   const interactionIssues = [];
-  if (!result.enterSettled.miniMode || result.enterSettled.fullDisplay !== 'none' || result.enterSettled.miniDisplay !== 'flex') {
+  if (
+    !result.enterSettled.miniMode ||
+    result.enterSettled.fullDisplay !== 'none' ||
+    result.enterSettled.miniDisplay !== 'flex'
+  ) {
     interactionIssues.push('mini layout was not exclusive after the mode switch');
   }
-  if (result.exitSettled.miniMode || result.exitSettled.fullDisplay === 'none' || result.exitSettled.miniDisplay !== 'none') {
+  if (
+    result.exitSettled.miniMode ||
+    result.exitSettled.fullDisplay === 'none' ||
+    result.exitSettled.miniDisplay !== 'none'
+  ) {
     interactionIssues.push('full layout was not restored after leaving mini mode');
   }
 
@@ -411,15 +433,20 @@ async function auditStationRenderingAndFilters(win) {
 
   const interactionIssues = [];
   if (!result.initial.found) interactionIssues.push('unsafe audit station was not rendered');
-  if (result.initial.name !== AUDIT_STATION.name) interactionIssues.push('station name was not rendered as literal text');
-  if (!result.initial.tags.includes(AUDIT_STATION.country)) interactionIssues.push('station country was not rendered as literal text');
+  if (result.initial.name !== AUDIT_STATION.name)
+    interactionIssues.push('station name was not rendered as literal text');
+  if (!result.initial.tags.includes(AUDIT_STATION.country))
+    interactionIssues.push('station country was not rendered as literal text');
   if (result.initial.injectedElement) interactionIssues.push('station data created executable DOM elements');
-  if (result.initial.iconSrc) interactionIssues.push(`unsafe icon URL reached img src: ${result.initial.iconSrc}`);
-  if (state.cachedIconUrls.includes(AUDIT_STATION.iconUrl)) interactionIssues.push('unsafe icon URL reached cache-icon IPC');
+  if (result.initial.iconSrc)
+    interactionIssues.push(`unsafe icon URL reached img src: ${result.initial.iconSrc}`);
+  if (state.cachedIconUrls.includes(AUDIT_STATION.iconUrl))
+    interactionIssues.push('unsafe icon URL reached cache-icon IPC');
   if (result.languageIds.length !== 1 || result.languageIds[0] !== AUDIT_STATION.id) {
     interactionIssues.push(`language filter returned ${result.languageIds.join(', ') || 'no stations'}`);
   }
-  if (result.empty.stationCount !== 0 || !result.empty.title) interactionIssues.push('empty search result was not rendered');
+  if (result.empty.stationCount !== 0 || !result.empty.title)
+    interactionIssues.push('empty search result was not rendered');
   if (result.restoredCount < 2) interactionIssues.push('station list did not recover after clearing filters');
 
   return {
@@ -603,7 +630,7 @@ async function main() {
   }
   send(win, 'app-version', app.getVersion());
   send(win, 'set-station', state.activeStation);
-  await new Promise(resolve => setTimeout(resolve, 200));
+  await new Promise((resolve) => setTimeout(resolve, 200));
 
   const results = [];
   const full = await audit(win, 'full-player');
@@ -623,7 +650,7 @@ async function main() {
     }
     new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   `);
-  await new Promise(resolve => setTimeout(resolve, 200));
+  await new Promise((resolve) => setTimeout(resolve, 200));
   const stationSwitch = await auditStationSwitch(win);
   results.push(stationSwitch);
   const list = await audit(win, 'station-list');
@@ -631,14 +658,17 @@ async function main() {
   results.push(list);
   send(win, 'set-mini', true);
   win.setSize(290, 82);
-  await new Promise(resolve => setTimeout(resolve, 200));
+  await new Promise((resolve) => setTimeout(resolve, 200));
   const mini = await audit(win, 'mini-player');
   mini.meta = await viewMeta(win);
   results.push(mini);
 
   fs.writeFileSync(path.join(outDir, 'report.json'), JSON.stringify(results, null, 2));
-  const issues = results.reduce((sum, r) =>
-    sum + (r.overflow?.length || 0) + (r.clippedText?.length || 0) + (r.interactionIssues?.length || 0), 0);
+  const issues = results.reduce(
+    (sum, r) =>
+      sum + (r.overflow?.length || 0) + (r.clippedText?.length || 0) + (r.interactionIssues?.length || 0),
+    0
+  );
   console.log(`ui-audit ${issues === 0 ? 'ok' : 'found issues'}: ${issues} issue(s)`);
   console.log(`report: ${path.join(outDir, 'report.json')}`);
   console.log(`screenshots: ${outDir}`);
@@ -646,7 +676,10 @@ async function main() {
   app.exit(issues > 0 ? 1 : 0);
 }
 
-app.whenReady().then(main).catch(err => {
-  console.error(err);
-  app.exit(1);
-});
+app
+  .whenReady()
+  .then(main)
+  .catch((err) => {
+    console.error(err);
+    app.exit(1);
+  });
