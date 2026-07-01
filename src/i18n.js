@@ -228,7 +228,6 @@ const T = {
     'history.title':         'Play history',
     'history.clear':         'Clear history',
     'filter.bitrate':        'Bitrate',
-    'filter.bitrate':        'Bitrate',
     'theme.nacht':           'Night',
     'theme.ozean':           'Ocean',
     'theme.daemmerung':      'Twilight',

@@ -9,6 +9,8 @@
     "smoke": "node scripts/smoke-check.js",
     "ui:audit": "electron scripts/ui-audit.js",
     "stations:check": "node scripts/validate-stations.js",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
     "test": "node scripts/smoke-check.js && node scripts/test.js",
     "verify": "npm run stations:check && npm run ui:audit && npm test",
     "build:icon": "node scripts/build-icon.js",
@@ -74,8 +76,12 @@
     "@playwright/test": "^1.61.1",
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.7.0",
     "playwright": "^1.61.1",
     "png-to-ico": "^3.0.1",
+    "prettier": "^3.9.4",
     "sharp": "^0.35.2"
   },
   "dependencies": {

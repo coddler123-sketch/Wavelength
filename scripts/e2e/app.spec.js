@@ -145,6 +145,26 @@ test('Track-History-Modal öffnet und schließt sich', async () => {
   await expect(modal).toBeHidden();
 });
 
+test('Stream-Abbruch löst Reconnect-Status aus und Stop bricht ihn ab', async () => {
+  const btn = win.locator('#btn-playstop');
+
+  // Ensure we start in playing state (aria-pressed="true" means playing)
+  const isAlreadyPlaying = await btn.evaluate(el => el.getAttribute('aria-pressed') === 'true');
+  if (!isAlreadyPlaying) {
+    await btn.click({ force: true });
+    await expect(btn).toHaveAttribute('aria-pressed', 'true', { timeout: 3000 });
+  }
+
+  // Simulate a stream stall while playing — scheduleReconnect() should fire
+  await win.evaluate(() => document.getElementById('audio').dispatchEvent(new Event('stalled')));
+  await expect(win.locator('body')).toHaveClass(/reconnecting/, { timeout: 2000 });
+
+  // Stop during backoff must cancel the timer and clear the reconnecting state
+  await btn.click({ force: true });
+  await win.waitForTimeout(300);
+  await expect(win.locator('body')).not.toHaveClass(/reconnecting/);
+});
+
 test('Mini-Modus umschalten zeigt Mini-View', async () => {
   const body = win.locator('body');
   const miniView = win.locator('#mini-view');

@@ -165,7 +165,7 @@ async function audit(win, label) {
       const clippedText = [];
       const selectorFor = (el) => {
         if (el.id) return '#' + el.id;
-        if (typeof el.className === 'string' && el.className.trim()) return '.' + el.className.trim().replace(/\s+/g, '.');
+        if (typeof el.className === 'string' && el.className.trim()) return '.' + el.className.trim().replace(/\\s+/g, '.');
         return el.tagName.toLowerCase();
       };
       const hasScrollableAncestor = (el) => {
@@ -559,7 +559,7 @@ async function auditButtonOverlap(win) {
           return rect.width > 0 && rect.height > 0 && rect.top < 80;
         })
         .map(el => ({
-          id: el.id || el.className.trim().split(/\s+/)[0],
+          id: el.id || el.className.trim().split(/\\s+/)[0],
           rect: el.getBoundingClientRect().toJSON(),
         }));
 
