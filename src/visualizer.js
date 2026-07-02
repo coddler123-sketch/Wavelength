@@ -1600,10 +1600,18 @@
 
     function syncWebGLSize() {
       if (webglCanvas && canvas && gl) {
-        if (webglCanvas.width !== canvas.width || webglCanvas.height !== canvas.height) {
-          webglCanvas.width = canvas.width;
-          webglCanvas.height = canvas.height;
-          gl.viewport(0, 0, canvas.width, canvas.height);
+        // Size from the webgl canvas' own layout box: the hidden 2D canvas
+        // (display:none in WebGL modes) keeps a stale buffer after mini→full
+        // and must not be used as the size source.
+        const dpr = window.devicePixelRatio || 1;
+        const w = webglCanvas.offsetWidth,
+          h = webglCanvas.offsetHeight;
+        const targetW = w > 0 ? Math.round(w * dpr) : canvas.width;
+        const targetH = h > 0 ? Math.round(h * dpr) : canvas.height;
+        if (webglCanvas.width !== targetW || webglCanvas.height !== targetH) {
+          webglCanvas.width = targetW;
+          webglCanvas.height = targetH;
+          gl.viewport(0, 0, targetW, targetH);
         }
       }
     }
@@ -1614,14 +1622,15 @@
         return;
       }
 
-      syncWebGLSize();
-
       if (canvas.style.display !== 'none') {
         canvas.style.display = 'none';
       }
       if (webglCanvas && webglCanvas.style.display !== 'block') {
         webglCanvas.style.display = 'block';
       }
+
+      // After the display toggle so offsetWidth reflects the live layout box.
+      syncWebGLSize();
 
       const label = VISUALIZER_LABELS[mode] || mode;
       if (webglCanvas) {
