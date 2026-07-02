@@ -150,9 +150,6 @@
         const w = c.offsetWidth,
           h = c.offsetHeight;
         if (w > 0 && h > 0) {
-          // Pin CSS size to logical pixels so the browser never stretches the buffer.
-          c.style.width = w + 'px';
-          c.style.height = h + 'px';
           if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) {
             c.width = Math.round(w * dpr);
             c.height = Math.round(h * dpr);
