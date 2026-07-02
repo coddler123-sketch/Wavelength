@@ -2,28 +2,40 @@
 (function (exports) {
   const BAR_COUNT = 44;
   const VISUALIZER_MODES = [
-    'bars', 'oscilloscope',
-    'wave', 'particles', 'tunnel', 'medwaves', 'neonpulse',
-    'flexi', 'unchained', 'starburst', 'geiss', 'idiot',
-    'tunnel3d', 'valley3d', 'matrix3d', 'mandala3d'
+    'bars',
+    'oscilloscope',
+    'wave',
+    'particles',
+    'tunnel',
+    'medwaves',
+    'neonpulse',
+    'flexi',
+    'unchained',
+    'starburst',
+    'geiss',
+    'idiot',
+    'tunnel3d',
+    'valley3d',
+    'matrix3d',
+    'mandala3d',
   ];
   const VISUALIZER_LABELS = {
-    bars:        'Bars',
-    oscilloscope:'Oscilloscope',
-    wave:        'Waveform',
-    particles:   'Particles',
-    tunnel:      'Tunnel',
-    medwaves:    'Wavelength Waves',
-    neonpulse:   'Neon Pulse',
-    flexi:       'Flexi',
-    unchained:   'Unchained',
-    starburst:   'Starburst',
-    geiss:       'Geiss',
-    idiot:       'Idiot',
-    tunnel3d:    '3D Neon Tunnel (WebGL)',
-    valley3d:    '3D Infinite Valley (WebGL)',
-    matrix3d:    '3D Audio Matrix (WebGL)',
-    mandala3d:   '3D Psychedelic Mandala (WebGL)',
+    bars: 'Bars',
+    oscilloscope: 'Oscilloscope',
+    wave: 'Waveform',
+    particles: 'Particles',
+    tunnel: 'Tunnel',
+    medwaves: 'Wavelength Waves',
+    neonpulse: 'Neon Pulse',
+    flexi: 'Flexi',
+    unchained: 'Unchained',
+    starburst: 'Starburst',
+    geiss: 'Geiss',
+    idiot: 'Idiot',
+    tunnel3d: '3D Neon Tunnel (WebGL)',
+    valley3d: '3D Infinite Valley (WebGL)',
+    matrix3d: '3D Audio Matrix (WebGL)',
+    mandala3d: '3D Psychedelic Mandala (WebGL)',
   };
 
   function flexiRingValues(values, steps) {
@@ -32,7 +44,7 @@
     const maxIndex = values.length - 1;
     for (let i = 0; i < steps; i++) {
       const angle = (i / steps) * Math.PI * 2;
-      const position = ((1 - Math.cos(angle)) * 0.5) * maxIndex;
+      const position = (1 - Math.cos(angle)) * 0.5 * maxIndex;
       const lo = Math.floor(position);
       const hi = Math.min(lo + 1, maxIndex);
       const mix = position - lo;
@@ -43,9 +55,8 @@
 
   function visualizerFrameTiming(timestamp, previousTimestamp) {
     const nominalFrameMs = 1000 / 60;
-    const elapsedMs = previousTimestamp === null
-      ? nominalFrameMs
-      : Math.max(0, Math.min(50, timestamp - previousTimestamp));
+    const elapsedMs =
+      previousTimestamp === null ? nominalFrameMs : Math.max(0, Math.min(50, timestamp - previousTimestamp));
     return {
       frameScale: elapsedMs / nominalFrameMs,
       clockDelta: elapsedMs * 0.00288,
@@ -53,45 +64,45 @@
   }
 
   function create(options) {
-    const canvas     = options.canvas;
-    const canvasCtx  = canvas.getContext('2d');
-    const miniCanvas    = options.miniCanvas;
+    const canvas = options.canvas;
+    const canvasCtx = canvas.getContext('2d');
+    const miniCanvas = options.miniCanvas;
     const miniCanvasCtx = miniCanvas ? miniCanvas.getContext('2d') : null;
-    const storageKey  = options.storageKey;
+    const storageKey = options.storageKey;
     const averageLevel = options.averageLevel;
-    const getAnalyser  = options.getAnalyser;
-    const getState     = options.getState;
-    const onLevel      = options.onLevel;
-    const showToast    = options.showToast;
+    const getAnalyser = options.getAnalyser;
+    const getState = options.getState;
+    const onLevel = options.onLevel;
+    const showToast = options.showToast;
 
     let running = false;
     let animationFrameId = null;
     let previousFrameTimestamp = null;
     let frameScale = 1;
-    let clock   = 0;
-    let mode    = localStorage.getItem(storageKey) || 'bars';
+    let clock = 0;
+    let mode = localStorage.getItem(storageKey) || 'bars';
 
     // Shared buffers
-    let freqBuf       = null;
+    let freqBuf = null;
     let timeDomainBuf = null;
-    const peaks   = new Float32Array(BAR_COUNT);
+    const peaks = new Float32Array(BAR_COUNT);
     const peakVel = new Float32Array(BAR_COUNT);
-    const barBuf  = new Float32Array(BAR_COUNT);
+    const barBuf = new Float32Array(BAR_COUNT);
 
     // Stateful mode data — reset on mode change
-    let wfallBuf      = null; // waterfall ring buffer
-    let wfallHead     = 0;
+    let wfallBuf = null; // waterfall ring buffer
+    let wfallHead = 0;
     let tunnelHistory = null; // tunnel ring buffer
-    let tunnelHead    = 0;
+    let tunnelHead = 0;
     let tunnelNextSampleAt = 0;
-    let particles     = [];
+    let particles = [];
     let particleSpawnCarry = 0;
-    let idiotFlashes  = [];
+    let idiotFlashes = [];
     let idiotSpawnCarry = 0;
 
     // WebGL state
-    let webglCanvas   = null;
-    let gl            = null;
+    let webglCanvas = null;
+    let gl = null;
     let positionBuffer = null;
     let webglPrograms = {}; // maps mode -> { program, uniforms: { u_resolution, u_time, u_bass, u_treble, u_frequencies } }
 
@@ -103,16 +114,25 @@
     let secondaryColorStr = 'rgba(112, 0, 255, 1.0)';
     let tertiaryColorStr = 'rgba(255, 0, 153, 1.0)';
 
-    const primaryColorStrAlpha = (a) => primaryColorVec ? `rgba(${Math.round(primaryColorVec[0]*255)}, ${Math.round(primaryColorVec[1]*255)}, ${Math.round(primaryColorVec[2]*255)}, ${a})` : `rgba(0, 240, 255, ${a})`;
-    const secondaryColorStrAlpha = (a) => secondaryColorVec ? `rgba(${Math.round(secondaryColorVec[0]*255)}, ${Math.round(secondaryColorVec[1]*255)}, ${Math.round(secondaryColorVec[2]*255)}, ${a})` : `rgba(112, 0, 255, ${a})`;
-    const tertiaryColorStrAlpha = (a) => tertiaryColorVec ? `rgba(${Math.round(tertiaryColorVec[0]*255)}, ${Math.round(tertiaryColorVec[1]*255)}, ${Math.round(tertiaryColorVec[2]*255)}, ${a})` : `rgba(255, 0, 153, ${a})`;
+    const primaryColorStrAlpha = (a) =>
+      primaryColorVec
+        ? `rgba(${Math.round(primaryColorVec[0] * 255)}, ${Math.round(primaryColorVec[1] * 255)}, ${Math.round(primaryColorVec[2] * 255)}, ${a})`
+        : `rgba(0, 240, 255, ${a})`;
+    const secondaryColorStrAlpha = (a) =>
+      secondaryColorVec
+        ? `rgba(${Math.round(secondaryColorVec[0] * 255)}, ${Math.round(secondaryColorVec[1] * 255)}, ${Math.round(secondaryColorVec[2] * 255)}, ${a})`
+        : `rgba(112, 0, 255, ${a})`;
+    const tertiaryColorStrAlpha = (a) =>
+      tertiaryColorVec
+        ? `rgba(${Math.round(tertiaryColorVec[0] * 255)}, ${Math.round(tertiaryColorVec[1] * 255)}, ${Math.round(tertiaryColorVec[2] * 255)}, ${a})`
+        : `rgba(255, 0, 153, ${a})`;
 
     // Interactive mouse state
     let mouseX = 0.5;
     let mouseY = 0.5;
 
-    const WFALL_FRAMES  = 80;
-    const TUNNEL_RINGS  = 22;
+    const WFALL_FRAMES = 80;
+    const TUNNEL_RINGS = 22;
     const MAX_PARTICLES = 90;
 
     const idleData = Array.from({ length: BAR_COUNT }, (_, i) => {
@@ -127,10 +147,11 @@
       const pairs = [[canvas, canvasCtx]];
       if (miniCanvas && miniCanvasCtx) pairs.push([miniCanvas, miniCanvasCtx]);
       for (const [c, ctx] of pairs) {
-        const w = c.offsetWidth, h = c.offsetHeight;
+        const w = c.offsetWidth,
+          h = c.offsetHeight;
         if (w > 0 && h > 0) {
           if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) {
-            c.width  = Math.round(w * dpr);
+            c.width = Math.round(w * dpr);
             c.height = Math.round(h * dpr);
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
           }
@@ -138,7 +159,8 @@
       }
 
       if (webglCanvas && gl) {
-        const w = webglCanvas.offsetWidth, h = webglCanvas.offsetHeight;
+        const w = webglCanvas.offsetWidth,
+          h = webglCanvas.offsetHeight;
         if (w > 0 && h > 0) {
           const targetW = Math.round(w * dpr);
           const targetH = Math.round(h * dpr);
@@ -153,21 +175,21 @@
 
     function fakeBar(t, i, count) {
       const shape = Math.pow(Math.sin((i / count) * Math.PI), 0.6);
-      const n = (
-        Math.sin(t * 1.1  + i * 0.35) * 0.30 +
-        Math.sin(t * 2.3  + i * 0.19) * 0.22 +
-        Math.sin(t * 0.7  + i * 0.52) * 0.18 +
-        Math.sin(t * 3.7  + i * 0.11) * 0.14 +
+      const n =
+        Math.sin(t * 1.1 + i * 0.35) * 0.3 +
+        Math.sin(t * 2.3 + i * 0.19) * 0.22 +
+        Math.sin(t * 0.7 + i * 0.52) * 0.18 +
+        Math.sin(t * 3.7 + i * 0.11) * 0.14 +
         Math.sin(t * 0.31 + i * 0.73) * 0.08 +
-        Math.sin(t * 5.1  + i * 0.27) * 0.05
-      );
+        Math.sin(t * 5.1 + i * 0.27) * 0.05;
       return Math.max(0, Math.min(1, (n + 0.62) * shape));
     }
 
     function drawMiniSignal(values) {
       if (!miniCanvas || !miniCanvasCtx) return;
       const dpr = window.devicePixelRatio || 1;
-      const W = miniCanvas.width / dpr, H = miniCanvas.height / dpr;
+      const W = miniCanvas.width / dpr,
+        H = miniCanvas.height / dpr;
       miniCanvasCtx.clearRect(0, 0, W, H);
       miniCanvasCtx.save();
 
@@ -188,7 +210,7 @@
         const barH = Math.max(1.5, v * H * 0.9);
         const x = i * (barW + gap);
         const y = H - barH;
-        
+
         miniCanvasCtx.beginPath();
         if (miniCanvasCtx.roundRect) {
           miniCanvasCtx.roundRect(x, y, barW, barH, 0.8);
@@ -203,23 +225,23 @@
     // ── Draw modes ────────────────────────────────────────────────
 
     function drawBars(values, W, H) {
-      const gap  = 2;
+      const gap = 2;
       const barW = (W - gap * (BAR_COUNT - 1)) / BAR_COUNT;
       const grad = canvasCtx.createLinearGradient(0, H, 0, 0);
-      grad.addColorStop(0.0,  secondaryColorStrAlpha(1.0));
+      grad.addColorStop(0.0, secondaryColorStrAlpha(1.0));
       grad.addColorStop(0.52, tertiaryColorStrAlpha(1.0));
-      grad.addColorStop(1.0,  primaryColorStrAlpha(1.0));
+      grad.addColorStop(1.0, primaryColorStrAlpha(1.0));
 
       canvasCtx.save();
       canvasCtx.shadowColor = primaryColorStrAlpha(0.16);
-      canvasCtx.shadowBlur  = 7;
+      canvasCtx.shadowBlur = 7;
       for (let i = 0; i < BAR_COUNT; i++) {
-        const x    = i * (barW + gap);
+        const x = i * (barW + gap);
         // Mirror: bass in center, highs on both sides
         const half = BAR_COUNT / 2;
-        const si   = i < half ? Math.floor(half - 1 - i) : Math.floor(i - half);
+        const si = i < half ? Math.floor(half - 1 - i) : Math.floor(i - half);
         const barH = Math.max(2, values[si] * H * 0.84);
-        const y    = H - barH;
+        const y = H - barH;
         canvasCtx.fillStyle = grad;
         canvasCtx.beginPath();
         if (canvasCtx.roundRect) canvasCtx.roundRect(x, y, barW, barH, [1.5, 1.5, 0, 0]);
@@ -229,10 +251,10 @@
         if (peaks[si] > 0.04) {
           const peakY = H - peaks[si] * H * 0.84 - 2.5;
           canvasCtx.shadowColor = primaryColorStrAlpha(0.55);
-          canvasCtx.shadowBlur  = 5;
-          canvasCtx.fillStyle   = 'rgba(255, 255, 255, 0.85)';
+          canvasCtx.shadowBlur = 5;
+          canvasCtx.fillStyle = 'rgba(255, 255, 255, 0.85)';
           canvasCtx.fillRect(x, peakY, barW, 1.5);
-          canvasCtx.shadowBlur  = 7;
+          canvasCtx.shadowBlur = 7;
           canvasCtx.shadowColor = primaryColorStrAlpha(0.16);
         }
       }
@@ -240,27 +262,27 @@
     }
 
     function drawMirror(values, W, H) {
-      const gap  = 2;
+      const gap = 2;
       const barW = (W - gap * (BAR_COUNT - 1)) / BAR_COUNT;
-      const mid  = H / 2;
+      const mid = H / 2;
       const grad = canvasCtx.createLinearGradient(0, H, 0, 0);
-      grad.addColorStop(0.0,  secondaryColorStrAlpha(1.0));
+      grad.addColorStop(0.0, secondaryColorStrAlpha(1.0));
       grad.addColorStop(0.52, tertiaryColorStrAlpha(1.0));
-      grad.addColorStop(1.0,  primaryColorStrAlpha(1.0));
+      grad.addColorStop(1.0, primaryColorStrAlpha(1.0));
 
       canvasCtx.save();
       canvasCtx.shadowColor = primaryColorStrAlpha(0.18);
-      canvasCtx.shadowBlur  = 6;
-      canvasCtx.fillStyle   = grad;
+      canvasCtx.shadowBlur = 6;
+      canvasCtx.fillStyle = grad;
       for (let i = 0; i < BAR_COUNT; i++) {
         const x = i * (barW + gap);
         const h = Math.max(2, values[i] * mid * 0.88);
         canvasCtx.fillRect(x, mid - h, barW, h);
-        canvasCtx.fillRect(x, mid,     barW, h);
+        canvasCtx.fillRect(x, mid, barW, h);
       }
-      canvasCtx.shadowBlur    = 0;
-      canvasCtx.strokeStyle   = primaryColorStrAlpha(0.07);
-      canvasCtx.lineWidth     = 1;
+      canvasCtx.shadowBlur = 0;
+      canvasCtx.strokeStyle = primaryColorStrAlpha(0.07);
+      canvasCtx.lineWidth = 1;
       canvasCtx.beginPath();
       canvasCtx.moveTo(0, mid);
       canvasCtx.lineTo(W, mid);
@@ -285,17 +307,17 @@
       }
 
       const grad = canvasCtx.createLinearGradient(0, 0, W, 0);
-      grad.addColorStop(0,   'rgba(0, 114, 255, 0.55)');
+      grad.addColorStop(0, 'rgba(0, 114, 255, 0.55)');
       grad.addColorStop(0.5, 'rgba(0, 240, 255, 1.0)');
-      grad.addColorStop(1,   'rgba(0, 114, 255, 0.55)');
+      grad.addColorStop(1, 'rgba(0, 114, 255, 0.55)');
 
       canvasCtx.save();
       canvasCtx.strokeStyle = grad;
-      canvasCtx.lineWidth   = 2.5;
-      canvasCtx.lineCap     = 'round';
-      canvasCtx.lineJoin    = 'round';
+      canvasCtx.lineWidth = 2.5;
+      canvasCtx.lineCap = 'round';
+      canvasCtx.lineJoin = 'round';
       canvasCtx.shadowColor = 'rgba(0, 240, 255, 0.55)';
-      canvasCtx.shadowBlur  = 10;
+      canvasCtx.shadowBlur = 10;
       canvasCtx.beginPath();
 
       const STEPS = Math.floor(W * 1.5);
@@ -304,23 +326,25 @@
         let y;
         if (hasReal) {
           const si = Math.floor((i / STEPS) * timeDomainBuf.length);
-          y = mid + ((timeDomainBuf[si] / 128.0) - 1.0) * H * 0.42;
+          y = mid + (timeDomainBuf[si] / 128.0 - 1.0) * H * 0.42;
         } else {
-          const t  = (i / STEPS) * Math.PI * 4;
-          const v  = values[Math.floor((i / STEPS) * values.length)] || 0;
-          y = mid
-            + Math.sin(t + clock * 2.1) * amp * 0.6 * (0.35 + v * 0.85)
-            + Math.sin(t * 1.5 + clock * 3.3) * amp * 0.28 * v
-            + Math.sin(t * 3.1 + clock * 1.1) * amp * 0.1;
+          const t = (i / STEPS) * Math.PI * 4;
+          const v = values[Math.floor((i / STEPS) * values.length)] || 0;
+          y =
+            mid +
+            Math.sin(t + clock * 2.1) * amp * 0.6 * (0.35 + v * 0.85) +
+            Math.sin(t * 1.5 + clock * 3.3) * amp * 0.28 * v +
+            Math.sin(t * 3.1 + clock * 1.1) * amp * 0.1;
         }
-        if (i === 0) canvasCtx.moveTo(x, y); else canvasCtx.lineTo(x, y);
+        if (i === 0) canvasCtx.moveTo(x, y);
+        else canvasCtx.lineTo(x, y);
       }
       canvasCtx.stroke();
 
-      canvasCtx.shadowBlur   = 0;
-      canvasCtx.globalAlpha  = 0.07;
-      canvasCtx.strokeStyle  = 'rgba(0, 240, 255, 1)';
-      canvasCtx.lineWidth    = 1;
+      canvasCtx.shadowBlur = 0;
+      canvasCtx.globalAlpha = 0.07;
+      canvasCtx.strokeStyle = 'rgba(0, 240, 255, 1)';
+      canvasCtx.lineWidth = 1;
       canvasCtx.beginPath();
       canvasCtx.moveTo(0, mid);
       canvasCtx.lineTo(W, mid);
@@ -343,18 +367,16 @@
       canvasCtx.save();
       for (let t = 0; t < WFALL_FRAMES; t++) {
         const histIdx = (wfallHead + t) % WFALL_FRAMES;
-        const x       = t * colW;
-        const snap    = wfallBuf[histIdx];
-        const age     = t / WFALL_FRAMES; 
+        const x = t * colW;
+        const snap = wfallBuf[histIdx];
+        const age = t / WFALL_FRAMES;
 
         for (let i = 0; i < BAR_COUNT; i++) {
           const v = snap[i];
           if (v < 0.04) continue;
           const freqY = (1 - i / BAR_COUNT) * H;
           const alpha = v * (0.15 + age * 0.8);
-          canvasCtx.fillStyle = v > 0.58
-            ? `rgba(0, 240, 255, ${alpha})`
-            : `rgba(0, 114, 255, ${alpha})`;
+          canvasCtx.fillStyle = v > 0.58 ? `rgba(0, 240, 255, ${alpha})` : `rgba(0, 114, 255, ${alpha})`;
           canvasCtx.fillRect(x, freqY, Math.ceil(colW) + 0.5, Math.ceil(rowH) + 0.5);
         }
       }
@@ -362,7 +384,8 @@
     }
 
     function drawWave(values, W, H) {
-      const mid = H * 0.55, amp = H * 0.32;
+      const mid = H * 0.55,
+        amp = H * 0.32;
       const grad = canvasCtx.createLinearGradient(0, 0, W, 0);
       grad.addColorStop(0.0, 'rgba(112, 0, 255, 0.35)');
       grad.addColorStop(0.5, 'rgba(0, 240, 255, 0.95)');
@@ -382,74 +405,83 @@
       fillGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
       canvasCtx.fillStyle = fillGrad;
       canvasCtx.beginPath();
-      wavePts.forEach(({ x, y }, i) => i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y));
-      canvasCtx.lineTo(W, H); canvasCtx.lineTo(0, H); canvasCtx.closePath();
+      wavePts.forEach(({ x, y }, i) => (i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y)));
+      canvasCtx.lineTo(W, H);
+      canvasCtx.lineTo(0, H);
+      canvasCtx.closePath();
       canvasCtx.fill();
 
       canvasCtx.shadowColor = 'rgba(0, 240, 255, 0.38)';
-      canvasCtx.shadowBlur  = 9;
+      canvasCtx.shadowBlur = 9;
       canvasCtx.strokeStyle = grad;
-      canvasCtx.lineWidth   = 3;
-      canvasCtx.lineCap     = 'round';
+      canvasCtx.lineWidth = 3;
+      canvasCtx.lineCap = 'round';
       canvasCtx.beginPath();
-      wavePts.forEach(({ x, y }, i) => i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y));
+      wavePts.forEach(({ x, y }, i) => (i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y)));
       canvasCtx.stroke();
 
-      canvasCtx.shadowBlur  = 0;
+      canvasCtx.shadowBlur = 0;
       canvasCtx.globalAlpha = 0.07;
-      canvasCtx.lineWidth   = 1;
+      canvasCtx.lineWidth = 1;
       canvasCtx.strokeStyle = '#00f0ff';
       canvasCtx.beginPath();
-      canvasCtx.moveTo(0, mid); canvasCtx.lineTo(W, mid);
+      canvasCtx.moveTo(0, mid);
+      canvasCtx.lineTo(W, mid);
       canvasCtx.stroke();
       canvasCtx.restore();
     }
 
     function drawDNA(values, W, H) {
-      const avg   = averageLevel(values);
-      const amp   = H * (0.28 + avg * 0.12);
-      const freq  = (2 * Math.PI * 2) / W;
+      const avg = averageLevel(values);
+      const amp = H * (0.28 + avg * 0.12);
+      const freq = (2 * Math.PI * 2) / W;
       const phase1 = clock * 1.2;
       const phase2 = phase1 + Math.PI;
-      const STEPS  = Math.floor(W / 3);
+      const STEPS = Math.floor(W / 3);
 
       canvasCtx.save();
       canvasCtx.lineCap = 'round';
 
       for (let i = 0; i <= STEPS; i++) {
         if (i % 4 !== 0) continue;
-        const x  = (i / STEPS) * W;
+        const x = (i / STEPS) * W;
         const y1 = H / 2 + Math.sin(x * freq + phase1) * amp;
         const y2 = H / 2 + Math.sin(x * freq + phase2) * amp;
         const fi = Math.floor((i / STEPS) * values.length);
-        const v  = values[fi] || 0;
-        canvasCtx.strokeStyle = v > 0.48 ? `rgba(0, 240, 255, ${0.15 + v * 0.45})` : `rgba(112, 0, 255, ${0.1 + v * 0.35})`;
-        canvasCtx.lineWidth   = 1 + v * 1.2;
+        const v = values[fi] || 0;
+        canvasCtx.strokeStyle =
+          v > 0.48 ? `rgba(0, 240, 255, ${0.15 + v * 0.45})` : `rgba(112, 0, 255, ${0.1 + v * 0.35})`;
+        canvasCtx.lineWidth = 1 + v * 1.2;
         canvasCtx.beginPath();
-        canvasCtx.moveTo(x, y1); canvasCtx.lineTo(x, y2);
+        canvasCtx.moveTo(x, y1);
+        canvasCtx.lineTo(x, y2);
         canvasCtx.stroke();
       }
 
       const grad1 = canvasCtx.createLinearGradient(0, 0, W, 0);
-      grad1.addColorStop(0,   'rgba(112, 0, 255, 0.55)');
+      grad1.addColorStop(0, 'rgba(112, 0, 255, 0.55)');
       grad1.addColorStop(0.5, 'rgba(0, 114, 255, 0.95)');
-      grad1.addColorStop(1,   'rgba(112, 0, 255, 0.55)');
+      grad1.addColorStop(1, 'rgba(112, 0, 255, 0.55)');
 
       const grad2 = canvasCtx.createLinearGradient(0, 0, W, 0);
-      grad2.addColorStop(0,   'rgba(0, 240, 255, 0.38)');
+      grad2.addColorStop(0, 'rgba(0, 240, 255, 0.38)');
       grad2.addColorStop(0.5, 'rgba(0, 240, 255, 0.78)');
-      grad2.addColorStop(1,   'rgba(0, 240, 255, 0.38)');
+      grad2.addColorStop(1, 'rgba(0, 240, 255, 0.38)');
 
-      for (const [grad, phase] of [[grad1, phase1], [grad2, phase2]]) {
+      for (const [grad, phase] of [
+        [grad1, phase1],
+        [grad2, phase2],
+      ]) {
         canvasCtx.strokeStyle = grad;
-        canvasCtx.lineWidth   = 2.5;
+        canvasCtx.lineWidth = 2.5;
         canvasCtx.shadowColor = phase === phase1 ? 'rgba(112, 0, 255, 0.45)' : 'rgba(0, 240, 255, 0.35)';
-        canvasCtx.shadowBlur  = 8;
+        canvasCtx.shadowBlur = 8;
         canvasCtx.beginPath();
         for (let i = 0; i <= STEPS; i++) {
           const x = (i / STEPS) * W;
           const y = H / 2 + Math.sin(x * freq + phase) * amp;
-          if (i === 0) canvasCtx.moveTo(x, y); else canvasCtx.lineTo(x, y);
+          if (i === 0) canvasCtx.moveTo(x, y);
+          else canvasCtx.lineTo(x, y);
         }
         canvasCtx.stroke();
       }
@@ -464,24 +496,24 @@
       particleSpawnCarry -= spawnN;
       for (let k = 0; k < spawnN && particles.length < MAX_PARTICLES; k++) {
         const fi = Math.floor(Math.random() * values.length);
-        const v  = values[fi];
+        const v = values[fi];
         if (v < 0.18) continue;
         particles.push({
-          x:     (fi / values.length) * W,
-          y:     H * 0.88,
-          vx:    (Math.random() - 0.5) * 2.2,
-          vy:    -(1.2 + v * 4.5 + Math.random() * 1.8),
-          life:  1,
+          x: (fi / values.length) * W,
+          y: H * 0.88,
+          vx: (Math.random() - 0.5) * 2.2,
+          vy: -(1.2 + v * 4.5 + Math.random() * 1.8),
+          life: 1,
           decay: 0.016 + Math.random() * 0.018,
-          r:     1.4 + v * 3.2,
-          cyan:  v > 0.58,
+          r: 1.4 + v * 3.2,
+          cyan: v > 0.58,
         });
       }
 
       canvasCtx.save();
-      particles = particles.filter(p => {
-        p.x  += p.vx * frameScale;
-        p.y  += p.vy * frameScale;
+      particles = particles.filter((p) => {
+        p.x += p.vx * frameScale;
+        p.y += p.vy * frameScale;
         p.vy *= Math.pow(0.982, frameScale);
         p.vx *= Math.pow(0.994, frameScale);
         p.life -= p.decay * frameScale;
@@ -489,9 +521,9 @@
 
         const a = p.life * 0.82;
         const color = p.cyan ? `rgba(0, 240, 255, ${a})` : `rgba(112, 0, 255, ${a})`;
-        canvasCtx.fillStyle   = color;
+        canvasCtx.fillStyle = color;
         canvasCtx.shadowColor = color;
-        canvasCtx.shadowBlur  = p.r * 2.2;
+        canvasCtx.shadowBlur = p.r * 2.2;
         canvasCtx.beginPath();
         canvasCtx.arc(p.x, p.y, p.r * p.life, 0, Math.PI * 2);
         canvasCtx.fill();
@@ -513,26 +545,25 @@
         tunnelNextSampleAt = clock + 0.144;
       }
 
-      const cx = W / 2, cy = H / 2;
+      const cx = W / 2,
+        cy = H / 2;
       canvasCtx.save();
 
       for (let t = 0; t < TUNNEL_RINGS; t++) {
-        const age     = t / TUNNEL_RINGS; 
+        const age = t / TUNNEL_RINGS;
         const histIdx = (tunnelHead + t) % TUNNEL_RINGS;
-        const snap    = tunnelHistory[histIdx];
-        const avg     = averageLevel(snap);
-        const scale   = 1 - age * 0.92;
-        const rx      = (W / 2) * scale * (0.88 + avg * 0.18);
-        const ry      = (H / 2) * scale * (0.88 + avg * 0.18);
+        const snap = tunnelHistory[histIdx];
+        const avg = averageLevel(snap);
+        const scale = 1 - age * 0.92;
+        const rx = (W / 2) * scale * (0.88 + avg * 0.18);
+        const ry = (H / 2) * scale * (0.88 + avg * 0.18);
         if (rx < 2 || ry < 2) continue;
 
         const alpha = age * (0.15 + avg * 0.55);
-        canvasCtx.strokeStyle = avg > 0.42
-          ? `rgba(0, 240, 255, ${alpha})`
-          : `rgba(0, 114, 255, ${alpha})`;
-        canvasCtx.lineWidth   = 0.8 + age * 2;
+        canvasCtx.strokeStyle = avg > 0.42 ? `rgba(0, 240, 255, ${alpha})` : `rgba(0, 114, 255, ${alpha})`;
+        canvasCtx.lineWidth = 0.8 + age * 2;
         canvasCtx.shadowColor = 'rgba(0, 240, 255, 0.28)';
-        canvasCtx.shadowBlur  = age * 8;
+        canvasCtx.shadowBlur = age * 8;
         canvasCtx.beginPath();
         canvasCtx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
         canvasCtx.stroke();
@@ -541,25 +572,26 @@
     }
 
     function drawScanner(values, W, H) {
-      const rows   = 13;
+      const rows = 13;
       const rowGap = H / (rows + 1);
 
       canvasCtx.save();
       canvasCtx.lineCap = 'round';
       for (let row = 0; row < rows; row++) {
-        const y     = rowGap * (row + 1);
+        const y = rowGap * (row + 1);
         const value = values[Math.floor((row / rows) * values.length)] || 0;
-        const left  = W * (0.09 + value * 0.14);
+        const left = W * (0.09 + value * 0.14);
         const right = W * (0.91 - value * 0.14);
 
         canvasCtx.strokeStyle = row % 3 === 0 ? 'rgba(0, 240, 255, 0.22)' : 'rgba(112, 0, 255, 0.24)';
-        canvasCtx.lineWidth   = 1;
+        canvasCtx.lineWidth = 1;
         canvasCtx.beginPath();
-        canvasCtx.moveTo(left, y); canvasCtx.lineTo(right, y);
+        canvasCtx.moveTo(left, y);
+        canvasCtx.lineTo(right, y);
         canvasCtx.stroke();
 
         canvasCtx.strokeStyle = value > 0.48 ? 'rgba(0, 240, 255, 0.95)' : 'rgba(0, 114, 255, 0.68)';
-        canvasCtx.lineWidth   = 1.6 + value * 2.2;
+        canvasCtx.lineWidth = 1.6 + value * 2.2;
         canvasCtx.beginPath();
         canvasCtx.moveTo(W / 2 - value * W * 0.38, y);
         canvasCtx.lineTo(W / 2 + value * W * 0.38, y);
@@ -570,13 +602,15 @@
 
     function drawMedWaves(values, W, H) {
       const mid = H * 0.46;
-      
-      let bassSum = 0, midSum = 0, highSum = 0;
+
+      let bassSum = 0,
+        midSum = 0,
+        highSum = 0;
       for (let i = 0; i < 12; i++) bassSum += values[i];
       for (let i = 12; i < 32; i++) midSum += values[i];
       for (let i = 32; i < 44; i++) highSum += values[i];
       const bassLvl = bassSum / 12;
-      const midLvl  = midSum / 20;
+      const midLvl = midSum / 20;
       const highLvl = highSum / 12;
 
       canvasCtx.save();
@@ -594,7 +628,7 @@
           frequency: 0.22,
           thickness: 3.2,
           shadowColor: 'rgba(112, 0, 255, 0.4)',
-          ampFactor: H * 0.28
+          ampFactor: H * 0.28,
         },
         // Mid wave - Electric Blue
         {
@@ -606,7 +640,7 @@
           frequency: 0.28,
           thickness: 2.2,
           shadowColor: 'rgba(0, 114, 255, 0.35)',
-          ampFactor: H * 0.24
+          ampFactor: H * 0.24,
         },
         // High wave - Neon Cyan
         {
@@ -618,14 +652,14 @@
           frequency: 0.36,
           thickness: 1.4,
           shadowColor: 'rgba(0, 240, 255, 0.3)',
-          ampFactor: H * 0.18
-        }
+          ampFactor: H * 0.18,
+        },
       ];
 
-      waves.forEach(w => {
+      waves.forEach((w) => {
         const pts = [];
         const amp = w.ampFactor * (0.3 + w.level * 0.82);
-        
+
         for (let i = 0; i < values.length; i++) {
           const x = (i / (values.length - 1)) * W;
           const wobble = Math.sin(clock * w.speed + i * w.frequency + w.phaseOffset) * amp;
@@ -638,7 +672,7 @@
         canvasCtx.fillStyle = fillGrad;
 
         canvasCtx.beginPath();
-        pts.forEach(({ x, y }, i) => i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y));
+        pts.forEach(({ x, y }, i) => (i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y)));
         canvasCtx.lineTo(W, H);
         canvasCtx.lineTo(0, H);
         canvasCtx.closePath();
@@ -649,7 +683,7 @@
         canvasCtx.shadowColor = w.shadowColor;
         canvasCtx.shadowBlur = 8;
         canvasCtx.beginPath();
-        pts.forEach(({ x, y }, i) => i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y));
+        pts.forEach(({ x, y }, i) => (i === 0 ? canvasCtx.moveTo(x, y) : canvasCtx.lineTo(x, y)));
         canvasCtx.stroke();
       });
 
@@ -658,7 +692,8 @@
 
     function drawFlexi(values, W, H) {
       const ctx = canvasCtx;
-      const cx = W / 2, cy = H / 2;
+      const cx = W / 2,
+        cy = H / 2;
       const bass = values.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
       const baseR = Math.min(W, H) * (0.18 + bass * 0.12);
       const steps = 128;
@@ -672,23 +707,23 @@
       function blobPoints(scale) {
         const pts = [];
         for (let i = 0; i < steps; i++) {
-          const a    = (i / steps) * Math.PI * 2;
-          const v    = ring[i];
+          const a = (i / steps) * Math.PI * 2;
+          const v = ring[i];
           const warp = Math.sin(a * 3 + clock * 1.2) * 0.15 + Math.sin(a * 5 - clock * 0.8) * 0.1;
-          const r    = (baseR + v * baseR * 0.9 + warp * baseR) * scale;
+          const r = (baseR + v * baseR * 0.9 + warp * baseR) * scale;
           pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
         }
         return pts;
       }
 
       for (let layer = 0; layer < 3; layer++) {
-        const hue  = (clock * 30 + layer * 120) % 360;
-        const pts  = blobPoints(1 - layer * 0.18);
+        const hue = (clock * 30 + layer * 120) % 360;
+        const pts = blobPoints(1 - layer * 0.18);
 
         if (layer === 0) {
           // Fill: use closePath (fine for fill, no stroke seam)
           ctx.beginPath();
-          pts.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+          pts.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
           ctx.closePath();
           const fill = ctx.createRadialGradient(cx, cy, 0, cx, cy, baseR * 1.8);
           fill.addColorStop(0, `hsla(${hue},70%,40%,0.18)`);
@@ -700,24 +735,25 @@
         // Stroke: repeat first point at end — no closePath, no join artifact
         ctx.beginPath();
         ctx.lineJoin = 'round';
-        ctx.lineCap  = 'round';
-        pts.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+        ctx.lineCap = 'round';
+        pts.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
         ctx.lineTo(pts[0][0], pts[0][1]); // explicit close with lineTo
         ctx.strokeStyle = `hsla(${hue},90%,65%,${0.75 - layer * 0.2})`;
         ctx.shadowColor = `hsla(${hue},90%,65%,0.6)`;
-        ctx.shadowBlur  = 12 + bass * 20;
-        ctx.lineWidth   = 2.2 - layer * 0.5;
+        ctx.shadowBlur = 12 + bass * 20;
+        ctx.lineWidth = 2.2 - layer * 0.5;
         ctx.stroke();
       }
       ctx.restore();
     }
 
     function drawUnchained(values, W, H) {
-      const ctx  = canvasCtx;
-      const cx   = W / 2, cy = H / 2;
+      const ctx = canvasCtx;
+      const cx = W / 2,
+        cy = H / 2;
       const size = Math.min(W, H);
-      const n    = 96;
-      const R0   = size * 0.2;   // inner corona circle radius
+      const n = 96;
+      const R0 = size * 0.2; // inner corona circle radius
       const maxSpike = size * 0.28;
 
       ctx.save();
@@ -729,32 +765,32 @@
       ctx.beginPath();
       ctx.arc(cx, cy, R0 + bass * size * 0.04, 0, Math.PI * 2);
       ctx.strokeStyle = `hsla(${(clock * 18) % 360},80%,60%,0.25)`;
-      ctx.lineWidth   = 2 + bass * 6;
+      ctx.lineWidth = 2 + bass * 6;
       ctx.shadowColor = `hsla(${(clock * 18) % 360},80%,60%,0.4)`;
-      ctx.shadowBlur  = 10 + bass * 20;
+      ctx.shadowBlur = 10 + bass * 20;
       ctx.stroke();
 
       // Spikes from corona perimeter outward — symmetric freq mapping
       const half = n / 2;
       ctx.lineCap = 'round';
       for (let i = 0; i < n; i++) {
-        const a    = (i / n) * Math.PI * 2 + clock * 0.04; // slow drift
-        const t    = i < half ? i / half : (n - i) / half; // 2-fold mirror
-        const fi   = Math.min(Math.floor(t * values.length), values.length - 1);
-        const v    = values[fi] || 0;
+        const a = (i / n) * Math.PI * 2 + clock * 0.04; // slow drift
+        const t = i < half ? i / half : (n - i) / half; // 2-fold mirror
+        const fi = Math.min(Math.floor(t * values.length), values.length - 1);
+        const v = values[fi] || 0;
         const spike = v * maxSpike;
-        const hue  = (i / n * 320 + clock * 18) % 360;
-        const x0   = cx + Math.cos(a) * R0;
-        const y0   = cy + Math.sin(a) * R0;
-        const x1   = cx + Math.cos(a) * (R0 + spike);
-        const y1   = cy + Math.sin(a) * (R0 + spike);
+        const hue = ((i / n) * 320 + clock * 18) % 360;
+        const x0 = cx + Math.cos(a) * R0;
+        const y0 = cy + Math.sin(a) * R0;
+        const x1 = cx + Math.cos(a) * (R0 + spike);
+        const y1 = cy + Math.sin(a) * (R0 + spike);
         ctx.beginPath();
         ctx.moveTo(x0, y0);
         ctx.lineTo(x1, y1);
         ctx.strokeStyle = `hsla(${hue},100%,65%,${0.4 + v * 0.6})`;
         ctx.shadowColor = `hsla(${hue},100%,65%,0.7)`;
-        ctx.shadowBlur  = 4 + v * 14;
-        ctx.lineWidth   = 1.2 + v * 2;
+        ctx.shadowBlur = 4 + v * 14;
+        ctx.lineWidth = 1.2 + v * 2;
         ctx.stroke();
       }
       ctx.restore();
@@ -762,25 +798,26 @@
 
     function drawStarburst(values, W, H) {
       const ctx = canvasCtx;
-      const cx = W / 2, cy = H / 2;
-      const n  = 64;
+      const cx = W / 2,
+        cy = H / 2;
+      const n = 64;
       ctx.save();
       ctx.fillStyle = 'rgba(0,0,0,0.12)';
       ctx.fillRect(0, 0, W, H);
       const quarter = n / 4;
       for (let i = 0; i < n; i++) {
-        const a   = (i / n) * Math.PI * 2;
+        const a = (i / n) * Math.PI * 2;
         const pos = i % quarter;
-        const t   = pos / quarter;
-        const fi  = Math.min(Math.floor(t * values.length), values.length - 1);
-        const v   = values[fi] || 0;
+        const t = pos / quarter;
+        const fi = Math.min(Math.floor(t * values.length), values.length - 1);
+        const v = values[fi] || 0;
         const len = Math.min((0.06 + v * 0.38) * Math.min(W, H), Math.min(W, H) * 0.42);
-        const hue = (pos / quarter * 280 + clock * 20) % 360;
+        const hue = ((pos / quarter) * 280 + clock * 20) % 360;
         ctx.strokeStyle = `hsla(${hue},100%,68%,${0.5 + v * 0.5})`;
         ctx.shadowColor = `hsla(${hue},100%,68%,0.8)`;
-        ctx.shadowBlur  = 6 + v * 16;
-        ctx.lineWidth   = 1 + v * 2.5;
-        ctx.lineCap     = 'round';
+        ctx.shadowBlur = 6 + v * 16;
+        ctx.lineWidth = 1 + v * 2.5;
+        ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len);
@@ -790,21 +827,28 @@
     }
 
     function drawGeiss(values, W, H) {
-      const ctx  = canvasCtx;
+      const ctx = canvasCtx;
       const bass = values.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
-      const mid  = values.slice(8, 24).reduce((a, b) => a + b, 0) / 16;
+      const mid = values.slice(8, 24).reduce((a, b) => a + b, 0) / 16;
       ctx.save();
       ctx.fillStyle = 'rgba(0,0,0,0.22)';
       ctx.fillRect(0, 0, W, H);
-      const cols = 8, rows = 6;
+      const cols = 8,
+        rows = 6;
       for (let row = 0; row <= rows; row++) {
         for (let col = 0; col <= cols; col++) {
-          const px  = (col / cols) * W;
-          const py  = (row / rows) * H;
-          const v   = values[Math.floor((col / cols) * values.length)] || 0;
-          const hue = ((Math.sin(px / W * 3 + clock) * 120 + Math.cos(py / H * 2 - clock * 0.7) * 80 + clock * 50) % 360 + 360) % 360;
-          const r   = (20 + v * 60 + bass * 30) * (0.6 + mid * 0.5);
-          const g   = ctx.createRadialGradient(px, py, 0, px, py, r);
+          const px = (col / cols) * W;
+          const py = (row / rows) * H;
+          const v = values[Math.floor((col / cols) * values.length)] || 0;
+          const hue =
+            (((Math.sin((px / W) * 3 + clock) * 120 +
+              Math.cos((py / H) * 2 - clock * 0.7) * 80 +
+              clock * 50) %
+              360) +
+              360) %
+            360;
+          const r = (20 + v * 60 + bass * 30) * (0.6 + mid * 0.5);
+          const g = ctx.createRadialGradient(px, py, 0, px, py, r);
           g.addColorStop(0, `hsla(${hue},100%,65%,${0.18 + v * 0.22})`);
           g.addColorStop(1, 'transparent');
           ctx.fillStyle = g;
@@ -815,7 +859,7 @@
     }
 
     function drawIdiot(values, W, H) {
-      const ctx  = canvasCtx;
+      const ctx = canvasCtx;
       const bass = values.slice(0, 6).reduce((a, b) => a + b, 0) / 6;
       ctx.save();
       ctx.fillStyle = 'rgba(0,0,0,0.15)';
@@ -827,21 +871,25 @@
         for (let i = 0; i < spawnN && idiotFlashes.length < 14; i++) {
           const hue = Math.random() * 360;
           idiotFlashes.push({
-            x1: Math.random() * W, y1: Math.random() * H,
-            x2: Math.random() * W, y2: Math.random() * H,
-            hue, life: 1.0, width: 1 + Math.random() * 3,
+            x1: Math.random() * W,
+            y1: Math.random() * H,
+            x2: Math.random() * W,
+            y2: Math.random() * H,
+            hue,
+            life: 1.0,
+            width: 1 + Math.random() * 3,
           });
         }
       } else {
         idiotSpawnCarry = 0;
       }
-      idiotFlashes = idiotFlashes.filter(f => f.life > 0);
+      idiotFlashes = idiotFlashes.filter((f) => f.life > 0);
       ctx.lineCap = 'round';
       for (const f of idiotFlashes) {
         ctx.strokeStyle = `hsla(${f.hue},100%,75%,${f.life})`;
         ctx.shadowColor = `hsla(${f.hue},100%,65%,${f.life * 0.8})`;
-        ctx.shadowBlur  = 14 * f.life;
-        ctx.lineWidth   = f.width * f.life;
+        ctx.shadowBlur = 14 * f.life;
+        ctx.lineWidth = f.width * f.life;
         ctx.beginPath();
         ctx.moveTo(f.x1, f.y1);
         ctx.lineTo(f.x2, f.y2);
@@ -859,24 +907,24 @@
     }
 
     function drawNeonPulse(values, W, H) {
-      const n   = 46;
+      const n = 46;
       const gap = W / n;
       const mid = H / 2;
       const ctx = canvasCtx;
       ctx.save();
       ctx.lineCap = 'round';
       for (let j = 0; j < n; j++) {
-        const f   = j / (n - 1);
+        const f = j / (n - 1);
         const val = values[Math.floor(f * (values.length - 1))] || 0;
         const hgt = val * mid * 0.92;
-        const x   = j * gap + gap * 0.5;
+        const x = j * gap + gap * 0.5;
         // Pink (#ff2d95) → Cyan (#21d3ee) across bars
         const hue = 320 - f * 200;
         const col = `hsl(${hue},95%,62%)`;
         ctx.strokeStyle = col;
         ctx.shadowColor = col;
-        ctx.shadowBlur  = 10 + val * 14;
-        ctx.lineWidth   = Math.max(2, gap * 0.42);
+        ctx.shadowBlur = 10 + val * 14;
+        ctx.lineWidth = Math.max(2, gap * 0.42);
         ctx.beginPath();
         ctx.moveTo(x, mid - hgt);
         ctx.lineTo(x, mid + hgt);
@@ -888,7 +936,11 @@
 
     function resetWebGL() {
       if (webglCanvas) {
-        try { webglCanvas.remove(); } catch (err) { void err; }
+        try {
+          webglCanvas.remove();
+        } catch (err) {
+          void err;
+        }
       }
       webglCanvas = null;
       gl = null;
@@ -910,7 +962,8 @@
         webglCanvas = document.createElement('canvas');
         webglCanvas.id = 'visualizer-webgl';
         webglCanvas.className = canvas.className;
-        webglCanvas.style.cssText = 'display: block; width: 100%; height: 100%; cursor: pointer; position: relative; z-index: 1; -webkit-app-region: no-drag;';
+        webglCanvas.style.cssText =
+          'display: block; width: 100%; height: 100%; cursor: pointer; position: relative; z-index: 1; -webkit-app-region: no-drag;';
         webglCanvas.setAttribute('role', 'img');
         webglCanvas.setAttribute('aria-label', 'Audio-Visualizer, Modus: 3D Neon Tunnel (WebGL)');
         webglCanvas.setAttribute('title', canvas.getAttribute('title') || '');
@@ -925,7 +978,7 @@
             view: window,
             clientX: e.clientX,
             clientY: e.clientY,
-            button: 2
+            button: 2,
           });
           canvas.dispatchEvent(newEvent);
         });
@@ -1511,33 +1564,26 @@
           return {
             program,
             uniforms: {
-              u_resolution:      gl.getUniformLocation(program, 'u_resolution'),
-              u_time:            gl.getUniformLocation(program, 'u_time'),
-              u_bass:            gl.getUniformLocation(program, 'u_bass'),
-              u_treble:          gl.getUniformLocation(program, 'u_treble'),
-              u_frequencies:     gl.getUniformLocation(program, 'u_frequencies'),
-              u_primary_color:   gl.getUniformLocation(program, 'u_primary_color'),
+              u_resolution: gl.getUniformLocation(program, 'u_resolution'),
+              u_time: gl.getUniformLocation(program, 'u_time'),
+              u_bass: gl.getUniformLocation(program, 'u_bass'),
+              u_treble: gl.getUniformLocation(program, 'u_treble'),
+              u_frequencies: gl.getUniformLocation(program, 'u_frequencies'),
+              u_primary_color: gl.getUniformLocation(program, 'u_primary_color'),
               u_secondary_color: gl.getUniformLocation(program, 'u_secondary_color'),
-              u_tertiary_color:  gl.getUniformLocation(program, 'u_tertiary_color'),
-              u_mouse:           gl.getUniformLocation(program, 'u_mouse')
-            }
+              u_tertiary_color: gl.getUniformLocation(program, 'u_tertiary_color'),
+              u_mouse: gl.getUniformLocation(program, 'u_mouse'),
+            },
           };
         }
 
         webglPrograms = {};
-        webglPrograms.tunnel3d  = compileProgram(fsTunnel3D);
-        webglPrograms.valley3d  = compileProgram(fsValley3D);
-        webglPrograms.matrix3d  = compileProgram(fsMatrix3D);
+        webglPrograms.tunnel3d = compileProgram(fsTunnel3D);
+        webglPrograms.valley3d = compileProgram(fsValley3D);
+        webglPrograms.matrix3d = compileProgram(fsMatrix3D);
         webglPrograms.mandala3d = compileProgram(fsMandala3D);
 
-        const vertices = new Float32Array([
-          -1, -1,
-           1, -1,
-          -1,  1,
-          -1,  1,
-           1, -1,
-           1,  1,
-        ]);
+        const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
 
         positionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -1644,21 +1690,21 @@
         }
       }
 
-      if      (mode === 'mirror')       drawMirror(values, W, H);
+      if (mode === 'mirror') drawMirror(values, W, H);
       else if (mode === 'oscilloscope') drawOscilloscope(values, W, H);
-      else if (mode === 'waterfall')    drawWaterfall(values, W, H);
-      else if (mode === 'wave')         drawWave(values, W, H);
-      else if (mode === 'particles')    drawParticles(values, W, H);
-      else if (mode === 'tunnel')       drawTunnel(values, W, H);
-      else if (mode === 'medwaves')     drawMedWaves(values, W, H);
-      else if (mode === 'neonpulse')    drawNeonPulse(values, W, H);
-      else if (mode === 'flexi')        drawFlexi(values, W, H);
-      else if (mode === 'unchained')    drawUnchained(values, W, H);
-      else if (mode === 'starburst')    drawStarburst(values, W, H);
-      else if (mode === 'geiss')        drawGeiss(values, W, H);
-      else if (mode === 'idiot')        drawIdiot(values, W, H);
-      else if (isWebGL)                 drawWebGL(values, W, H);
-      else                              drawBars(values, W, H);
+      else if (mode === 'waterfall') drawWaterfall(values, W, H);
+      else if (mode === 'wave') drawWave(values, W, H);
+      else if (mode === 'particles') drawParticles(values, W, H);
+      else if (mode === 'tunnel') drawTunnel(values, W, H);
+      else if (mode === 'medwaves') drawMedWaves(values, W, H);
+      else if (mode === 'neonpulse') drawNeonPulse(values, W, H);
+      else if (mode === 'flexi') drawFlexi(values, W, H);
+      else if (mode === 'unchained') drawUnchained(values, W, H);
+      else if (mode === 'starburst') drawStarburst(values, W, H);
+      else if (mode === 'geiss') drawGeiss(values, W, H);
+      else if (mode === 'idiot') drawIdiot(values, W, H);
+      else if (isWebGL) drawWebGL(values, W, H);
+      else drawBars(values, W, H);
     }
 
     function getBarData() {
@@ -1671,10 +1717,10 @@
         if (freqBuf.reduce((a, b) => a + b, 0) > 0) {
           for (let i = 0; i < BAR_COUNT; i++) {
             const start = Math.floor((i / BAR_COUNT) * 90);
-            const end   = Math.max(start + 1, Math.floor(((i + 1) / BAR_COUNT) * 90));
+            const end = Math.max(start + 1, Math.floor(((i + 1) / BAR_COUNT) * 90));
             let sum = 0;
             for (let b = start; b < end; b++) sum += freqBuf[b];
-            barBuf[i] = (sum / (end - start)) / 255;
+            barBuf[i] = sum / (end - start) / 255;
           }
           return barBuf;
         }
@@ -1686,7 +1732,8 @@
     function updatePeaks(values) {
       for (let i = 0; i < BAR_COUNT; i++) {
         if (values[i] >= peaks[i]) {
-          peaks[i] = values[i]; peakVel[i] = 0;
+          peaks[i] = values[i];
+          peakVel[i] = 0;
         } else {
           peakVel[i] += 0.0018 * frameScale;
           peaks[i] = Math.max(0, peaks[i] - peakVel[i] * frameScale);
@@ -1696,8 +1743,8 @@
 
     function drawIdle() {
       const dpr = window.devicePixelRatio || 1;
-      const W   = canvas.width  / dpr;
-      const H   = canvas.height / dpr;
+      const W = canvas.width / dpr;
+      const H = canvas.height / dpr;
       canvasCtx.clearRect(0, 0, W, H);
       onLevel(0.08);
       drawMain(idleData, W, H);
@@ -1708,8 +1755,8 @@
       animationFrameId = null;
       if (!running) return;
       const dpr = window.devicePixelRatio || 1;
-      const W   = canvas.width  / dpr;
-      const H   = canvas.height / dpr;
+      const W = canvas.width / dpr;
+      const H = canvas.height / dpr;
       const state = getState();
 
       if (!state.playing || !state.windowVisible) {
@@ -1818,7 +1865,11 @@
     }
     window.addEventListener('resize', () => {
       if (resizeTimer) clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => { resize(); resizeTimer = null; }, 100);
+      resizeTimer = setTimeout(() => {
+        resize();
+        if (!running) drawIdle();
+        resizeTimer = null;
+      }, 100);
     });
     resize();
 
@@ -1845,9 +1896,9 @@
     return { start, stop, drawIdle, toggleMode, resetMode, getMode, setMode, resize, setColors };
   }
 
-  exports.create            = create;
-  exports.VISUALIZER_MODES  = VISUALIZER_MODES;
+  exports.create = create;
+  exports.VISUALIZER_MODES = VISUALIZER_MODES;
   exports.VISUALIZER_LABELS = VISUALIZER_LABELS;
-  exports.flexiRingValues    = flexiRingValues;
+  exports.flexiRingValues = flexiRingValues;
   exports.visualizerFrameTiming = visualizerFrameTiming;
 })(typeof module !== 'undefined' ? module.exports : (window.WavelengthVisualizer = {}));
