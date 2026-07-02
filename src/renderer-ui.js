@@ -1,42 +1,52 @@
 import { state, audio } from './renderer-state.js';
 import {
-  STATION_GAIN_MIN_DB, STATION_GAIN_MAX_DB, STATION_GAIN_STEP_DB,
-  stationGainKey, clampStationGainDb, gainDbToLinear, stationGainLabel,
+  STATION_GAIN_MIN_DB,
+  STATION_GAIN_MAX_DB,
+  STATION_GAIN_STEP_DB,
+  stationGainKey,
+  clampStationGainDb,
+  gainDbToLinear,
+  stationGainLabel,
   nextStationGainDb,
 } from './station-gain.mjs';
 import { playStopLabel } from './ui-labels.mjs';
 import { t } from './i18n.js';
 
-export {
-  STATION_GAIN_MIN_DB, STATION_GAIN_MAX_DB, STATION_GAIN_STEP_DB,
-  stationGainKey,
-};
+export { STATION_GAIN_MIN_DB, STATION_GAIN_MAX_DB, STATION_GAIN_STEP_DB, stationGainKey };
 
 const api = window.electronAPI;
 const { formatListen } = window.utils;
 
 // ── Persistence (localStorage) ───────────────────
 export const LS = {
-  vol:              'wl.volume',
-  pin:              'wl.pin',
-  mini:             'wl.mini',
-  muted:            'wl.muted',
-  playing:          'wl.playing',
-  vizMode:          'wl.visualizerMode',
-  bass:             'wl.bassBoost',
-  listenDate:       'wl.listenDate',
+  vol: 'wl.volume',
+  pin: 'wl.pin',
+  mini: 'wl.mini',
+  muted: 'wl.muted',
+  playing: 'wl.playing',
+  vizMode: 'wl.visualizerMode',
+  bass: 'wl.bassBoost',
+  listenDate: 'wl.listenDate',
   listenOverallTotal: 'wl.listenOverallTotalMs',
 };
 
-export function stationTodayKey(id) { return `wl.listenTodayMs_${id}`; }
-export function stationTotalKey(id)  { return `wl.listenTotalMs_${id}`; }
+export function stationTodayKey(id) {
+  return `wl.listenTodayMs_${id}`;
+}
+export function stationTotalKey(id) {
+  return `wl.listenTotalMs_${id}`;
+}
 
 export function loadInt(key, fallback) {
   const v = parseInt(localStorage.getItem(key), 10);
   return Number.isFinite(v) ? v : fallback;
 }
-export function loadBool(key) { return localStorage.getItem(key) === '1'; }
-export const saveBool = (key, v) => { localStorage.setItem(key, v ? '1' : '0'); };
+export function loadBool(key) {
+  return localStorage.getItem(key) === '1';
+}
+export const saveBool = (key, v) => {
+  localStorage.setItem(key, v ? '1' : '0');
+};
 
 // ── Station Name + Marquee ───────────────────────
 // Builds a seamless, one-directional ticker: the text is duplicated with a
@@ -109,8 +119,8 @@ export function updateListenBadge() {
     badge.title = t('tooltip.no.station');
     return;
   }
-  const today   = parseInt(localStorage.getItem(stationTodayKey(state.activeStation.id)) || '0', 10);
-  const total   = parseInt(localStorage.getItem(stationTotalKey(state.activeStation.id)) || '0', 10);
+  const today = parseInt(localStorage.getItem(stationTodayKey(state.activeStation.id)) || '0', 10);
+  const total = parseInt(localStorage.getItem(stationTotalKey(state.activeStation.id)) || '0', 10);
   const overall = parseInt(localStorage.getItem(LS.listenOverallTotal) || '0', 10);
   badge.textContent = t('listen.today', formatListen(today));
   badge.title = t('listen.badge.tooltip', formatListen(total), formatListen(overall));
@@ -165,8 +175,8 @@ export function showToast(message, options = {}) {
 export function updateTimeTheme() {
   const h = new Date().getHours() + new Date().getMinutes() / 60;
   let dayness = 0;
-  if (h >= 8 && h < 18)       dayness = 1;
-  else if (h >= 6 && h < 8)   dayness = (h - 6) / 2;
+  if (h >= 8 && h < 18) dayness = 1;
+  else if (h >= 6 && h < 8) dayness = (h - 6) / 2;
   else if (h >= 18 && h < 21) dayness = (21 - h) / 3;
   const r = document.documentElement;
   r.style.setProperty('--bg-day-mix', String(dayness));
@@ -186,7 +196,7 @@ export function setThemeLevel(level) {
 // ── Play UI ──────────────────────────────────────
 export function updateItemEqualizer() {
   const activeId = state.activeStation?.id;
-  document.querySelectorAll('.item-eq-anim').forEach(eq => {
+  document.querySelectorAll('.item-eq-anim').forEach((eq) => {
     const stationId = eq.closest('[data-id]')?.dataset.id;
     eq.classList.toggle('hidden', !state.playing || stationId !== activeId);
   });
@@ -196,15 +206,17 @@ export function updatePlayUI() {
   document.body.classList.toggle('is-playing', state.playing);
   const mainPath = document.querySelector('#main-icon path');
   if (mainPath) {
-    mainPath.setAttribute('d', state.playing
-      ? 'M 3.5 3.5 L 14.5 3.5 L 14.5 14.5 L 3.5 14.5 Z'
-      : 'M 3 2 L 15 9 L 3 16 L 3 2 Z');
+    mainPath.setAttribute(
+      'd',
+      state.playing ? 'M 3.5 3.5 L 14.5 3.5 L 14.5 14.5 L 3.5 14.5 Z' : 'M 3 2 L 15 9 L 3 16 L 3 2 Z'
+    );
   }
   const miniPath = document.querySelector('#mini-icon path');
   if (miniPath) {
-    miniPath.setAttribute('d', state.playing
-      ? 'M 2.5 2.5 L 9.5 2.5 L 9.5 9.5 L 2.5 9.5 Z'
-      : 'M 2 1 L 11 6 L 2 11 L 2 1 Z');
+    miniPath.setAttribute(
+      'd',
+      state.playing ? 'M 2.5 2.5 L 9.5 2.5 L 9.5 9.5 L 2.5 9.5 Z' : 'M 2 1 L 11 6 L 2 11 L 2 1 Z'
+    );
   }
   const playLabel = playStopLabel(state.playing);
   for (const id of ['btn-playstop', 'mini-playstop']) {
@@ -333,11 +345,6 @@ export function setMini(on) {
   saveBool(LS.mini, on);
   if (state.visualizer) {
     requestAnimationFrame(() => state.visualizer.resize());
-    // The Electron window physically resizes BEFORE the IPC set-mini arrives, so
-    // window.resize fires while #full-view is still display:none (offsetWidth=0) and
-    // is skipped. A deferred second resize ensures correct dimensions once the window
-    // has settled at its new size and the canvas is visible again.
-    if (!on) setTimeout(() => { state.visualizer?.resize(); if (!state.playing) state.visualizer?.drawIdle(); }, 200);
   }
   if (!state.playing && state.visualizer) requestAnimationFrame(() => state.visualizer.drawIdle());
   // Slider fill and marquee width both rely on offsetWidth/clientWidth, which
@@ -430,8 +437,8 @@ export const showAboutModal = () => {
   if (ver) ver.textContent = `v${state.appVersion}`;
 
   const nameEl = document.getElementById('about-station-name');
-  const urlEl  = document.getElementById('about-stream-url');
-  const webEl  = document.getElementById('about-website-url');
+  const urlEl = document.getElementById('about-stream-url');
+  const webEl = document.getElementById('about-website-url');
 
   if (state.activeStation) {
     if (nameEl) nameEl.textContent = state.activeStation.name || t('no.station');
@@ -529,9 +536,8 @@ export function displayTrackInfo(title) {
   const textChanged = cleanTitle !== state.currentTrackInfoText;
   state.currentTrackInfoText = cleanTitle;
 
-  const text = state.playing && cleanTitle
-    ? cleanTitle
-    : (state.activeStation ? state.activeStation.name : 'Wavelength');
+  const text =
+    state.playing && cleanTitle ? cleanTitle : state.activeStation ? state.activeStation.name : 'Wavelength';
 
   // Skip re-running the marquee animation when the text hasn't actually
   // changed (e.g. repeated ICY metadata pings) — restarting it looks jumpy.

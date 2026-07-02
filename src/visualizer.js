@@ -1801,14 +1801,25 @@
     }
 
     let resizeTimer = null;
-    function onWindowResize() {
-      if (resizeTimer) clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        resize();
-        resizeTimer = null;
-      }, 100);
+    // ResizeObserver fires when the canvas gains real dimensions after display:none is
+    // removed (mini→full switch). window.resize fires *before* the set-mini IPC arrives,
+    // so it always catches an invisible canvas and is skipped — ResizeObserver does not
+    // have that race condition.
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(() => {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          resize();
+          if (!running) drawIdle();
+          resizeTimer = null;
+        }, 50);
+      });
+      resizeObserver.observe(canvas);
     }
-    window.addEventListener('resize', onWindowResize);
+    window.addEventListener('resize', () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { resize(); resizeTimer = null; }, 100);
+    });
     resize();
 
     function setColors(c1, c2, c3) {
