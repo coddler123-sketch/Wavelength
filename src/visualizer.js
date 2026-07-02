@@ -1693,6 +1693,12 @@
       if (!isWebGL) {
         if (canvas.style.display === 'none') {
           canvas.style.display = 'block';
+          // The buffer may have gone stale while hidden during WebGL modes —
+          // sync it now instead of waiting for the debounced ResizeObserver.
+          resize();
+          const dpr = window.devicePixelRatio || 1;
+          W = canvas.width / dpr;
+          H = canvas.height / dpr;
         }
         if (webglCanvas && webglCanvas.style.display !== 'none') {
           webglCanvas.style.display = 'none';
