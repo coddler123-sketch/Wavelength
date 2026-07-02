@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.7.6
+
+- fix: size WebGL canvas from its own layout box, not the hidden 2D canvas
+- fix: remove canvas CSS size pinning that froze size after mini cold start
+- fix: pin canvas CSS size to prevent browser stretching buffer on mini→full
+- fix: redraw idle frame after window.resize clears the canvas
+- fix: use ResizeObserver to reliably resize canvas on mini to full switch
+- fix: visualizer pixelated after mini→full switch
+
 ## 1.7.5
 
 - style: apply prettier formatting
