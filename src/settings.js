@@ -10,7 +10,9 @@ export const DEFAULTS = {
 export function loadSettings() {
   try {
     return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') };
-  } catch { return { ...DEFAULTS }; }
+  } catch {
+    return { ...DEFAULTS };
+  }
 }
 
 export function saveSettings(patch) {

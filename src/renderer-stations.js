@@ -1,8 +1,14 @@
 import { state } from './renderer-state.js';
 import {
-  setActiveStationName, updateListenBadge, switchView,
-  stationGainKey, loadInt, stationTodayKey, applyStationGain,
-  showToast, applyMarquee,
+  setActiveStationName,
+  updateListenBadge,
+  switchView,
+  stationGainKey,
+  loadInt,
+  stationTodayKey,
+  applyStationGain,
+  showToast,
+  applyMarquee,
 } from './renderer-ui.js';
 import { startPlay, stopPlay } from './renderer-audio.js';
 import { escapeHtml, safeHttpUrl } from './renderer-sanitize.mjs';
@@ -26,7 +32,9 @@ export function showStationsLoading() {
   const list = document.getElementById('station-list');
   if (!list) return;
   list.classList.add('is-loading');
-  const rows = Array.from({ length: 8 }, () => `
+  const rows = Array.from(
+    { length: 8 },
+    () => `
     <div class="station-skeleton" aria-hidden="true">
       <div class="skeleton-icon"></div>
       <div class="skeleton-text">
@@ -34,7 +42,8 @@ export function showStationsLoading() {
         <div class="skeleton-line skeleton-line-meta"></div>
       </div>
     </div>
-  `).join('');
+  `
+  ).join('');
   list.innerHTML = rows;
 }
 
@@ -44,11 +53,11 @@ export function renderStations() {
   if (!list) return;
 
   let stations = filterStations(state.allStations, {
-    search:         document.getElementById('station-search')?.value || '',
-    genre:          document.getElementById('genre-filter')?.value || '',
-    lang:           document.getElementById('lang-filter')?.value || '',
-    minBitrate:     parseInt(document.getElementById('bitrate-filter')?.value || '0', 10),
-    favorites:      state.favorites,
+    search: document.getElementById('station-search')?.value || '',
+    genre: document.getElementById('genre-filter')?.value || '',
+    lang: document.getElementById('lang-filter')?.value || '',
+    minBitrate: parseInt(document.getElementById('bitrate-filter')?.value || '0', 10),
+    favorites: state.favorites,
     favFilterActive: state.favFilterActive,
   });
 
@@ -65,15 +74,18 @@ export function renderStations() {
 
     let icon, title, hint;
     if (state.favFilterActive) {
-      icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>';
+      icon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>';
       title = t('empty.fav.title');
       hint = t('empty.fav.hint');
     } else if (hasFilters) {
-      icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+      icon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
       title = t('empty.search.title');
       hint = search ? t('empty.search.hint.query', escapeHtml(search)) : t('empty.search.hint.filter');
     } else {
-      icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4"/></svg>';
+      icon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M6.3 6.3a8 8 0 0 0 0 11.4M17.7 6.3a8 8 0 0 1 0 11.4"/></svg>';
       title = t('empty.none.title');
       hint = t('empty.none.hint');
     }
@@ -90,14 +102,14 @@ export function renderStations() {
   }
 
   const categoryGroups = {};
-  const customStns = stations.filter(s => s.isCustom);
-  const favStations = stations.filter(s => !s.isCustom && state.favorites.includes(s.id));
-  const nonFavStations = stations.filter(s => !s.isCustom && !state.favorites.includes(s.id));
+  const customStns = stations.filter((s) => s.isCustom);
+  const favStations = stations.filter((s) => !s.isCustom && state.favorites.includes(s.id));
+  const nonFavStations = stations.filter((s) => !s.isCustom && !state.favorites.includes(s.id));
 
   // Sortiere Favoriten alphabetisch
   favStations.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
 
-  nonFavStations.forEach(s => {
+  nonFavStations.forEach((s) => {
     const cat = getStationCategory(s.genre);
     if (!categoryGroups[cat]) categoryGroups[cat] = [];
     categoryGroups[cat].push(s);
@@ -224,14 +236,17 @@ export function renderStations() {
         imgEl.classList.remove('hidden');
         svgEl.classList.add('hidden');
       } else {
-        api.cacheIcon(iconUrl).then(dataUrl => {
-          if (dataUrl && imgEl && svgEl) {
-            iconRendererCache.set(iconUrl, dataUrl);
-            imgEl.src = dataUrl;
-            imgEl.classList.remove('hidden');
-            svgEl.classList.add('hidden');
-          }
-        }).catch(() => {});
+        api
+          .cacheIcon(iconUrl)
+          .then((dataUrl) => {
+            if (dataUrl && imgEl && svgEl) {
+              iconRendererCache.set(iconUrl, dataUrl);
+              imgEl.src = dataUrl;
+              imgEl.classList.remove('hidden');
+              svgEl.classList.add('hidden');
+            }
+          })
+          .catch(() => {});
       }
     }
   }
@@ -268,14 +283,17 @@ export function selectStation(station, options = {}) {
   if (syncMain) {
     api.selectStation(station, shouldSuppressMainAutoplay(startWhenStopped, wasPlaying));
     if (station.streamUrl) {
-      api.checkStream(station.streamUrl).then(result => {
-        if (!result.ok) {
-          showToast(t('toast.stream.error', result.error || result.statusCode), {
-            actionLabel: t('toast.retry'),
-            onAction: () => selectStation(station, { startWhenStopped: true }),
-          });
-        }
-      }).catch(() => {});
+      api
+        .checkStream(station.streamUrl)
+        .then((result) => {
+          if (!result.ok) {
+            showToast(t('toast.stream.error', result.error || result.statusCode), {
+              actionLabel: t('toast.retry'),
+              onAction: () => selectStation(station, { startWhenStopped: true }),
+            });
+          }
+        })
+        .catch(() => {});
     }
   }
 
@@ -290,7 +308,8 @@ export function selectStation(station, options = {}) {
   const miniLogoWrap = document.getElementById('mini-logo-wrap');
   if (miniLogoWrap) miniLogoWrap.title = station.name;
   const miniSub = document.getElementById('mini-station-subtitle');
-  if (miniSub) miniSub.textContent = [displayGenre(station.genre), station.country].filter(Boolean).join(' · ');
+  if (miniSub)
+    miniSub.textContent = [displayGenre(station.genre), station.country].filter(Boolean).join(' · ');
   updateMiniLogo(station);
   updatePlayerLogo(station);
 
@@ -307,30 +326,32 @@ export function selectStation(station, options = {}) {
 // ── Filters ──────────────────────────────────────
 export function populateFilters() {
   const genreSelect = document.getElementById('genre-filter');
-  const langSelect  = document.getElementById('lang-filter');
+  const langSelect = document.getElementById('lang-filter');
   if (!genreSelect || !langSelect) return;
 
   const categories = [
-    ['Ambient/Chillout',    'filter.cat.ambient'],
-    ['Pop & Charts',        'filter.cat.pop'],
-    ['Rock & Metal',        'filter.cat.rock'],
-    ['Elektronik & Dance',  'filter.cat.electronic'],
-    ['Hip-Hop & R&B',       'filter.cat.hiphop'],
-    ['Klassik & Jazz',      'filter.cat.classical'],
-    ['Wissen & Kultur',     'filter.cat.knowledge'],
-    ['Nachrichten & Talk',  'filter.cat.news'],
+    ['Ambient/Chillout', 'filter.cat.ambient'],
+    ['Pop & Charts', 'filter.cat.pop'],
+    ['Rock & Metal', 'filter.cat.rock'],
+    ['Elektronik & Dance', 'filter.cat.electronic'],
+    ['Hip-Hop & R&B', 'filter.cat.hiphop'],
+    ['Klassik & Jazz', 'filter.cat.classical'],
+    ['Wissen & Kultur', 'filter.cat.knowledge'],
+    ['Nachrichten & Talk', 'filter.cat.news'],
     ['Oldies & Jahrzehnte', 'filter.cat.oldies'],
-    ['Schlager & Weltmusik','filter.cat.schlager'],
-    ['Sonstige',            'filter.cat.other'],
+    ['Schlager & Weltmusik', 'filter.cat.schlager'],
+    ['Sonstige', 'filter.cat.other'],
   ];
-  const langs  = [...new Set(state.allStations.map(s => getLanguageLabel(s.language)).filter(Boolean))].sort();
+  const langs = [
+    ...new Set(state.allStations.map((s) => getLanguageLabel(s.language)).filter(Boolean)),
+  ].sort();
 
   genreSelect.replaceChildren();
   langSelect.replaceChildren();
   appendOption(genreSelect, '', t('filter.all.categories'));
   appendOption(langSelect, '', t('filter.all.languages'));
   categories.forEach(([val, key]) => appendOption(genreSelect, val, t(key)));
-  langs.forEach(l => appendOption(langSelect, l, l));
+  langs.forEach((l) => appendOption(langSelect, l, l));
 }
 
 // ── Favorites ────────────────────────────────────
@@ -340,7 +361,7 @@ function saveFavorites() {
 
 export function toggleFavorite(id) {
   if (state.favorites.includes(id)) {
-    state.favorites = state.favorites.filter(x => x !== id);
+    state.favorites = state.favorites.filter((x) => x !== id);
   } else {
     state.favorites.push(id);
   }
@@ -368,7 +389,7 @@ export function updatePlayerFavStar() {
 // ── Logos ────────────────────────────────────────
 export function updateMiniLogo(station) {
   const miniIcon = document.getElementById('mini-station-icon');
-  const miniSvg  = document.getElementById('mini-logo-svg');
+  const miniSvg = document.getElementById('mini-logo-svg');
   if (!miniIcon || !miniSvg) return;
   const url = station && safeHttpUrl(station.iconUrl);
   if (url) {
@@ -377,14 +398,17 @@ export function updateMiniLogo(station) {
       miniIcon.classList.remove('hidden');
       miniSvg.classList.add('hidden');
     } else {
-      api.cacheIcon(url).then(dataUrl => {
-        if (dataUrl) {
-          iconRendererCache.set(url, dataUrl);
-          miniIcon.src = dataUrl;
-          miniIcon.classList.remove('hidden');
-          miniSvg.classList.add('hidden');
-        }
-      }).catch(() => {});
+      api
+        .cacheIcon(url)
+        .then((dataUrl) => {
+          if (dataUrl) {
+            iconRendererCache.set(url, dataUrl);
+            miniIcon.src = dataUrl;
+            miniIcon.classList.remove('hidden');
+            miniSvg.classList.add('hidden');
+          }
+        })
+        .catch(() => {});
     }
   } else {
     miniIcon.classList.add('hidden');
@@ -393,7 +417,7 @@ export function updateMiniLogo(station) {
 }
 
 export function updatePlayerLogo(station) {
-  const playerIcon  = document.getElementById('player-station-icon');
+  const playerIcon = document.getElementById('player-station-icon');
   const defaultLogo = document.getElementById('player-default-logo');
   if (!playerIcon || !defaultLogo) return;
   const url = station && safeHttpUrl(station.iconUrl);
@@ -407,19 +431,22 @@ export function updatePlayerLogo(station) {
       defaultLogo.classList.add('hidden');
       handleUrl(playerIcon.src);
     } else {
-      api.cacheIcon(url).then(dataUrl => {
-        if (dataUrl) {
-          iconRendererCache.set(url, dataUrl);
-          playerIcon.src = dataUrl;
-          playerIcon.classList.remove('hidden');
-          defaultLogo.classList.add('hidden');
-          handleUrl(dataUrl);
-        } else {
+      api
+        .cacheIcon(url)
+        .then((dataUrl) => {
+          if (dataUrl) {
+            iconRendererCache.set(url, dataUrl);
+            playerIcon.src = dataUrl;
+            playerIcon.classList.remove('hidden');
+            defaultLogo.classList.add('hidden');
+            handleUrl(dataUrl);
+          } else {
+            resetDynamicTheme();
+          }
+        })
+        .catch(() => {
           resetDynamicTheme();
-        }
-      }).catch(() => {
-        resetDynamicTheme();
-      });
+        });
     }
   } else {
     playerIcon.classList.add('hidden');
@@ -429,18 +456,29 @@ export function updatePlayerLogo(station) {
 }
 
 function rgbToHsl(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  let h,
+    s,
+    l = (max + min) / 2;
   if (max === min) {
     h = s = 0; // achromatic
   } else {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
     switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
     }
     h /= 6;
   }
@@ -455,16 +493,16 @@ function hslToRgb(h, s, l) {
     const hue2rgb = (p, q, t) => {
       if (t < 0) t += 1;
       if (t > 1) t -= 1;
-      if (t < 1/6) return p + (q - p) * 6 * t;
-      if (t < 1/2) return q;
-      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
       return p;
     };
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
     const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1/3);
+    r = hue2rgb(p, q, h + 1 / 3);
     g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1/3);
+    b = hue2rgb(p, q, h - 1 / 3);
   }
   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
@@ -485,7 +523,9 @@ function updateDynamicThemeFromIcon(iconUrl) {
       ctx.drawImage(img, 0, 0, 16, 16);
       const data = ctx.getImageData(0, 0, 16, 16).data;
 
-      let bestR = 0, bestG = 240, bestB = 255;
+      let bestR = 0,
+        bestG = 240,
+        bestB = 255;
       let maxSat = -1;
 
       for (let i = 0; i < data.length; i += 4) {
@@ -521,7 +561,7 @@ function updateDynamicThemeFromIcon(iconUrl) {
       const c3 = hslToRgb((h + 0.67) % 1.0, neonS, neonL1);
 
       const r = document.documentElement;
-      const hex = (rgb) => '#' + rgb.map(x => x.toString(16).padStart(2, '0')).join('');
+      const hex = (rgb) => '#' + rgb.map((x) => x.toString(16).padStart(2, '0')).join('');
       const color1 = hex(c1);
       const color2 = hex(c2);
       const color3 = hex(c3);
@@ -549,7 +589,7 @@ function resetDynamicTheme() {
   r.style.removeProperty('--accent');
   r.style.removeProperty('--accent2');
   r.style.removeProperty('--accent3');
-  
+
   if (state.visualizer && typeof state.visualizer.setColors === 'function') {
     state.visualizer.setColors(null, null, null);
   }
@@ -567,13 +607,13 @@ function addRecentStation(id) {
 }
 
 export function populateRecents() {
-  const row    = document.getElementById('recents-row');
-  const list   = document.getElementById('recents-list');
+  const row = document.getElementById('recents-row');
+  const list = document.getElementById('recents-list');
   const picker = document.getElementById('station-picker');
   if (!row || !list || !picker) return;
 
   const activeRecents = state.recentStations
-    .map(id => state.allStations.find(s => s.id === id))
+    .map((id) => state.allStations.find((s) => s.id === id))
     .filter(Boolean);
 
   if (activeRecents.length === 0) {
@@ -586,7 +626,7 @@ export function populateRecents() {
   picker.classList.add('has-recents');
   list.innerHTML = '';
 
-  activeRecents.forEach(station => {
+  activeRecents.forEach((station) => {
     const item = document.createElement('button');
     item.className = 'recent-item';
     item.type = 'button';
@@ -598,17 +638,25 @@ export function populateRecents() {
     img.alt = '';
     const recentUrl = safeHttpUrl(station.iconUrl);
     if (recentUrl) {
-      api.cacheIcon(recentUrl).then(dataUrl => { if (dataUrl) img.src = dataUrl; }).catch(() => {});
+      api
+        .cacheIcon(recentUrl)
+        .then((dataUrl) => {
+          if (dataUrl) img.src = dataUrl;
+        })
+        .catch(() => {});
     }
     item.appendChild(img);
-    item.addEventListener('click', () => { selectStation(station); switchView('player'); });
+    item.addEventListener('click', () => {
+      selectStation(station);
+      switchView('player');
+    });
     list.appendChild(item);
   });
 }
 
 // ── Keyboard Navigation ──────────────────────────
 function updateKeyboardHighlight(index, listItems) {
-  listItems.forEach(item => item.classList.remove('highlighted'));
+  listItems.forEach((item) => item.classList.remove('highlighted'));
   state.highlightedIndex = index;
   if (index >= 0 && index < listItems.length) {
     const item = listItems[index];
@@ -640,13 +688,18 @@ export function initKeyboardNav() {
       if (state.highlightedIndex >= 0 && state.highlightedIndex < items.length) {
         e.preventDefault();
         const targetId = items[state.highlightedIndex].dataset.id;
-        const station = state.allStations.find(s => s.id === targetId);
-        if (station) { selectStation(station); switchView('player'); }
+        const station = state.allStations.find((s) => s.id === targetId);
+        if (station) {
+          selectStation(station);
+          switchView('player');
+        }
       }
     }
   });
 
-  searchInput.addEventListener('input', () => { state.highlightedIndex = -1; });
+  searchInput.addEventListener('input', () => {
+    state.highlightedIndex = -1;
+  });
 }
 
 // ── Custom Station Editor ────────────────────────
@@ -654,21 +707,21 @@ let _editorPrevFocus = null;
 
 export function openStationEditor(station = null) {
   _editorPrevFocus = document.activeElement;
-  const modal    = document.getElementById('station-editor-modal');
-  const title    = document.getElementById('station-editor-title');
-  const idInput  = document.getElementById('station-editor-id');
-  const nameEl   = document.getElementById('station-editor-name');
-  const urlEl    = document.getElementById('station-editor-url');
-  const genreEl  = document.getElementById('station-editor-genre');
-  const iconEl   = document.getElementById('station-editor-icon');
-  const errorEl  = document.getElementById('station-editor-error');
+  const modal = document.getElementById('station-editor-modal');
+  const title = document.getElementById('station-editor-title');
+  const idInput = document.getElementById('station-editor-id');
+  const nameEl = document.getElementById('station-editor-name');
+  const urlEl = document.getElementById('station-editor-url');
+  const genreEl = document.getElementById('station-editor-genre');
+  const iconEl = document.getElementById('station-editor-icon');
+  const errorEl = document.getElementById('station-editor-error');
   if (!modal) return;
-  title.textContent   = station ? t('editor.title.edit') : t('editor.title.add');
-  idInput.value       = station ? station.id : '';
-  nameEl.value        = station ? station.name : '';
-  urlEl.value         = station ? station.streamUrl : '';
-  genreEl.value       = station && station.genre !== 'Eigene' ? station.genre : '';
-  iconEl.value        = station ? (station.iconUrl || '') : '';
+  title.textContent = station ? t('editor.title.edit') : t('editor.title.add');
+  idInput.value = station ? station.id : '';
+  nameEl.value = station ? station.name : '';
+  urlEl.value = station ? station.streamUrl : '';
+  genreEl.value = station && station.genre !== 'Eigene' ? station.genre : '';
+  iconEl.value = station ? station.iconUrl || '' : '';
   errorEl.classList.add('hidden');
   errorEl.textContent = '';
   modal.classList.remove('hidden');
@@ -681,7 +734,10 @@ export function closeStationEditor() {
   if (!modal) return;
   modal.classList.add('hidden');
   modal.setAttribute('aria-hidden', 'true');
-  if (_editorPrevFocus?.focus) { _editorPrevFocus.focus(); _editorPrevFocus = null; }
+  if (_editorPrevFocus?.focus) {
+    _editorPrevFocus.focus();
+    _editorPrevFocus = null;
+  }
 }
 
 function showConfirmModal(title, message, onConfirm) {
@@ -748,39 +804,51 @@ function deleteCustomStation(station) {
 }
 
 export function initStationEditor() {
-  const form      = document.getElementById('station-editor-form');
-  const modal     = document.getElementById('station-editor-modal');
-  const errorEl   = document.getElementById('station-editor-error');
+  const form = document.getElementById('station-editor-form');
+  const modal = document.getElementById('station-editor-modal');
+  const errorEl = document.getElementById('station-editor-error');
   if (!form) return;
 
   document.getElementById('station-editor-close-btn')?.addEventListener('click', closeStationEditor);
   document.getElementById('station-editor-cancel-btn')?.addEventListener('click', closeStationEditor);
-  modal?.addEventListener('click', e => { if (e.target === modal) closeStationEditor(); });
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeStationEditor();
+  });
 
-  form.addEventListener('submit', async e => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const id       = document.getElementById('station-editor-id').value;
-    const name     = document.getElementById('station-editor-name').value.trim();
+    const id = document.getElementById('station-editor-id').value;
+    const name = document.getElementById('station-editor-name').value.trim();
     const streamUrl = document.getElementById('station-editor-url').value.trim();
-    const genre    = document.getElementById('station-editor-genre').value.trim();
-    const iconUrl  = document.getElementById('station-editor-icon').value.trim();
+    const genre = document.getElementById('station-editor-genre').value.trim();
+    const iconUrl = document.getElementById('station-editor-icon').value.trim();
 
-    const showErr = msg => {
+    const showErr = (msg) => {
       errorEl.textContent = msg;
       errorEl.classList.remove('hidden');
     };
-    if (!name)       { showErr(t('editor.err.name')); document.getElementById('station-editor-name').focus(); return; }
-    if (!streamUrl)  { showErr(t('editor.err.url')); document.getElementById('station-editor-url').focus(); return; }
-    if (!/^https?:\/\//i.test(streamUrl)) { showErr(t('editor.err.url')); document.getElementById('station-editor-url').focus(); return; }
+    if (!name) {
+      showErr(t('editor.err.name'));
+      document.getElementById('station-editor-name').focus();
+      return;
+    }
+    if (!streamUrl) {
+      showErr(t('editor.err.url'));
+      document.getElementById('station-editor-url').focus();
+      return;
+    }
+    if (!/^https?:\/\//i.test(streamUrl)) {
+      showErr(t('editor.err.url'));
+      document.getElementById('station-editor-url').focus();
+      return;
+    }
 
     const saveBtn = document.getElementById('station-editor-save-btn');
     saveBtn.disabled = true;
     saveBtn.textContent = t('editor.saving');
     try {
       const data = { name, streamUrl, genre, iconUrl };
-      const newStations = id
-        ? await api.updateCustomStation(id, data)
-        : await api.addCustomStation(data);
+      const newStations = id ? await api.updateCustomStation(id, data) : await api.addCustomStation(data);
       state.allStations = newStations;
       populateFilters();
       renderStations();

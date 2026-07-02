@@ -92,7 +92,10 @@ function validateStations(stations) {
       errors.push(`${label}: country should be uppercase`);
     }
 
-    if (typeof station.language === 'string' && RAW_LANGUAGE_LABELS.has(station.language.trim().toLowerCase())) {
+    if (
+      typeof station.language === 'string' &&
+      RAW_LANGUAGE_LABELS.has(station.language.trim().toLowerCase())
+    ) {
       errors.push(`${label}: language should use localized label instead of "${station.language}"`);
     }
   });

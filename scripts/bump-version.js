@@ -26,10 +26,7 @@ if (lock.packages?.['']) lock.packages[''].version = next;
 
 const htmlPath = path.join(__dirname, '..', 'src', 'index.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
-const updatedHtml = html.replace(
-  /(<p[^>]+id="about-version"[^>]*>)v[\d.]+(<\/p>)/,
-  `$1v${next}$2`
-);
+const updatedHtml = html.replace(/(<p[^>]+id="about-version"[^>]*>)v[\d.]+(<\/p>)/, `$1v${next}$2`);
 if (updatedHtml === html) {
   console.error('Warning: about-version not found in index.html');
 }
@@ -40,10 +37,7 @@ fs.writeFileSync(htmlPath, updatedHtml);
 
 const readmePath = path.join(__dirname, '..', 'README.md');
 const readme = fs.readFileSync(readmePath, 'utf8');
-const updatedReadme = readme.replace(
-  /Current version: `[^`]+`/,
-  `Current version: \`${next}\``
-);
+const updatedReadme = readme.replace(/Current version: `[^`]+`/, `Current version: \`${next}\``);
 if (updatedReadme === readme) {
   console.error('Warning: current version not found in README.md');
 }

@@ -1,446 +1,960 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src-elem 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; media-src *; img-src 'self' data:;">
-<title>Wavelength</title>
-<link rel="stylesheet" href="index.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src-elem 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; media-src *; img-src 'self' data:;"
+    />
+    <title>Wavelength</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <audio id="audio" preload="none" crossorigin="anonymous"></audio>
 
-<audio id="audio" preload="none" crossorigin="anonymous"></audio>
-
-<!-- ── Full view ─────────────────────────────────── -->
-<div id="full-view">
-
-  <div class="top-section">
-    <div class="logo-area">
-      <div class="logo-img-wrap" id="player-logo-wrap">
-        <img id="player-station-icon" class="logo-mark hidden" alt="" />
-        <!-- Glowing Wave Vector Logo -->
-        <svg id="player-default-logo" class="logo-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke="url(#logo-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <defs>
-            <linearGradient id="logo-grad" x1="6" y1="22" x2="38" y2="22" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#ffbf69"/>
-              <stop offset="48%" stop-color="#34d6d0"/>
-              <stop offset="100%" stop-color="#4f7cff"/>
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-      <div class="logo-info">
-        <div class="app-title-label">Wavelength</div>
-        <div class="station-title-row">
-          <div class="logo-name" id="active-station-name" title="Wavelength"><span class="logo-name-inner" id="active-station-name-inner">Wavelength</span></div>
-          <button class="station-gain-pill" id="station-gain-pill" data-i18n-title="tooltip.gain.reset" data-i18n-aria="tooltip.gain.reset" title="Sender-Trim zurücksetzen" aria-label="Sender-Trim zurücksetzen"></button>
-        </div>
-        <div class="logo-tagline" id="active-station-subtitle">Multi-Sender-Radio</div>
-        <div class="status-row">
-          <div class="live-badge"><span class="live-wave" aria-hidden="true"><span></span><span></span><span></span></span><span id="live-status" aria-live="polite" aria-atomic="true">Gestoppt</span></div>
-          <span class="listen-badge" id="listen-badge" aria-live="polite" aria-atomic="true">Heute 0 min</span>
-          <span class="sleep-badge" id="sleep-badge" aria-live="polite" aria-atomic="true"></span>
-          <button class="fav-badge-btn" id="player-fav-btn" data-i18n-title="tooltip.fav.add" data-i18n-aria="tooltip.fav.add" title="Zu Favoriten hinzufügen" aria-label="Zu Favoriten hinzufügen" aria-pressed="false"><svg width="12" height="12" viewBox="-2 -2.5 28 28" overflow="visible" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <button class="view-toggle-btn" id="btn-view-toggle" aria-pressed="false" data-i18n-title="tooltip.view.stations" data-i18n-aria="tooltip.view.stations" aria-label="Senderliste anzeigen" title="Senderliste anzeigen">
-    <svg class="icon-list" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <line x1="8" y1="6" x2="21" y2="6"/>
-      <line x1="8" y1="12" x2="21" y2="12"/>
-      <line x1="8" y1="18" x2="21" y2="18"/>
-      <line x1="3" y1="6" x2="3.01" y2="6"/>
-      <line x1="3" y1="12" x2="3.01" y2="12"/>
-      <line x1="3" y1="18" x2="3.01" y2="18"/>
-    </svg>
-    <svg class="icon-player" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M9 18V5l12-2v13"/>
-      <circle cx="6" cy="18" r="3"/>
-      <circle cx="18" cy="16" r="3"/>
-    </svg>
-  </button>
-
-  <button class="settings-btn" id="btn-settings" data-i18n-title="settings.title" data-i18n-aria="settings.title" title="Einstellungen" aria-label="Einstellungen">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-    </svg>
-  </button>
-
-  <button class="hide-btn" id="btn-hide" data-i18n-title="tooltip.hide" data-i18n-aria="tooltip.hide" title="In Tray minimieren" aria-label="In Tray minimieren">
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-      <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
-    </svg>
-  </button>
-
-  <!-- Station Picker panel -->
-  <div class="station-picker" id="station-picker">
-    <div class="search-container">
-      <div class="search-row">
-        <input type="text" id="station-search" data-i18n-placeholder="filter.search" data-i18n-aria="filter.search" placeholder="Station filtern…" aria-label="Station filtern…">
-        <button class="fav-toggle-btn" id="btn-fav-filter" data-i18n-title="tooltip.fav.filter" data-i18n-aria="tooltip.fav.filter" title="Nur Favoriten anzeigen" aria-label="Nur Favoriten anzeigen">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-          </svg>
-        </button>
-        <button class="add-station-btn" id="btn-add-station" data-i18n-title="tooltip.station.add" data-i18n-aria="tooltip.station.add" title="Eigene Station hinzufügen" aria-label="Eigene Station hinzufügen">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-        </button>
-      </div>
-      <div class="filter-row">
-        <select id="genre-filter" aria-label="Kategorie filtern">
-          <option value="">Alle Kategorien</option>
-        </select>
-        <select id="lang-filter" aria-label="Sprache filtern">
-          <option value="">Alle Sprachen</option>
-        </select>
-        <select id="bitrate-filter" aria-label="Mindestbitrate">
-          <option value="0" data-i18n="filter.bitrate">Bitrate</option>
-          <option value="64">≥ 64 kbps</option>
-          <option value="128">≥ 128 kbps</option>
-          <option value="192">≥ 192 kbps</option>
-          <option value="320">≥ 320 kbps</option>
-        </select>
-      </div>
-    </div>
-    <div class="recents-row hidden" id="recents-row">
-      <div class="recents-label" data-i18n="recents.label">Zuletzt:</div>
-      <div id="recents-list"></div>
-    </div>
-    <div class="station-list" id="station-list">
-      <!-- Loaded dynamically -->
-    </div>
-  </div>
-
-  <div class="viz-strip">
-    <svg class="viz-logo-underlay" viewBox="0 0 44 44" fill="none" aria-hidden="true" focusable="false">
-      <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <canvas id="visualizer" role="img" aria-label="Audio-Visualizer, Modus: Bars" data-i18n-title="tooltip.visualizer" title="Linksklick = Modus wechseln · Rechtsklick = Menü"></canvas>
-    <div class="viz-toast" id="viz-toast" role="status" aria-live="polite" aria-atomic="true"></div>
-  </div>
-
-  <div class="track-info-container" id="track-info-container">
-    <div class="track-info-icon" id="track-info-icon">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 18V5l12-2v13"></path>
-        <circle cx="6" cy="18" r="3"></circle>
-        <circle cx="18" cy="16" r="3"></circle>
-      </svg>
-    </div>
-    <div class="track-info-text-wrap" id="track-info-text-wrap">
-      <div class="track-info-text" id="track-info-text">Wavelength</div>
-    </div>
-  </div>
-
-  <div class="controls-group">
-  <div class="action-row">
-    <div class="ctrl-pill">
-      <button class="action-btn" id="btn-pin" data-i18n-title="tooltip.pin" data-i18n-aria="tooltip.pin" title="Immer im Vordergrund" aria-label="Immer im Vordergrund">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9.5 2.5l3 3-3.25 3.25.25 2.25-2 2-1.75-3.25L2.5 8l2-2 2.25.25L9.5 2.5z"/>
-          <path d="M5.75 9.75L2 13.5"/>
-        </svg>
-      </button>
-      <button class="action-btn" id="btn-toggle-mini" data-i18n-title="tooltip.mini" data-i18n-aria="tooltip.mini" title="Mini-Modus" aria-label="Mini-Modus">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="11" height="9" rx="2"/>
-          <path d="M5 6.5h5"/>
-          <path d="M5 9h3"/>
-        </svg>
-      </button>
-    </div>
-    <button class="ctrl-btn lg" id="btn-playstop" data-i18n-title="tooltip.play" data-i18n-aria="tooltip.play" aria-label="Abspielen" aria-pressed="false" title="Abspielen">
-      <svg id="main-icon" width="20" height="20" viewBox="0 0 18 18" fill="currentColor">
-        <path d="M 3 2 L 15 9 L 3 16 L 3 2 Z"/>
-      </svg>
-    </button>
-    <div class="ctrl-pill">
-      <button class="action-btn" id="btn-sleep" data-i18n-title="tooltip.sleep" data-i18n-aria="tooltip.sleep" title="Sleeptimer (15 → 30 → 60 → 90 min → aus)" aria-label="Sleeptimer">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-        </svg>
-      </button>
-      <button class="action-btn" id="btn-bass" data-i18n-title="tooltip.bass" data-i18n-aria="tooltip.bass" title="Bassverstärkung · B" aria-label="Bassverstärkung">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/>
-          <line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/>
-          <line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/>
-          <line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="12" x2="14" y2="12"/><line x1="18" y1="16" x2="22" y2="16"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-  <div class="vol-row">
-    <button class="vol-mute-btn" id="btn-mute" data-i18n-title="tooltip.mute" data-i18n-aria="tooltip.mute" aria-label="Stumm · M" aria-pressed="false" title="Stumm · M">
-      <svg id="mute-icon" width="16" height="16" viewBox="0 0 15 15" fill="currentColor">
-        <path d="M2 5h3l4-3v11l-4-3H2V5z"/>
-        <path d="M11 5.5a3 3 0 0 1 0 4" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-      </svg>
-    </button>
-    <input type="range" id="vol-slider" min="0" max="100" value="80" data-i18n-title="tooltip.volume" data-i18n-aria="tooltip.volume.short" title="Lautstärke · Mausrad · ↑↓" aria-label="Lautstärke">
-    <span class="vol-val" id="vol-val">80%</span>
-  </div>
-  </div>
-
-</div>
-
-<!-- ── Mini view ─────────────────────────────────── -->
-<div id="mini-view">
-  <div class="mini-bar">
-    <div class="mini-logo" id="mini-logo-wrap">
-      <svg id="mini-logo-svg" class="logo-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke="url(#mini-logo-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <defs>
-          <linearGradient id="mini-logo-grad" x1="6" y1="22" x2="38" y2="22" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#ffbf69"/>
-            <stop offset="48%" stop-color="#34d6d0"/>
-            <stop offset="100%" stop-color="#4f7cff"/>
-          </linearGradient>
-        </defs>
-      </svg>
-      <img id="mini-station-icon" class="hidden" alt="">
-    </div>
-    <div class="mini-info">
-      <div class="mini-name" id="mini-station-name-wrap"><span class="mini-name-inner" id="mini-station-name">Wavelength</span></div>
-      <div class="mini-subtitle" id="mini-station-subtitle"></div>
-    </div>
-    <div class="mini-ctrls">
-      <button class="mini-btn play-btn" id="mini-playstop" data-i18n-title="tooltip.play" data-i18n-aria="tooltip.play" aria-label="Abspielen" aria-pressed="false" title="Abspielen">
-        <svg id="mini-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-          <path d="M 2 1 L 11 6 L 2 11 L 2 1 Z"/>
-        </svg>
-      </button>
-      <button class="mini-btn" id="mini-expand" data-i18n-title="tooltip.expand" data-i18n-aria="tooltip.expand" title="Vollansicht" aria-label="Vollansicht">
-        <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="11" height="9" rx="2"/>
-          <path d="M5 6.5h5"/>
-          <path d="M5 9h3"/>
-        </svg>
-      </button>
-      <button class="mini-btn" id="mini-hide" data-i18n-title="tooltip.hide" data-i18n-aria="tooltip.hide" title="In Tray minimieren" aria-label="In Tray minimieren">
-        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-          <line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-  <div class="mini-vol-strip">
-    <input type="range" id="mini-vol" min="0" max="100" value="80" data-i18n-title="tooltip.volume.short" data-i18n-aria="tooltip.volume.short" title="Lautstärke" aria-label="Lautstärke">
-  </div>
-</div>
-
-<!-- ── Visualizer Context Menu ──────────────────────── -->
-<div id="viz-context-menu" class="context-menu hidden"></div>
-
-<!-- ── About Modal Overlay ─────────────────────────── -->
-<div id="about-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">
-  <div class="modal-content">
-    <button class="modal-close" id="about-close-btn" data-i18n-title="tooltip.close" data-i18n-aria="tooltip.close" title="Schließen" aria-label="Schließen">&times;</button>
-    <div class="modal-logo-wrap">
-      <svg class="modal-logo" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22" stroke="url(#modal-logo-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <defs>
-          <linearGradient id="modal-logo-grad" x1="6" y1="22" x2="38" y2="22" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#ffbf69"/>
-            <stop offset="48%" stop-color="#34d6d0"/>
-            <stop offset="100%" stop-color="#4f7cff"/>
-          </linearGradient>
-        </defs>
-      </svg>
-    </div>
-    <h2 class="modal-title" id="about-modal-title">Wavelength</h2>
-    <p class="modal-subtitle" id="about-version">v1.7.6</p>
-    
-    <div class="modal-info-block">
-      <div class="modal-info-item">
-        <span class="modal-info-label" data-i18n="about.station">Aktive Station</span>
-        <span class="modal-info-val" id="about-station-name" data-i18n="about.no.station">Keine Station</span>
-      </div>
-      <div class="modal-info-item">
-        <span class="modal-info-label" data-i18n="about.stream">Stream-URL</span>
-        <span class="modal-info-val box" id="about-stream-url">-</span>
-      </div>
-      <div class="modal-info-item">
-        <span class="modal-info-label" data-i18n="about.website">Website</span>
-        <span class="modal-info-val box" id="about-website-url">-</span>
-      </div>
-    </div>
-    
-    <div class="modal-buttons modal-buttons--full">
-      <button class="modal-btn primary" id="about-web-btn" data-i18n="about.open.website">Website öffnen</button>
-      <button class="modal-btn" id="about-ok-btn" data-i18n="about.close">Schließen</button>
-    </div>
-  </div>
-</div>
-
-<div id="shortcuts-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="shortcuts-modal-title" aria-hidden="true">
-  <div class="modal-content">
-    <button class="modal-close" id="shortcuts-close-btn" data-i18n-title="tooltip.close" data-i18n-aria="tooltip.close" title="Schließen" aria-label="Schließen">&times;</button>
-    <h2 class="modal-title" id="shortcuts-modal-title" data-i18n="shortcuts.title">Tastaturkürzel</h2>
-    <div class="modal-info-block shortcuts-list">
-      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.play">Play / Pause</span><kbd data-i18n="shortcut.key.space">Leertaste</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.mute">Stummschalten</span><kbd>M</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.bass">Bassverstärkung wechseln</span><kbd>B</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.visualizer">Visualizer-Modus</span><kbd>V</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.volume">Lautstärke</span><span><kbd>↑</kbd> <kbd>↓</kbd></span></div>
-      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.gain">Station-Gain</span><span><kbd>Alt</kbd>+<kbd>↑</kbd> <kbd>↓</kbd></span></div>
-      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.scroll">Lautstärke (Mausrad)</span><kbd data-i18n="shortcut.scroll.key">Scrollen</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.help">Hilfe öffnen</span><span><kbd>?</kbd> / <kbd>F1</kbd></span></div>
-      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.history">Wiedergabeverlauf</span><kbd>F4</kbd></div>
-      <div class="shortcut-row"><span class="shortcut-label" data-i18n="shortcut.close">Modal schließen</span><kbd>Esc</kbd></div>
-    </div>
-    <div class="modal-buttons modal-buttons--full">
-      <button class="modal-btn" id="shortcuts-ok-btn" data-i18n="about.close">Schließen</button>
-    </div>
-  </div>
-</div>
-
-<div id="station-editor-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="station-editor-title" aria-hidden="true">
-  <div class="modal-content">
-    <button class="modal-close" id="station-editor-close-btn" data-i18n-title="tooltip.close" data-i18n-aria="tooltip.close" title="Schließen" aria-label="Schließen">&times;</button>
-    <h2 class="modal-title" id="station-editor-title">Station hinzufügen</h2>
-    <form id="station-editor-form" class="station-editor-form" novalidate>
-      <input type="hidden" id="station-editor-id">
-      <div class="form-field">
-        <label for="station-editor-name"><span data-i18n="editor.label.name">Name</span> <span class="field-required">*</span></label>
-        <input type="text" id="station-editor-name" placeholder="z.B. Mein Lieblingssender" autocomplete="off">
-      </div>
-      <div class="form-field">
-        <label for="station-editor-url"><span data-i18n="editor.label.url">Stream-URL</span> <span class="field-required">*</span></label>
-        <input type="text" id="station-editor-url" placeholder="https://stream.beispiel.de/live" autocomplete="off">
-      </div>
-      <div class="form-field">
-        <label for="station-editor-genre" data-i18n="editor.label.genre">Kategorie</label>
-        <input type="text" id="station-editor-genre" placeholder="z.B. Pop, Rock, Jazz …" autocomplete="off">
-      </div>
-      <div class="form-field">
-        <label for="station-editor-icon" data-i18n="editor.label.icon">Icon-URL</label>
-        <input type="text" id="station-editor-icon" placeholder="https://..." autocomplete="off">
-      </div>
-      <p id="station-editor-error" class="form-error hidden"></p>
-      <div class="modal-buttons modal-buttons--full">
-        <button type="button" class="modal-btn modal-btn-ghost" id="station-editor-cancel-btn" data-i18n="editor.cancel">Abbrechen</button>
-        <button type="submit" class="modal-btn" id="station-editor-save-btn" data-i18n="editor.save">Speichern</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- ── Confirmation Modal Overlay ─────────────────── -->
-<div id="confirm-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
-  <div class="modal-content">
-    <h2 class="modal-title" id="confirm-modal-title" data-i18n="confirm.title">Station löschen?</h2>
-    <p class="modal-subtitle" id="confirm-modal-body"></p>
-    <div class="modal-buttons modal-buttons--full">
-      <button class="modal-btn modal-btn-ghost" id="confirm-cancel-btn" data-i18n="confirm.cancel">Abbrechen</button>
-      <button class="modal-btn danger" id="confirm-ok-btn" data-i18n="confirm.ok">Löschen</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Track History Modal Overlay ─────────────── -->
-<div id="history-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
-  <div class="modal-content history-modal">
-    <h2 class="modal-title" id="history-modal-title" data-i18n="history.title">Wiedergabeverlauf</h2>
-    <div id="history-list" class="history-list" aria-live="polite"></div>
-    <div class="modal-buttons modal-buttons--full">
-      <button class="modal-btn modal-btn-ghost" id="history-clear-btn" data-i18n="history.clear">Verlauf löschen</button>
-      <button class="modal-btn" id="history-close-btn" data-i18n="about.close">Schließen</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Settings Modal ───────────────────────────── -->
-<div id="settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
-  <div class="modal-content settings-modal-content">
-    <h2 class="modal-title" id="settings-modal-title" data-i18n="settings.title">Einstellungen</h2>
-
-    <div class="settings-body">
-      <div class="settings-section">
-        <div class="settings-section-title" data-i18n="settings.appearance">Darstellung</div>
-
-
-        <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.lang">Sprache</span>
-          <div class="lang-picker" id="lang-picker">
-            <button class="lang-btn" data-lang="de">Deutsch</button>
-            <button class="lang-btn" data-lang="en">English</button>
+    <!-- ── Full view ─────────────────────────────────── -->
+    <div id="full-view">
+      <div class="top-section">
+        <div class="logo-area">
+          <div class="logo-img-wrap" id="player-logo-wrap">
+            <img id="player-station-icon" class="logo-mark hidden" alt="" />
+            <!-- Glowing Wave Vector Logo -->
+            <svg
+              id="player-default-logo"
+              class="logo-mark"
+              viewBox="0 0 44 44"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22"
+                stroke="url(#logo-grad)"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <defs>
+                <linearGradient id="logo-grad" x1="6" y1="22" x2="38" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#ffbf69" />
+                  <stop offset="48%" stop-color="#34d6d0" />
+                  <stop offset="100%" stop-color="#4f7cff" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="logo-info">
+            <div class="app-title-label">Wavelength</div>
+            <div class="station-title-row">
+              <div class="logo-name" id="active-station-name" title="Wavelength">
+                <span class="logo-name-inner" id="active-station-name-inner">Wavelength</span>
+              </div>
+              <button
+                class="station-gain-pill"
+                id="station-gain-pill"
+                data-i18n-title="tooltip.gain.reset"
+                data-i18n-aria="tooltip.gain.reset"
+                title="Sender-Trim zurücksetzen"
+                aria-label="Sender-Trim zurücksetzen"
+              ></button>
+            </div>
+            <div class="logo-tagline" id="active-station-subtitle">Multi-Sender-Radio</div>
+            <div class="status-row">
+              <div class="live-badge">
+                <span class="live-wave" aria-hidden="true"><span></span><span></span><span></span></span
+                ><span id="live-status" aria-live="polite" aria-atomic="true">Gestoppt</span>
+              </div>
+              <span class="listen-badge" id="listen-badge" aria-live="polite" aria-atomic="true"
+                >Heute 0 min</span
+              >
+              <span class="sleep-badge" id="sleep-badge" aria-live="polite" aria-atomic="true"></span>
+              <button
+                class="fav-badge-btn"
+                id="player-fav-btn"
+                data-i18n-title="tooltip.fav.add"
+                data-i18n-aria="tooltip.fav.add"
+                title="Zu Favoriten hinzufügen"
+                aria-label="Zu Favoriten hinzufügen"
+                aria-pressed="false"
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="-2 -2.5 28 28"
+                  overflow="visible"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <polygon
+                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                  ></polygon>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="settings-section">
-        <div class="settings-section-title" data-i18n="settings.startup">Startverhalten</div>
-        <label class="settings-check-row">
-          <input type="checkbox" id="setting-autoplay">
-          <span data-i18n="settings.autoplay">Letzten Sender automatisch abspielen</span>
-        </label>
-        <label class="settings-check-row">
-          <input type="checkbox" id="setting-startmini">
-          <span data-i18n="settings.startMini">Im Mini-Modus starten</span>
-        </label>
-      </div>
+      <button
+        class="view-toggle-btn"
+        id="btn-view-toggle"
+        aria-pressed="false"
+        data-i18n-title="tooltip.view.stations"
+        data-i18n-aria="tooltip.view.stations"
+        aria-label="Senderliste anzeigen"
+        title="Senderliste anzeigen"
+      >
+        <svg
+          class="icon-list"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="3.01" y2="6" />
+          <line x1="3" y1="12" x2="3.01" y2="12" />
+          <line x1="3" y1="18" x2="3.01" y2="18" />
+        </svg>
+        <svg
+          class="icon-player"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M9 18V5l12-2v13" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="18" cy="16" r="3" />
+        </svg>
+      </button>
 
-      <div class="settings-section">
-        <div class="settings-section-title">System</div>
-        <label class="settings-check-row">
-          <input type="checkbox" id="setting-autostart">
-          <span data-i18n="settings.autostart">Mit Windows starten</span>
-        </label>
-      </div>
-    </div>
+      <button
+        class="settings-btn"
+        id="btn-settings"
+        data-i18n-title="settings.title"
+        data-i18n-aria="settings.title"
+        title="Einstellungen"
+        aria-label="Einstellungen"
+      >
+        <svg
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+          />
+        </svg>
+      </button>
 
-    <div class="modal-buttons modal-buttons--full">
-      <button class="modal-btn" id="settings-save-btn" data-i18n="settings.save">Speichern</button>
-    </div>
-  </div>
-</div>
+      <button
+        class="hide-btn"
+        id="btn-hide"
+        data-i18n-title="tooltip.hide"
+        data-i18n-aria="tooltip.hide"
+        title="In Tray minimieren"
+        aria-label="In Tray minimieren"
+      >
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 10 10"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+        >
+          <line x1="1" y1="1" x2="9" y2="9" />
+          <line x1="9" y1="1" x2="1" y2="9" />
+        </svg>
+      </button>
 
-<!-- ── Onboarding Modal Overlay ─────────────────── -->
-<div id="onboarding-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
-  <div class="modal-content onboarding">
-    <div class="onboarding-slides">
-      <div class="onboarding-slide active" data-slide="0">
-        <div class="onboarding-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      <!-- Station Picker panel -->
+      <div class="station-picker" id="station-picker">
+        <div class="search-container">
+          <div class="search-row">
+            <input
+              type="text"
+              id="station-search"
+              data-i18n-placeholder="filter.search"
+              data-i18n-aria="filter.search"
+              placeholder="Station filtern…"
+              aria-label="Station filtern…"
+            />
+            <button
+              class="fav-toggle-btn"
+              id="btn-fav-filter"
+              data-i18n-title="tooltip.fav.filter"
+              data-i18n-aria="tooltip.fav.filter"
+              title="Nur Favoriten anzeigen"
+              aria-label="Nur Favoriten anzeigen"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                ></polygon>
+              </svg>
+            </button>
+            <button
+              class="add-station-btn"
+              id="btn-add-station"
+              data-i18n-title="tooltip.station.add"
+              data-i18n-aria="tooltip.station.add"
+              title="Eigene Station hinzufügen"
+              aria-label="Eigene Station hinzufügen"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="filter-row">
+            <select id="genre-filter" aria-label="Kategorie filtern">
+              <option value="">Alle Kategorien</option>
+            </select>
+            <select id="lang-filter" aria-label="Sprache filtern">
+              <option value="">Alle Sprachen</option>
+            </select>
+            <select id="bitrate-filter" aria-label="Mindestbitrate">
+              <option value="0" data-i18n="filter.bitrate">Bitrate</option>
+              <option value="64">≥ 64 kbps</option>
+              <option value="128">≥ 128 kbps</option>
+              <option value="192">≥ 192 kbps</option>
+              <option value="320">≥ 320 kbps</option>
+            </select>
+          </div>
         </div>
-        <h2 class="modal-title" id="onboarding-title">Willkommen bei Wavelength</h2>
-        <p class="onboarding-text">Wavelength läuft dezent im System-Tray. Schließe das Fenster, der Player läuft im Hintergrund weiter.</p>
-      </div>
-      <div class="onboarding-slide" data-slide="1">
-        <div class="onboarding-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="8" width="20" height="8" rx="2"/><circle cx="8" cy="12" r="1.5"/><path d="M12 12h6"/></svg>
+        <div class="recents-row hidden" id="recents-row">
+          <div class="recents-label" data-i18n="recents.label">Zuletzt:</div>
+          <div id="recents-list"></div>
         </div>
-        <h2 class="modal-title">Mini-Modus</h2>
-        <p class="onboarding-text">Klick aufs Halbmond-Icon oder drücke <kbd>M</kbd>: die App wird zur kompakten Leiste, perfekt am Bildschirmrand.</p>
-      </div>
-      <div class="onboarding-slide" data-slide="2">
-        <div class="onboarding-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+        <div class="station-list" id="station-list">
+          <!-- Loaded dynamically -->
         </div>
-        <h2 class="modal-title">Favoriten &amp; Shortcuts</h2>
-        <p class="onboarding-text">Markiere Sender mit dem Stern. <kbd>Leertaste</kbd> spielt/stoppt, <kbd>F1</kbd> zeigt alle Tastaturkürzel.</p>
       </div>
-    </div>
-    <div class="onboarding-dots" role="tablist" aria-label="Onboarding-Fortschritt">
-      <span class="onboarding-dot active" data-dot="0"></span>
-      <span class="onboarding-dot" data-dot="1"></span>
-      <span class="onboarding-dot" data-dot="2"></span>
-    </div>
-    <div class="modal-buttons modal-buttons--full">
-      <button class="modal-btn modal-btn-ghost" id="onboarding-skip-btn">Überspringen</button>
-      <button class="modal-btn" id="onboarding-next-btn">Weiter</button>
-    </div>
-  </div>
-</div>
 
-<script src="utils.js"></script>
-<script src="visualizer.js"></script>
-<script type="module" src="renderer.js"></script>
-</body>
+      <div class="viz-strip">
+        <svg class="viz-logo-underlay" viewBox="0 0 44 44" fill="none" aria-hidden="true" focusable="false">
+          <path
+            d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <canvas
+          id="visualizer"
+          role="img"
+          aria-label="Audio-Visualizer, Modus: Bars"
+          data-i18n-title="tooltip.visualizer"
+          title="Linksklick = Modus wechseln · Rechtsklick = Menü"
+        ></canvas>
+        <div class="viz-toast" id="viz-toast" role="status" aria-live="polite" aria-atomic="true"></div>
+      </div>
+
+      <div class="track-info-container" id="track-info-container">
+        <div class="track-info-icon" id="track-info-icon">
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </div>
+        <div class="track-info-text-wrap" id="track-info-text-wrap">
+          <div class="track-info-text" id="track-info-text">Wavelength</div>
+        </div>
+      </div>
+
+      <div class="controls-group">
+        <div class="action-row">
+          <div class="ctrl-pill">
+            <button
+              class="action-btn"
+              id="btn-pin"
+              data-i18n-title="tooltip.pin"
+              data-i18n-aria="tooltip.pin"
+              title="Immer im Vordergrund"
+              aria-label="Immer im Vordergrund"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 15 15"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M9.5 2.5l3 3-3.25 3.25.25 2.25-2 2-1.75-3.25L2.5 8l2-2 2.25.25L9.5 2.5z" />
+                <path d="M5.75 9.75L2 13.5" />
+              </svg>
+            </button>
+            <button
+              class="action-btn"
+              id="btn-toggle-mini"
+              data-i18n-title="tooltip.mini"
+              data-i18n-aria="tooltip.mini"
+              title="Mini-Modus"
+              aria-label="Mini-Modus"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 15 15"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="2" y="3" width="11" height="9" rx="2" />
+                <path d="M5 6.5h5" />
+                <path d="M5 9h3" />
+              </svg>
+            </button>
+          </div>
+          <button
+            class="ctrl-btn lg"
+            id="btn-playstop"
+            data-i18n-title="tooltip.play"
+            data-i18n-aria="tooltip.play"
+            aria-label="Abspielen"
+            aria-pressed="false"
+            title="Abspielen"
+          >
+            <svg id="main-icon" width="20" height="20" viewBox="0 0 18 18" fill="currentColor">
+              <path d="M 3 2 L 15 9 L 3 16 L 3 2 Z" />
+            </svg>
+          </button>
+          <div class="ctrl-pill">
+            <button
+              class="action-btn"
+              id="btn-sleep"
+              data-i18n-title="tooltip.sleep"
+              data-i18n-aria="tooltip.sleep"
+              title="Sleeptimer (15 → 30 → 60 → 90 min → aus)"
+              aria-label="Sleeptimer"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            </button>
+            <button
+              class="action-btn"
+              id="btn-bass"
+              data-i18n-title="tooltip.bass"
+              data-i18n-aria="tooltip.bass"
+              title="Bassverstärkung · B"
+              aria-label="Bassverstärkung"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="4" y1="21" x2="4" y2="14" />
+                <line x1="4" y1="10" x2="4" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12" y2="3" />
+                <line x1="20" y1="21" x2="20" y2="16" />
+                <line x1="20" y1="12" x2="20" y2="3" />
+                <line x1="2" y1="14" x2="6" y2="14" />
+                <line x1="10" y1="12" x2="14" y2="12" />
+                <line x1="18" y1="16" x2="22" y2="16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="vol-row">
+          <button
+            class="vol-mute-btn"
+            id="btn-mute"
+            data-i18n-title="tooltip.mute"
+            data-i18n-aria="tooltip.mute"
+            aria-label="Stumm · M"
+            aria-pressed="false"
+            title="Stumm · M"
+          >
+            <svg id="mute-icon" width="16" height="16" viewBox="0 0 15 15" fill="currentColor">
+              <path d="M2 5h3l4-3v11l-4-3H2V5z" />
+              <path
+                d="M11 5.5a3 3 0 0 1 0 4"
+                stroke="currentColor"
+                stroke-width="1.4"
+                fill="none"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+          <input
+            type="range"
+            id="vol-slider"
+            min="0"
+            max="100"
+            value="80"
+            data-i18n-title="tooltip.volume"
+            data-i18n-aria="tooltip.volume.short"
+            title="Lautstärke · Mausrad · ↑↓"
+            aria-label="Lautstärke"
+          />
+          <span class="vol-val" id="vol-val">80%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Mini view ─────────────────────────────────── -->
+    <div id="mini-view">
+      <div class="mini-bar">
+        <div class="mini-logo" id="mini-logo-wrap">
+          <svg
+            id="mini-logo-svg"
+            class="logo-mark"
+            viewBox="0 0 44 44"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22"
+              stroke="url(#mini-logo-grad)"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <defs>
+              <linearGradient
+                id="mini-logo-grad"
+                x1="6"
+                y1="22"
+                x2="38"
+                y2="22"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0%" stop-color="#ffbf69" />
+                <stop offset="48%" stop-color="#34d6d0" />
+                <stop offset="100%" stop-color="#4f7cff" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <img id="mini-station-icon" class="hidden" alt="" />
+        </div>
+        <div class="mini-info">
+          <div class="mini-name" id="mini-station-name-wrap">
+            <span class="mini-name-inner" id="mini-station-name">Wavelength</span>
+          </div>
+          <div class="mini-subtitle" id="mini-station-subtitle"></div>
+        </div>
+        <div class="mini-ctrls">
+          <button
+            class="mini-btn play-btn"
+            id="mini-playstop"
+            data-i18n-title="tooltip.play"
+            data-i18n-aria="tooltip.play"
+            aria-label="Abspielen"
+            aria-pressed="false"
+            title="Abspielen"
+          >
+            <svg id="mini-icon" width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+              <path d="M 2 1 L 11 6 L 2 11 L 2 1 Z" />
+            </svg>
+          </button>
+          <button
+            class="mini-btn"
+            id="mini-expand"
+            data-i18n-title="tooltip.expand"
+            data-i18n-aria="tooltip.expand"
+            title="Vollansicht"
+            aria-label="Vollansicht"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 15 15"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="2" y="3" width="11" height="9" rx="2" />
+              <path d="M5 6.5h5" />
+              <path d="M5 9h3" />
+            </svg>
+          </button>
+          <button
+            class="mini-btn"
+            id="mini-hide"
+            data-i18n-title="tooltip.hide"
+            data-i18n-aria="tooltip.hide"
+            title="In Tray minimieren"
+            aria-label="In Tray minimieren"
+          >
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 11 11"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            >
+              <line x1="1" y1="1" x2="10" y2="10" />
+              <line x1="10" y1="1" x2="1" y2="10" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="mini-vol-strip">
+        <input
+          type="range"
+          id="mini-vol"
+          min="0"
+          max="100"
+          value="80"
+          data-i18n-title="tooltip.volume.short"
+          data-i18n-aria="tooltip.volume.short"
+          title="Lautstärke"
+          aria-label="Lautstärke"
+        />
+      </div>
+    </div>
+
+    <!-- ── Visualizer Context Menu ──────────────────────── -->
+    <div id="viz-context-menu" class="context-menu hidden"></div>
+
+    <!-- ── About Modal Overlay ─────────────────────────── -->
+    <div
+      id="about-modal"
+      class="modal-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="about-modal-title"
+    >
+      <div class="modal-content">
+        <button
+          class="modal-close"
+          id="about-close-btn"
+          data-i18n-title="tooltip.close"
+          data-i18n-aria="tooltip.close"
+          title="Schließen"
+          aria-label="Schließen"
+        >
+          &times;
+        </button>
+        <div class="modal-logo-wrap">
+          <svg class="modal-logo" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M6 22C6 22 9 10 13 10C17 10 19 34 23 34C27 34 29 14 33 14C37 14 38 22 38 22"
+              stroke="url(#modal-logo-grad)"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <defs>
+              <linearGradient
+                id="modal-logo-grad"
+                x1="6"
+                y1="22"
+                x2="38"
+                y2="22"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0%" stop-color="#ffbf69" />
+                <stop offset="48%" stop-color="#34d6d0" />
+                <stop offset="100%" stop-color="#4f7cff" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h2 class="modal-title" id="about-modal-title">Wavelength</h2>
+        <p class="modal-subtitle" id="about-version">v1.7.6</p>
+
+        <div class="modal-info-block">
+          <div class="modal-info-item">
+            <span class="modal-info-label" data-i18n="about.station">Aktive Station</span>
+            <span class="modal-info-val" id="about-station-name" data-i18n="about.no.station"
+              >Keine Station</span
+            >
+          </div>
+          <div class="modal-info-item">
+            <span class="modal-info-label" data-i18n="about.stream">Stream-URL</span>
+            <span class="modal-info-val box" id="about-stream-url">-</span>
+          </div>
+          <div class="modal-info-item">
+            <span class="modal-info-label" data-i18n="about.website">Website</span>
+            <span class="modal-info-val box" id="about-website-url">-</span>
+          </div>
+        </div>
+
+        <div class="modal-buttons modal-buttons--full">
+          <button class="modal-btn primary" id="about-web-btn" data-i18n="about.open.website">
+            Website öffnen
+          </button>
+          <button class="modal-btn" id="about-ok-btn" data-i18n="about.close">Schließen</button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="shortcuts-modal"
+      class="modal-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="shortcuts-modal-title"
+      aria-hidden="true"
+    >
+      <div class="modal-content">
+        <button
+          class="modal-close"
+          id="shortcuts-close-btn"
+          data-i18n-title="tooltip.close"
+          data-i18n-aria="tooltip.close"
+          title="Schließen"
+          aria-label="Schließen"
+        >
+          &times;
+        </button>
+        <h2 class="modal-title" id="shortcuts-modal-title" data-i18n="shortcuts.title">Tastaturkürzel</h2>
+        <div class="modal-info-block shortcuts-list">
+          <div class="shortcut-row">
+            <span class="shortcut-label" data-i18n="shortcut.play">Play / Pause</span
+            ><kbd data-i18n="shortcut.key.space">Leertaste</kbd>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label" data-i18n="shortcut.mute">Stummschalten</span><kbd>M</kbd>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label" data-i18n="shortcut.bass">Bassverstärkung wechseln</span><kbd>B</kbd>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label" data-i18n="shortcut.visualizer">Visualizer-Modus</span><kbd>V</kbd>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label" data-i18n="shortcut.volume">Lautstärke</span
+            ><span><kbd>↑</kbd> <kbd>↓</kbd></span>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label" data-i18n="shortcut.gain">Station-Gain</span
+            ><span><kbd>Alt</kbd>+<kbd>↑</kbd> <kbd>↓</kbd></span>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label" data-i18n="shortcut.scroll">Lautstärke (Mausrad)</span
+            ><kbd data-i18n="shortcut.scroll.key">Scrollen</kbd>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label" data-i18n="shortcut.help">Hilfe öffnen</span
+            ><span><kbd>?</kbd> / <kbd>F1</kbd></span>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label" data-i18n="shortcut.history">Wiedergabeverlauf</span><kbd>F4</kbd>
+          </div>
+          <div class="shortcut-row">
+            <span class="shortcut-label" data-i18n="shortcut.close">Modal schließen</span><kbd>Esc</kbd>
+          </div>
+        </div>
+        <div class="modal-buttons modal-buttons--full">
+          <button class="modal-btn" id="shortcuts-ok-btn" data-i18n="about.close">Schließen</button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="station-editor-modal"
+      class="modal-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="station-editor-title"
+      aria-hidden="true"
+    >
+      <div class="modal-content">
+        <button
+          class="modal-close"
+          id="station-editor-close-btn"
+          data-i18n-title="tooltip.close"
+          data-i18n-aria="tooltip.close"
+          title="Schließen"
+          aria-label="Schließen"
+        >
+          &times;
+        </button>
+        <h2 class="modal-title" id="station-editor-title">Station hinzufügen</h2>
+        <form id="station-editor-form" class="station-editor-form" novalidate>
+          <input type="hidden" id="station-editor-id" />
+          <div class="form-field">
+            <label for="station-editor-name"
+              ><span data-i18n="editor.label.name">Name</span> <span class="field-required">*</span></label
+            >
+            <input
+              type="text"
+              id="station-editor-name"
+              placeholder="z.B. Mein Lieblingssender"
+              autocomplete="off"
+            />
+          </div>
+          <div class="form-field">
+            <label for="station-editor-url"
+              ><span data-i18n="editor.label.url">Stream-URL</span>
+              <span class="field-required">*</span></label
+            >
+            <input
+              type="text"
+              id="station-editor-url"
+              placeholder="https://stream.beispiel.de/live"
+              autocomplete="off"
+            />
+          </div>
+          <div class="form-field">
+            <label for="station-editor-genre" data-i18n="editor.label.genre">Kategorie</label>
+            <input
+              type="text"
+              id="station-editor-genre"
+              placeholder="z.B. Pop, Rock, Jazz …"
+              autocomplete="off"
+            />
+          </div>
+          <div class="form-field">
+            <label for="station-editor-icon" data-i18n="editor.label.icon">Icon-URL</label>
+            <input type="text" id="station-editor-icon" placeholder="https://..." autocomplete="off" />
+          </div>
+          <p id="station-editor-error" class="form-error hidden"></p>
+          <div class="modal-buttons modal-buttons--full">
+            <button
+              type="button"
+              class="modal-btn modal-btn-ghost"
+              id="station-editor-cancel-btn"
+              data-i18n="editor.cancel"
+            >
+              Abbrechen
+            </button>
+            <button type="submit" class="modal-btn" id="station-editor-save-btn" data-i18n="editor.save">
+              Speichern
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── Confirmation Modal Overlay ─────────────────── -->
+    <div
+      id="confirm-modal"
+      class="modal-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-modal-title"
+    >
+      <div class="modal-content">
+        <h2 class="modal-title" id="confirm-modal-title" data-i18n="confirm.title">Station löschen?</h2>
+        <p class="modal-subtitle" id="confirm-modal-body"></p>
+        <div class="modal-buttons modal-buttons--full">
+          <button class="modal-btn modal-btn-ghost" id="confirm-cancel-btn" data-i18n="confirm.cancel">
+            Abbrechen
+          </button>
+          <button class="modal-btn danger" id="confirm-ok-btn" data-i18n="confirm.ok">Löschen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Track History Modal Overlay ─────────────── -->
+    <div
+      id="history-modal"
+      class="modal-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="history-modal-title"
+    >
+      <div class="modal-content history-modal">
+        <h2 class="modal-title" id="history-modal-title" data-i18n="history.title">Wiedergabeverlauf</h2>
+        <div id="history-list" class="history-list" aria-live="polite"></div>
+        <div class="modal-buttons modal-buttons--full">
+          <button class="modal-btn modal-btn-ghost" id="history-clear-btn" data-i18n="history.clear">
+            Verlauf löschen
+          </button>
+          <button class="modal-btn" id="history-close-btn" data-i18n="about.close">Schließen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Settings Modal ───────────────────────────── -->
+    <div
+      id="settings-modal"
+      class="modal-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settings-modal-title"
+    >
+      <div class="modal-content settings-modal-content">
+        <h2 class="modal-title" id="settings-modal-title" data-i18n="settings.title">Einstellungen</h2>
+
+        <div class="settings-body">
+          <div class="settings-section">
+            <div class="settings-section-title" data-i18n="settings.appearance">Darstellung</div>
+
+            <div class="settings-row">
+              <span class="settings-label" data-i18n="settings.lang">Sprache</span>
+              <div class="lang-picker" id="lang-picker">
+                <button class="lang-btn" data-lang="de">Deutsch</button>
+                <button class="lang-btn" data-lang="en">English</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title" data-i18n="settings.startup">Startverhalten</div>
+            <label class="settings-check-row">
+              <input type="checkbox" id="setting-autoplay" />
+              <span data-i18n="settings.autoplay">Letzten Sender automatisch abspielen</span>
+            </label>
+            <label class="settings-check-row">
+              <input type="checkbox" id="setting-startmini" />
+              <span data-i18n="settings.startMini">Im Mini-Modus starten</span>
+            </label>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">System</div>
+            <label class="settings-check-row">
+              <input type="checkbox" id="setting-autostart" />
+              <span data-i18n="settings.autostart">Mit Windows starten</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-buttons modal-buttons--full">
+          <button class="modal-btn" id="settings-save-btn" data-i18n="settings.save">Speichern</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Onboarding Modal Overlay ─────────────────── -->
+    <div
+      id="onboarding-modal"
+      class="modal-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="onboarding-title"
+    >
+      <div class="modal-content onboarding">
+        <div class="onboarding-slides">
+          <div class="onboarding-slide active" data-slide="0">
+            <div class="onboarding-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="14" rx="2" />
+                <path d="M8 21h8M12 17v4" />
+              </svg>
+            </div>
+            <h2 class="modal-title" id="onboarding-title">Willkommen bei Wavelength</h2>
+            <p class="onboarding-text">
+              Wavelength läuft dezent im System-Tray. Schließe das Fenster, der Player läuft im Hintergrund
+              weiter.
+            </p>
+          </div>
+          <div class="onboarding-slide" data-slide="1">
+            <div class="onboarding-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="8" width="20" height="8" rx="2" />
+                <circle cx="8" cy="12" r="1.5" />
+                <path d="M12 12h6" />
+              </svg>
+            </div>
+            <h2 class="modal-title">Mini-Modus</h2>
+            <p class="onboarding-text">
+              Klick aufs Halbmond-Icon oder drücke <kbd>M</kbd>: die App wird zur kompakten Leiste, perfekt am
+              Bildschirmrand.
+            </p>
+          </div>
+          <div class="onboarding-slide" data-slide="2">
+            <div class="onboarding-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <polygon
+                  points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                />
+              </svg>
+            </div>
+            <h2 class="modal-title">Favoriten &amp; Shortcuts</h2>
+            <p class="onboarding-text">
+              Markiere Sender mit dem Stern. <kbd>Leertaste</kbd> spielt/stoppt, <kbd>F1</kbd> zeigt alle
+              Tastaturkürzel.
+            </p>
+          </div>
+        </div>
+        <div class="onboarding-dots" role="tablist" aria-label="Onboarding-Fortschritt">
+          <span class="onboarding-dot active" data-dot="0"></span>
+          <span class="onboarding-dot" data-dot="1"></span>
+          <span class="onboarding-dot" data-dot="2"></span>
+        </div>
+        <div class="modal-buttons modal-buttons--full">
+          <button class="modal-btn modal-btn-ghost" id="onboarding-skip-btn">Überspringen</button>
+          <button class="modal-btn" id="onboarding-next-btn">Weiter</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script src="visualizer.js"></script>
+    <script type="module" src="renderer.js"></script>
+  </body>
 </html>

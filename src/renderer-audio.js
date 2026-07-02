@@ -1,14 +1,24 @@
 import { state, audio } from './renderer-state.js';
 import {
-  LS, saveBool, stationTodayKey, stationTotalKey, loadInt,
-  updatePlayUI, reportConnectionState, displayTrackInfo,
-  showToast, applyStationGain, updateListenBadge,
+  LS,
+  saveBool,
+  stationTodayKey,
+  stationTotalKey,
+  loadInt,
+  updatePlayUI,
+  reportConnectionState,
+  displayTrackInfo,
+  showToast,
+  applyStationGain,
+  updateListenBadge,
 } from './renderer-ui.js';
 import { bassTooltip, MEDIA_SESSION_FALLBACK } from './ui-labels.mjs';
 import { t } from './i18n.js';
 import {
-  RECONNECT_DELAYS, shouldScheduleReconnect,
-  reconnectDelayForAttempt, nextReconnectAttempt,
+  RECONNECT_DELAYS,
+  shouldScheduleReconnect,
+  reconnectDelayForAttempt,
+  nextReconnectAttempt,
 } from './reconnect-policy.mjs';
 
 export { RECONNECT_DELAYS } from './reconnect-policy.mjs';
@@ -17,7 +27,7 @@ const api = window.electronAPI;
 const { mediaSessionFields } = window.utils;
 
 // ── Bass Boost ───────────────────────────────────
-export const BASS_GAINS  = [0, 6, 12];
+export const BASS_GAINS = [0, 6, 12];
 
 export function applyBassBoost() {
   if (state.bassFilter) state.bassFilter.gain.value = BASS_GAINS[state.bassBoostLevel];
@@ -32,7 +42,8 @@ export function cycleBassBoost() {
   state.bassBoostLevel = (state.bassBoostLevel + 1) % BASS_GAINS.length;
   localStorage.setItem(LS.bass, String(state.bassBoostLevel));
   applyBassBoost();
-  const bassLevelLabel = [t('tooltip.bass.off'), '+6 dB', '+12 dB'][state.bassBoostLevel] ?? t('tooltip.bass.off');
+  const bassLevelLabel =
+    [t('tooltip.bass.off'), '+6 dB', '+12 dB'][state.bassBoostLevel] ?? t('tooltip.bass.off');
   showToast(`Bass ${bassLevelLabel}`);
 }
 
@@ -92,7 +103,10 @@ export function scheduleReconnect() {
 }
 
 export function cancelReconnect() {
-  if (state.reconnectTimer) { clearTimeout(state.reconnectTimer); state.reconnectTimer = null; }
+  if (state.reconnectTimer) {
+    clearTimeout(state.reconnectTimer);
+    state.reconnectTimer = null;
+  }
   state.reconnectAttempt = 0;
   setReconnecting(false);
   if (state.playing) reportConnectionState(state.muted ? 'muted' : 'live');
@@ -106,25 +120,27 @@ export function updateMediaSession(isPlaying) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title,
       artist,
-      album:   `${state.activeStation.genre} · ${state.activeStation.country}`,
+      album: `${state.activeStation.genre} · ${state.activeStation.country}`,
       artwork: state.activeStation.iconUrl
         ? [{ src: state.activeStation.iconUrl, sizes: '128x128', type: 'image/png' }]
         : [],
     });
   } else {
     navigator.mediaSession.metadata = new MediaMetadata({
-      title:  MEDIA_SESSION_FALLBACK.title,
+      title: MEDIA_SESSION_FALLBACK.title,
       artist: MEDIA_SESSION_FALLBACK.artist,
-      album:  MEDIA_SESSION_FALLBACK.album,
+      album: MEDIA_SESSION_FALLBACK.album,
     });
   }
   navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
 }
 
 if ('mediaSession' in navigator) {
-  navigator.mediaSession.setActionHandler('play',  () => api.playPause());
+  navigator.mediaSession.setActionHandler('play', () => api.playPause());
   navigator.mediaSession.setActionHandler('pause', () => api.playPause());
-  navigator.mediaSession.setActionHandler('stop',  () => { if (state.playing) api.playPause(); });
+  navigator.mediaSession.setActionHandler('stop', () => {
+    if (state.playing) api.playPause();
+  });
 }
 
 // ── Listen Timer ─────────────────────────────────
@@ -148,8 +164,8 @@ function addListenTime(ms) {
   ensureListenDate();
   const rounded = Math.round(ms);
   const id = state.activeStation.id;
-  const today   = parseInt(localStorage.getItem(stationTodayKey(id)) || '0', 10) + rounded;
-  const total   = parseInt(localStorage.getItem(stationTotalKey(id)) || '0', 10) + rounded;
+  const today = parseInt(localStorage.getItem(stationTodayKey(id)) || '0', 10) + rounded;
+  const total = parseInt(localStorage.getItem(stationTotalKey(id)) || '0', 10) + rounded;
   const overall = parseInt(localStorage.getItem(LS.listenOverallTotal) || '0', 10) + rounded;
   localStorage.setItem(stationTodayKey(id), String(today));
   localStorage.setItem(stationTotalKey(id), String(total));
@@ -172,7 +188,10 @@ export function startListenTimer() {
 
 export function stopListenTimer() {
   recordListenTick();
-  if (state.listenTimer) { clearInterval(state.listenTimer); state.listenTimer = null; }
+  if (state.listenTimer) {
+    clearInterval(state.listenTimer);
+    state.listenTimer = null;
+  }
   state.lastListenAt = 0;
 }
 
@@ -204,7 +223,11 @@ export function stopPlay() {
   state.playing = false;
   audio.pause();
   audio.src = '';
-  try { audio.load(); } catch (e) { console.warn('[audio] load() after stop failed:', e); }
+  try {
+    audio.load();
+  } catch (e) {
+    console.warn('[audio] load() after stop failed:', e);
+  }
   cancelReconnect();
   stopListenTimer();
   reportConnectionState('stopped');
@@ -225,8 +248,12 @@ audio.addEventListener('error', () => {
   if (err && err.code === 1) return; // MEDIA_ERR_ABORTED — normal source change
   scheduleReconnect();
 });
-audio.addEventListener('stalled', () => { if (state.playing) scheduleReconnect(); });
-audio.addEventListener('ended',   () => { if (state.playing) scheduleReconnect(); });
+audio.addEventListener('stalled', () => {
+  if (state.playing) scheduleReconnect();
+});
+audio.addEventListener('ended', () => {
+  if (state.playing) scheduleReconnect();
+});
 audio.addEventListener('playing', () => {
   cancelReconnect();
   reportConnectionState(state.muted ? 'muted' : 'live');

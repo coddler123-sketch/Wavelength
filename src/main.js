@@ -1,5 +1,19 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, nativeTheme,
-        screen, globalShortcut, Notification, dialog, shell, powerMonitor, session } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  Tray,
+  Menu,
+  nativeImage,
+  ipcMain,
+  nativeTheme,
+  screen,
+  globalShortcut,
+  Notification,
+  dialog,
+  shell,
+  powerMonitor,
+  session,
+} = require('electron');
 const { autoUpdater } = require('electron-updater');
 const { trayState: computeTrayState } = require('./utils.js');
 const { loadStations, DEFAULT_STATIONS } = require('./stations.js');
@@ -8,22 +22,26 @@ const { buildTrayStationMenuItems, stationSwitcherSubmenu, setTrayLang, tr } = r
 const { createIcyMetadataClient } = require('./icy-metadata-client.js');
 const windowState = require('./window-state.js');
 const path = require('path');
-const fs   = require('fs');
+const fs = require('fs');
 
 // ── Single-instance lock ──────────────────────────────────
-if (process.env.NODE_ENV !== 'test' && !app.requestSingleInstanceLock()) { app.exit(0); }
+if (process.env.NODE_ENV !== 'test' && !app.requestSingleInstanceLock()) {
+  app.exit(0);
+}
 app.on('second-instance', () => {
   if (!mainWindow) return;
-  if (rendererReady) { mainWindow.show(); mainWindow.focus(); }
-  else showOnLoad = true; // content not ready yet
+  if (rendererReady) {
+    mainWindow.show();
+    mainWindow.focus();
+  } else showOnLoad = true; // content not ready yet
 });
 
-let mainWindow    = null;
-let tray          = null;
-let isPlaying     = false;
-let isMini        = false;
-let isPinned      = false;
-let isMuted       = false;
+let mainWindow = null;
+let tray = null;
+let isPlaying = false;
+let isMini = false;
+let isPinned = false;
+let isMuted = false;
 let rendererReady = false;
 let updateReadyVersion = null;
 const startedHidden = process.argv.includes('--hidden');
@@ -48,7 +66,8 @@ function log(message, extra = '') {
     fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
     try {
       const stats = fs.statSync(LOG_FILE);
-      if (stats.size > 1 * 1024 * 1024) { // 1 MB limit
+      if (stats.size > 1 * 1024 * 1024) {
+        // 1 MB limit
         fs.renameSync(LOG_FILE, LOG_FILE + '.old');
       }
     } catch (err) {
@@ -68,26 +87,40 @@ process.on('unhandledRejection', (reason) => log('unhandledRejection', reason?.s
 ipcMain.on('renderer-error', (_e, info) => {
   if (!info || typeof info !== 'object') return;
   const type = String(info.type || 'error').slice(0, 30);
-  const msg  = String(info.message || '').slice(0, 500);
-  const src  = info.source ? ` ${String(info.source).slice(0, 200)}:${info.line || '?'}` : '';
-  const stk  = info.stack ? `\n${String(info.stack).slice(0, 1500)}` : '';
+  const msg = String(info.message || '').slice(0, 500);
+  const src = info.source ? ` ${String(info.source).slice(0, 200)}:${info.line || '?'}` : '';
+  const stk = info.stack ? `\n${String(info.stack).slice(0, 1500)}` : '';
   log(`renderer-${type}: ${msg}${src}${stk}`);
 });
 
 // ── Sleep timer ───────────────────────────────────────────
-let sleepTimer  = null;
+let sleepTimer = null;
 let sleepTickTimer = null;
 let sleepEndsAt = 0;
 
 function setSleepTimer(minutes) {
-  if (sleepTimer) { clearTimeout(sleepTimer); sleepTimer = null; }
-  if (sleepTickTimer) { clearInterval(sleepTickTimer); sleepTickTimer = null; }
-  sleepEndsAt = 0;
-  if (!minutes)   { updateTrayMenu(); updateTrayTooltip(); sendSleepToRenderer(); return; }
-  sleepEndsAt = Date.now() + minutes * 60_000;
-  sleepTimer  = setTimeout(() => {
+  if (sleepTimer) {
+    clearTimeout(sleepTimer);
     sleepTimer = null;
-    if (sleepTickTimer) { clearInterval(sleepTickTimer); sleepTickTimer = null; }
+  }
+  if (sleepTickTimer) {
+    clearInterval(sleepTickTimer);
+    sleepTickTimer = null;
+  }
+  sleepEndsAt = 0;
+  if (!minutes) {
+    updateTrayMenu();
+    updateTrayTooltip();
+    sendSleepToRenderer();
+    return;
+  }
+  sleepEndsAt = Date.now() + minutes * 60_000;
+  sleepTimer = setTimeout(() => {
+    sleepTimer = null;
+    if (sleepTickTimer) {
+      clearInterval(sleepTickTimer);
+      sleepTickTimer = null;
+    }
     sleepEndsAt = 0;
     if (isPlaying) togglePlay();
     updateTrayMenu();
@@ -117,18 +150,31 @@ function sleepMenuItem(minutes) {
     label: tr().sleepMin(minutes),
     type: 'checkbox',
     checked: !!active,
-    click: () => setSleepTimer(minutes)
+    click: () => setSleepTimer(minutes),
   };
 }
 
-const BG_COLOR   = '#0a0915'; // Dark cyberpunk/deep space background
+const BG_COLOR = '#0a0915'; // Dark cyberpunk/deep space background
 
 // ── Position persistence ─────────────────────────────────
 const STATE_FILE = path.join(app.getPath('userData'), 'window-state.json');
 let saveTimer = null;
 
-function loadWindowState()  { return windowState.load(STATE_FILE, log); }
-function saveWindowState()  { windowState.save(STATE_FILE, log, mainWindow, screen.getAllDisplays(), isMini, dockMini, fullWidth, fullHeight); }
+function loadWindowState() {
+  return windowState.load(STATE_FILE, log);
+}
+function saveWindowState() {
+  windowState.save(
+    STATE_FILE,
+    log,
+    mainWindow,
+    screen.getAllDisplays(),
+    isMini,
+    dockMini,
+    fullWidth,
+    fullHeight
+  );
+}
 
 function scheduleSave() {
   if (saveTimer) clearTimeout(saveTimer);
@@ -141,7 +187,7 @@ function scheduleSave() {
 // ── Window sizes ──────────────────────────────────────────
 const SIZES = {
   full: { width: 460, height: 520 },
-  mini: { width: 290, height: 82  }
+  mini: { width: 290, height: 82 },
 };
 
 function getIconPath(name) {
@@ -156,8 +202,7 @@ function trayState() {
 
 function getFallbackTrayIcon() {
   if (!fallbackTrayIcon) {
-    fallbackTrayIcon = nativeImage.createFromPath(getIconPath('icon.png'))
-      .resize({ width: 16, height: 16 });
+    fallbackTrayIcon = nativeImage.createFromPath(getIconPath('icon.png')).resize({ width: 16, height: 16 });
   }
   return fallbackTrayIcon;
 }
@@ -176,9 +221,9 @@ function snapMiniToNearestEdge(force = false) {
   const display = screen.getDisplayMatching(bounds).workArea;
   const distances = [
     { edge: 'left', value: Math.abs(bounds.x - display.x) },
-    { edge: 'right', value: Math.abs((bounds.x + bounds.width) - (display.x + display.width)) },
+    { edge: 'right', value: Math.abs(bounds.x + bounds.width - (display.x + display.width)) },
     { edge: 'top', value: Math.abs(bounds.y - display.y) },
-    { edge: 'bottom', value: Math.abs((bounds.y + bounds.height) - (display.y + display.height)) },
+    { edge: 'bottom', value: Math.abs(bounds.y + bounds.height - (display.y + display.height)) },
   ].sort((a, b) => a.value - b.value);
   if (!force && distances[0].value > 28) return;
 
@@ -188,7 +233,8 @@ function snapMiniToNearestEdge(force = false) {
   if (distances[0].edge === 'right') x = display.x + display.width - bounds.width;
   if (distances[0].edge === 'top') y = display.y;
   if (distances[0].edge === 'bottom') y = display.y + display.height - bounds.height;
-  if (x !== bounds.x || y !== bounds.y) mainWindow.setBounds({ x, y, width: bounds.width, height: bounds.height }, false);
+  if (x !== bounds.x || y !== bounds.y)
+    mainWindow.setBounds({ x, y, width: bounds.width, height: bounds.height }, false);
 }
 
 function createWindow() {
@@ -200,18 +246,28 @@ function createWindow() {
 
   const startSize = isMini ? SIZES.mini : { width: fullWidth, height: fullHeight };
   mainWindow = new BrowserWindow({
-    width: startSize.width, height: startSize.height,
-    x: saved?.x, y: saved?.y,
-    frame: false, transparent: false, resizable: false, maximizable: false,
-    minWidth: startSize.width, minHeight: startSize.height,
-    maxWidth: startSize.width, maxHeight: startSize.height,
-    skipTaskbar: true, alwaysOnTop: isPinned, show: false,
+    width: startSize.width,
+    height: startSize.height,
+    x: saved?.x,
+    y: saved?.y,
+    frame: false,
+    transparent: false,
+    resizable: false,
+    maximizable: false,
+    minWidth: startSize.width,
+    minHeight: startSize.height,
+    maxWidth: startSize.width,
+    maxHeight: startSize.height,
+    skipTaskbar: true,
+    alwaysOnTop: isPinned,
+    show: false,
     backgroundColor: BG_COLOR,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true, nodeIntegration: false
+      contextIsolation: true,
+      nodeIntegration: false,
     },
-    icon: getIconPath('icon.ico')
+    icon: getIconPath('icon.ico'),
   });
 
   mainWindow.loadFile(path.join(__dirname, 'index.html')).then(() => {
@@ -227,17 +283,30 @@ function createWindow() {
     }
   });
 
-  mainWindow.on('move',  scheduleSave);
+  mainWindow.on('move', scheduleSave);
   mainWindow.on('resize', scheduleSave);
-  mainWindow.on('close', (e) => { e.preventDefault(); saveWindowState(); mainWindow.hide(); });
-  mainWindow.on('hide',  () => { updateTrayMenu(); mainWindow?.webContents.send('window-visible', false); });
-  mainWindow.on('show',  () => { updateTrayMenu(); mainWindow?.webContents.send('window-visible', true);  });
+  mainWindow.on('close', (e) => {
+    e.preventDefault();
+    saveWindowState();
+    mainWindow.hide();
+  });
+  mainWindow.on('hide', () => {
+    updateTrayMenu();
+    mainWindow?.webContents.send('window-visible', false);
+  });
+  mainWindow.on('show', () => {
+    updateTrayMenu();
+    mainWindow?.webContents.send('window-visible', true);
+  });
 }
 
 function toggleWindow() {
   if (!mainWindow) return;
   if (mainWindow.isVisible()) mainWindow.hide();
-  else { mainWindow.show(); mainWindow.focus(); }
+  else {
+    mainWindow.show();
+    mainWindow.focus();
+  }
 }
 
 function fadeInWindow() {
@@ -246,7 +315,10 @@ function fadeInWindow() {
   mainWindow.show();
   let op = 0;
   const timer = setInterval(() => {
-    if (!mainWindow || mainWindow.isDestroyed()) { clearInterval(timer); return; }
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      clearInterval(timer);
+      return;
+    }
     op = Math.min(1, op + 0.04);
     mainWindow.setOpacity(op);
     if (op >= 1) clearInterval(timer);
@@ -286,13 +358,14 @@ function startIcyMetadataClient(streamUrl) {
 
 function updateTrayTooltip() {
   if (!tray) return;
-  const label = {
-    connecting: 'Verbinden',
-    live: 'Live',
-    reconnecting: 'Erneut verbinden',
-    muted: 'Stumm',
-    stopped: 'Gestoppt',
-  }[connectionState] || (isPlaying ? 'Live' : 'Gestoppt');
+  const label =
+    {
+      connecting: 'Verbinden',
+      live: 'Live',
+      reconnecting: 'Erneut verbinden',
+      muted: 'Stumm',
+      stopped: 'Gestoppt',
+    }[connectionState] || (isPlaying ? 'Live' : 'Gestoppt');
   const stationName = activeStation ? activeStation.name : 'Keine Station';
   let tooltip = `Wavelength v${APP_VERSION}\nStation: ${stationName}\nStatus: ${label}`;
   if (isPlaying && currentTrackTitle) {
@@ -315,7 +388,7 @@ function updateTrayMenu() {
     { label: isPlaying ? s.stop : s.play, click: () => togglePlay() },
     {
       label: s.switchStation,
-      submenu: stationSwitcherSubmenu(stationMenuItems, activeStation)
+      submenu: stationSwitcherSubmenu(stationMenuItems, activeStation),
     },
     { type: 'separator' },
     {
@@ -327,14 +400,17 @@ function updateTrayMenu() {
         sleepMenuItem(90),
         { type: 'separator' },
         { label: s.sleepCancel, enabled: !!sleepTimer, click: () => setSleepTimer(0) },
-      ]
+      ],
     },
     { type: 'separator' },
     { label: s.mute, type: 'checkbox', checked: isMuted, click: () => toggleMute() },
     { label: s.pin, type: 'checkbox', checked: isPinned, click: () => togglePin() },
     { label: isMini ? s.full : s.mini, click: () => toggleMini() },
     { label: s.dock, type: 'checkbox', checked: dockMini, click: () => toggleMiniDock() },
-    { label: mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() ? s.hide : s.show, click: toggleWindow },
+    {
+      label: mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() ? s.hide : s.show,
+      click: toggleWindow,
+    },
     { type: 'separator' },
     { label: s.autostart, type: 'checkbox', checked: getAutostart(), click: () => toggleAutostart() },
     { type: 'separator' },
@@ -343,17 +419,19 @@ function updateTrayMenu() {
       submenu: [
         { label: s.resetWin, click: resetWindowPosition },
         { label: s.resetApp, click: resetAppSettings },
-      ]
+      ],
     },
     { type: 'separator' },
     { label: s.shortcuts, click: showShortcutsDialog },
     { label: s.about, click: showAboutDialog },
     { type: 'separator' },
-    ...(updateReadyVersion ? [
-      { label: s.update(updateReadyVersion), click: () => autoUpdater.quitAndInstall() },
-      { type: 'separator' },
-    ] : []),
-    { label: s.quit, click: quitApp }
+    ...(updateReadyVersion
+      ? [
+          { label: s.update(updateReadyVersion), click: () => autoUpdater.quitAndInstall() },
+          { type: 'separator' },
+        ]
+      : []),
+    { label: s.quit, click: quitApp },
   ]);
   tray.setContextMenu(menu);
 }
@@ -379,7 +457,7 @@ function selectStationInternal(station, noPlay = false) {
 }
 
 function togglePlay(forceState) {
-  isPlaying = (typeof forceState === 'boolean') ? forceState : !isPlaying;
+  isPlaying = typeof forceState === 'boolean' ? forceState : !isPlaying;
   connectionState = isPlaying ? 'connecting' : 'stopped';
   if (isPlaying) {
     startIcyMetadataClient(activeStation?.streamUrl);
@@ -418,7 +496,7 @@ async function toggleMini() {
   try {
     if (fade) mainWindow.setOpacity(0.01);
     isMini = !isMini;
-    const [x, y]  = mainWindow.getPosition();
+    const [x, y] = mainWindow.getPosition();
     const prevW = isMini ? fullWidth : SIZES.mini.width;
     const newW = isMini ? SIZES.mini.width : fullWidth;
     const newH = isMini ? SIZES.mini.height : fullHeight;
@@ -437,9 +515,9 @@ async function toggleMini() {
       const display = screen.getDisplayMatching({ x: newX, y: newY, width: newW, height: newH }).workArea;
       const distances = [
         { edge: 'left', value: Math.abs(newX - display.x) },
-        { edge: 'right', value: Math.abs((newX + newW) - (display.x + display.width)) },
+        { edge: 'right', value: Math.abs(newX + newW - (display.x + display.width)) },
         { edge: 'top', value: Math.abs(newY - display.y) },
-        { edge: 'bottom', value: Math.abs((newY + newH) - (display.y + display.height)) },
+        { edge: 'bottom', value: Math.abs(newY + newH - (display.y + display.height)) },
       ].sort((a, b) => a.value - b.value);
 
       if (distances[0].value <= 28) {
@@ -463,7 +541,7 @@ async function toggleMini() {
     updateTrayMenu();
 
     if (fade) {
-      await new Promise(resolve => setTimeout(resolve, 16));
+      await new Promise((resolve) => setTimeout(resolve, 16));
       mainWindow.setOpacity(1);
     }
   } catch (err) {
@@ -493,9 +571,9 @@ function setConnectionState(state) {
 function sendStateToRenderer() {
   if (!mainWindow || mainWindow.isDestroyed() || !rendererReady) return;
   mainWindow.webContents.send('set-playing', isPlaying);
-  mainWindow.webContents.send('set-pinned',  isPinned);
-  mainWindow.webContents.send('set-mini',    isMini);
-  mainWindow.webContents.send('set-muted',   isMuted);
+  mainWindow.webContents.send('set-pinned', isPinned);
+  mainWindow.webContents.send('set-mini', isMini);
+  mainWindow.webContents.send('set-muted', isMuted);
   sendSleepToRenderer();
 }
 
@@ -504,7 +582,10 @@ function sendSleepToRenderer() {
   mainWindow.webContents.send('sleep-update', sleepTimer ? sleepEndsAt : 0);
 }
 
-function quitApp() { saveWindowState(); app.exit(0); }
+function quitApp() {
+  saveWindowState();
+  app.exit(0);
+}
 
 const RUN_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run';
 const AUTOSTART_NAME = app.getName(); // 'Wavelength' in production
@@ -527,7 +608,9 @@ function findMisnamedAutostartEntries() {
       if (exeInValue === myExe) results.push(name);
     }
     return results;
-  } catch (_) { return []; }
+  } catch (_) {
+    return [];
+  }
 }
 
 function getAutostart() {
@@ -643,27 +726,32 @@ function showShortcutsDialog() {
 }
 
 // ── IPC ───────────────────────────────────────────────────
-ipcMain.on('play-pause',        (_, forceState) => togglePlay(forceState));
-ipcMain.on('toggle-pin',        togglePin);
-ipcMain.on('toggle-mini',       toggleMini);
-ipcMain.on('toggle-mute',       toggleMute);
-ipcMain.on('hide-window',       () => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide(); });
-ipcMain.on('quit-app',          quitApp);
-ipcMain.on('open-external',     (_, url) => {
+ipcMain.on('play-pause', (_, forceState) => togglePlay(forceState));
+ipcMain.on('toggle-pin', togglePin);
+ipcMain.on('toggle-mini', toggleMini);
+ipcMain.on('toggle-mute', toggleMute);
+ipcMain.on('hide-window', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();
+});
+ipcMain.on('quit-app', quitApp);
+ipcMain.on('open-external', (_, url) => {
   if (typeof url === 'string' && (url.startsWith('https://') || url.startsWith('http://'))) {
     shell.openExternal(url);
   }
 });
 const SLEEP_CYCLE = [15, 30, 60, 90, 0];
 ipcMain.on('cycle-sleep-timer', () => {
-  if (!sleepTimer) { setSleepTimer(SLEEP_CYCLE[0]); return; }
+  if (!sleepTimer) {
+    setSleepTimer(SLEEP_CYCLE[0]);
+    return;
+  }
   const currentRemaining = Math.round((sleepEndsAt - Date.now()) / 60_000);
-  const idx = SLEEP_CYCLE.findIndex(m => Math.abs(m - currentRemaining) <= 1);
+  const idx = SLEEP_CYCLE.findIndex((m) => Math.abs(m - currentRemaining) <= 1);
   const next = SLEEP_CYCLE[(idx + 1) % SLEEP_CYCLE.length];
   setSleepTimer(next);
 });
-ipcMain.on('connection-state',  (_, state) => setConnectionState(state));
-ipcMain.on('select-station',    (_, station, noPlay) => selectStationInternal(station, noPlay));
+ipcMain.on('connection-state', (_, state) => setConnectionState(state));
+ipcMain.on('select-station', (_, station, noPlay) => selectStationInternal(station, noPlay));
 
 ipcMain.handle('get-stations', async () => {
   try {
@@ -687,7 +775,7 @@ ipcMain.handle('get-stations', async () => {
 ipcMain.handle('add-custom-station', (e, data) => {
   customStations.add(data);
   const custom = customStations.load();
-  allStations = [...custom, ...allStations.filter(s => !s.isCustom)];
+  allStations = [...custom, ...allStations.filter((s) => !s.isCustom)];
   updateTrayMenu();
   return allStations;
 });
@@ -695,9 +783,9 @@ ipcMain.handle('add-custom-station', (e, data) => {
 ipcMain.handle('update-custom-station', (e, id, data) => {
   customStations.update(id, data);
   const custom = customStations.load();
-  allStations = [...custom, ...allStations.filter(s => !s.isCustom)];
+  allStations = [...custom, ...allStations.filter((s) => !s.isCustom)];
   if (activeStation && activeStation.id === id) {
-    activeStation = custom.find(s => s.id === id) || activeStation;
+    activeStation = custom.find((s) => s.id === id) || activeStation;
   }
   updateTrayMenu();
   return allStations;
@@ -706,7 +794,7 @@ ipcMain.handle('update-custom-station', (e, id, data) => {
 ipcMain.handle('remove-custom-station', (e, id) => {
   customStations.remove(id);
   const custom = customStations.load();
-  allStations = [...custom, ...allStations.filter(s => !s.isCustom)];
+  allStations = [...custom, ...allStations.filter((s) => !s.isCustom)];
   if (activeStation && activeStation.id === id) {
     activeStation = allStations[0] || null;
   }
@@ -724,16 +812,33 @@ ipcMain.on('set-lang', (e, lang) => {
   updateTrayMenu();
 });
 
-ipcMain.handle('check-stream', (e, url) => new Promise(resolve => {
-  try {
-    const { net } = require('electron');
-    const req = net.request({ method: 'HEAD', url, redirect: 'follow' });
-    const timer = setTimeout(() => { try { req.abort(); } catch (_) {} resolve({ ok: false, error: 'timeout' }); }, 5000);
-    req.on('response', res => { clearTimeout(timer); resolve({ ok: res.statusCode < 400, statusCode: res.statusCode }); });
-    req.on('error',    err => { clearTimeout(timer); resolve({ ok: false, error: err.message }); });
-    req.end();
-  } catch (err) { resolve({ ok: false, error: err.message }); }
-}));
+ipcMain.handle(
+  'check-stream',
+  (e, url) =>
+    new Promise((resolve) => {
+      try {
+        const { net } = require('electron');
+        const req = net.request({ method: 'HEAD', url, redirect: 'follow' });
+        const timer = setTimeout(() => {
+          try {
+            req.abort();
+          } catch (_) {}
+          resolve({ ok: false, error: 'timeout' });
+        }, 5000);
+        req.on('response', (res) => {
+          clearTimeout(timer);
+          resolve({ ok: res.statusCode < 400, statusCode: res.statusCode });
+        });
+        req.on('error', (err) => {
+          clearTimeout(timer);
+          resolve({ ok: false, error: err.message });
+        });
+        req.end();
+      } catch (err) {
+        resolve({ ok: false, error: err.message });
+      }
+    })
+);
 
 // ── Icon Cache ────────────────────────────────────
 const crypto = require('crypto');
@@ -741,7 +846,9 @@ let iconCacheDir = null;
 function getIconCacheDir() {
   if (!iconCacheDir) {
     iconCacheDir = path.join(app.getPath('userData'), 'icons');
-    try { fs.mkdirSync(iconCacheDir, { recursive: true }); } catch (_) {}
+    try {
+      fs.mkdirSync(iconCacheDir, { recursive: true });
+    } catch (_) {}
     const versionFile = path.join(iconCacheDir, '_version');
     try {
       if (fs.readFileSync(versionFile, 'utf8').trim() !== ICON_CACHE_VERSION) throw new Error();
@@ -761,13 +868,15 @@ const ICON_CACHE_VERSION = '3';
 const ICON_MAX_BYTES = 1_000_000;
 const ICON_MAX_FILES = 300;
 
-function urlHash(url) { return crypto.createHash('sha1').update(url).digest('hex'); }
+function urlHash(url) {
+  return crypto.createHash('sha1').update(url).digest('hex');
+}
 function extFromContentType(ct) {
   if (!ct) return 'png';
   if (ct.includes('jpeg') || ct.includes('jpg')) return 'jpg';
-  if (ct.includes('gif'))  return 'gif';
+  if (ct.includes('gif')) return 'gif';
   if (ct.includes('webp')) return 'webp';
-  if (ct.includes('svg'))  return 'svg';
+  if (ct.includes('svg')) return 'svg';
   if (ct.includes('icon') || ct.includes('ico')) return 'ico';
   return 'png';
 }
@@ -780,12 +889,22 @@ function mimeFromExt(ext) {
 function cacheCleanup() {
   try {
     const dir = getIconCacheDir();
-    const files = fs.readdirSync(dir).map(f => {
-      const fp = path.join(dir, f);
-      try { return { fp, mtime: fs.statSync(fp).mtimeMs }; } catch { return null; }
-    }).filter(Boolean).sort((a, b) => b.mtime - a.mtime);
+    const files = fs
+      .readdirSync(dir)
+      .map((f) => {
+        const fp = path.join(dir, f);
+        try {
+          return { fp, mtime: fs.statSync(fp).mtimeMs };
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.mtime - a.mtime);
     for (const { fp } of files.slice(ICON_MAX_FILES)) {
-      try { fs.unlinkSync(fp); } catch (_) {}
+      try {
+        fs.unlinkSync(fp);
+      } catch (_) {}
     }
   } catch (_) {}
 }
@@ -794,13 +913,15 @@ function readFromDisk(url) {
   try {
     const dir = getIconCacheDir();
     const hash = urlHash(url);
-    const files = fs.readdirSync(dir).filter(f => f.startsWith(hash + '.'));
+    const files = fs.readdirSync(dir).filter((f) => f.startsWith(hash + '.'));
     if (!files[0]) return null;
     const fp = path.join(dir, files[0]);
     const buf = fs.readFileSync(fp);
     const ext = files[0].split('.').pop();
     return `data:${mimeFromExt(ext)};base64,${buf.toString('base64')}`;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function isPrivateHost(urlStr) {
@@ -808,14 +929,16 @@ function isPrivateHost(urlStr) {
     const { hostname } = new URL(urlStr);
     if (hostname === 'localhost') return true;
     const p = hostname.split('.').map(Number);
-    if (p.length === 4 && p.every(n => n >= 0 && n <= 255)) {
+    if (p.length === 4 && p.every((n) => n >= 0 && n <= 255)) {
       if (p[0] === 127) return true;
       if (p[0] === 10) return true;
       if (p[0] === 172 && p[1] >= 16 && p[1] <= 31) return true;
       if (p[0] === 192 && p[1] === 168) return true;
       if (p[0] === 169 && p[1] === 254) return true;
     }
-  } catch { return true; }
+  } catch {
+    return true;
+  }
   return false;
 }
 
@@ -824,14 +947,17 @@ ipcMain.handle('cache-icon', async (e, url) => {
   if (isPrivateHost(url)) return null;
   if (iconMemCache.has(url)) return iconMemCache.get(url);
   const fromDisk = readFromDisk(url);
-  if (fromDisk) { iconMemCache.set(url, fromDisk); return fromDisk; }
+  if (fromDisk) {
+    iconMemCache.set(url, fromDisk);
+    return fromDisk;
+  }
   try {
     const { net } = require('electron');
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
     const res = await net.fetch(url, {
       signal: controller.signal,
-      headers: { 'User-Agent': APP_USER_AGENT }
+      headers: { 'User-Agent': APP_USER_AGENT },
     });
     clearTimeout(timer);
     if (!res.ok) return null;
@@ -840,13 +966,17 @@ ipcMain.handle('cache-icon', async (e, url) => {
     const ext = extFromContentType(res.headers.get('content-type') || '');
     const dataUrl = `data:${mimeFromExt(ext)};base64,${buf.toString('base64')}`;
     iconMemCache.set(url, dataUrl);
-    try { fs.writeFileSync(path.join(getIconCacheDir(), `${urlHash(url)}.${ext}`), buf); } catch (_) {}
+    try {
+      fs.writeFileSync(path.join(getIconCacheDir(), `${urlHash(url)}.${ext}`), buf);
+    } catch (_) {}
     if (iconMemCache.size % 50 === 0) cacheCleanup();
     return dataUrl;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 });
 
-ipcMain.handle('get-state',      () => ({
+ipcMain.handle('get-state', () => ({
   isPlaying,
   isMini,
   isPinned,
@@ -854,7 +984,7 @@ ipcMain.handle('get-state',      () => ({
   version: APP_VERSION,
   sleepEndsAt,
   dockMini,
-  activeStation
+  activeStation,
 }));
 
 // ── System idle detection ─────────────────────────────────
@@ -894,7 +1024,7 @@ app.whenReady().then(async () => {
 
   nativeTheme.themeSource = 'dark';
   log(`start v${APP_VERSION}`);
-  
+
   // Load stations on startup to pre-populate tray menu
   try {
     const stations = await loadStations();
@@ -913,8 +1043,14 @@ app.whenReady().then(async () => {
   showFirstRunHint();
   if (startedHidden) setTimeout(fadeInWindow, 4000);
 
-  if (!globalShortcut.register('MediaPlayPause', () => togglePlay())) log('shortcut-register-failed', 'MediaPlayPause');
-  if (!globalShortcut.register('MediaStop',      () => { if (isPlaying) togglePlay(); })) log('shortcut-register-failed', 'MediaStop');
+  if (!globalShortcut.register('MediaPlayPause', () => togglePlay()))
+    log('shortcut-register-failed', 'MediaPlayPause');
+  if (
+    !globalShortcut.register('MediaStop', () => {
+      if (isPlaying) togglePlay();
+    })
+  )
+    log('shortcut-register-failed', 'MediaStop');
 
   setInterval(checkSystemIdle, 30_000);
 
@@ -923,21 +1059,30 @@ app.whenReady().then(async () => {
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
 
-    autoUpdater.on('update-available', info => {
+    autoUpdater.on('update-available', (info) => {
       log(`update-available v${info.version}`);
-      new Notification({ title: 'Wavelength Update', body: `Version ${info.version} wird heruntergeladen…` }).show();
+      new Notification({
+        title: 'Wavelength Update',
+        body: `Version ${info.version} wird heruntergeladen…`,
+      }).show();
     });
 
-    autoUpdater.on('update-downloaded', info => {
+    autoUpdater.on('update-downloaded', (info) => {
       log(`update-downloaded v${info.version}`);
       updateReadyVersion = info.version;
-      new Notification({ title: 'Wavelength Update bereit', body: `v${info.version} installiert sich beim nächsten Start.` }).show();
+      new Notification({
+        title: 'Wavelength Update bereit',
+        body: `v${info.version} installiert sich beim nächsten Start.`,
+      }).show();
       updateTrayMenu();
     });
 
-    autoUpdater.on('error', err => log(`updater-error: ${err.message}`));
+    autoUpdater.on('error', (err) => log(`updater-error: ${err.message}`));
 
-    setTimeout(() => autoUpdater.checkForUpdates().catch(err => log(`update-check-failed: ${err.message}`)), 10_000);
+    setTimeout(
+      () => autoUpdater.checkForUpdates().catch((err) => log(`update-check-failed: ${err.message}`)),
+      10_000
+    );
   }
 });
 

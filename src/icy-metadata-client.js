@@ -70,56 +70,74 @@ function createIcyMetadataClient(options) {
       const parsedUrl = new URL(streamUrl);
       const client = parsedUrl.protocol === 'https:' ? https : http;
 
-      const req = client.get(streamUrl, {
-        headers: {
-          'Icy-MetaData': '1',
-          'User-Agent': userAgent,
-        }
-      }, (res) => {
-        if (!isCurrentClient(token, streamUrl)) {
-          res.destroy();
-          return;
-        }
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          req.destroy();
-          start(res.headers.location, redirectCount + 1, token);
-          return;
-        }
+      const req = client.get(
+        streamUrl,
+        {
+          headers: {
+            'Icy-MetaData': '1',
+            'User-Agent': userAgent,
+          },
+        },
+        (res) => {
+          if (!isCurrentClient(token, streamUrl)) {
+            res.destroy();
+            return;
+          }
+          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+            req.destroy();
+            start(res.headers.location, redirectCount + 1, token);
+            return;
+          }
 
-        if (res.statusCode !== 200) {
-          log(`[icy] HTTP Status: ${res.statusCode} for ${streamUrl}`);
-          req.destroy();
-          scheduleReconnect(streamUrl, token);
-          return;
-        }
+          if (res.statusCode !== 200) {
+            log(`[icy] HTTP Status: ${res.statusCode} for ${streamUrl}`);
+            req.destroy();
+            scheduleReconnect(streamUrl, token);
+            return;
+          }
 
-        const metaint = parseInt(res.headers['icy-metaint'], 10);
-        if (!metaint || isNaN(metaint)) {
-          return;
-        }
+          const metaint = parseInt(res.headers['icy-metaint'], 10);
+          if (!metaint || isNaN(metaint)) {
+            return;
+          }
 
-        let bytesRead = 0;
-        let nextMeta = metaint;
-        let metaBuffer = null;
-        let metaLength = 0;
-        let readingMeta = false;
+          let bytesRead = 0;
+          let nextMeta = metaint;
+          let metaBuffer = null;
+          let metaLength = 0;
+          let readingMeta = false;
 
-        res.on('data', (chunk) => {
-          if (!isCurrentClient(token, streamUrl)) return;
-          let offset = 0;
-          while (offset < chunk.length) {
-            if (!readingMeta) {
-              const bytesNeeded = nextMeta - bytesRead;
-              const bytesAvailable = chunk.length - offset;
-              const toRead = Math.min(bytesNeeded, bytesAvailable);
+          res.on('data', (chunk) => {
+            if (!isCurrentClient(token, streamUrl)) return;
+            let offset = 0;
+            while (offset < chunk.length) {
+              if (!readingMeta) {
+                const bytesNeeded = nextMeta - bytesRead;
+                const bytesAvailable = chunk.length - offset;
+                const toRead = Math.min(bytesNeeded, bytesAvailable);
 
-              bytesRead += toRead;
-              offset += toRead;
+                bytesRead += toRead;
+                offset += toRead;
 
-              if (bytesRead === nextMeta) {
-                readingMeta = true;
-                bytesRead = 0;
-                if (offset < chunk.length) {
+                if (bytesRead === nextMeta) {
+                  readingMeta = true;
+                  bytesRead = 0;
+                  if (offset < chunk.length) {
+                    const lenByte = chunk[offset];
+                    offset++;
+                    metaLength = lenByte * 16;
+                    if (metaLength > 0) {
+                      metaBuffer = Buffer.alloc(metaLength);
+                    } else {
+                      readingMeta = false;
+                      nextMeta = metaint;
+                    }
+                  } else {
+                    metaLength = -1;
+                  }
+                }
+              } else {
+                if (metaLength === -1) {
                   const lenByte = chunk[offset];
                   offset++;
                   metaLength = lenByte * 16;
@@ -129,62 +147,48 @@ function createIcyMetadataClient(options) {
                     readingMeta = false;
                     nextMeta = metaint;
                   }
-                } else {
-                  metaLength = -1;
+                  continue;
                 }
-              }
-            } else {
-              if (metaLength === -1) {
-                const lenByte = chunk[offset];
-                offset++;
-                metaLength = lenByte * 16;
-                if (metaLength > 0) {
-                  metaBuffer = Buffer.alloc(metaLength);
-                } else {
+
+                const bytesNeeded = metaLength - bytesRead;
+                const bytesAvailable = chunk.length - offset;
+                const toRead = Math.min(bytesNeeded, bytesAvailable);
+
+                if (metaBuffer) {
+                  chunk.copy(metaBuffer, bytesRead, offset, offset + toRead);
+                }
+                bytesRead += toRead;
+                offset += toRead;
+
+                if (bytesRead === metaLength) {
+                  const rawMeta = metaBuffer ? metaBuffer.toString('utf8') : '';
+                  const match = rawMeta.match(/StreamTitle='([^']*)'/);
+                  if (match && match[1]) {
+                    const title = match[1].trim();
+                    if (title && title !== currentTrackTitle) {
+                      currentTrackTitle = title;
+                      onTrackTitle(title);
+                    }
+                  }
                   readingMeta = false;
+                  bytesRead = 0;
                   nextMeta = metaint;
                 }
-                continue;
-              }
-
-              const bytesNeeded = metaLength - bytesRead;
-              const bytesAvailable = chunk.length - offset;
-              const toRead = Math.min(bytesNeeded, bytesAvailable);
-
-              if (metaBuffer) {
-                chunk.copy(metaBuffer, bytesRead, offset, offset + toRead);
-              }
-              bytesRead += toRead;
-              offset += toRead;
-
-              if (bytesRead === metaLength) {
-                const rawMeta = metaBuffer ? metaBuffer.toString('utf8') : '';
-                const match = rawMeta.match(/StreamTitle='([^']*)'/);
-                if (match && match[1]) {
-                  const title = match[1].trim();
-                  if (title && title !== currentTrackTitle) {
-                    currentTrackTitle = title;
-                    onTrackTitle(title);
-                  }
-                }
-                readingMeta = false;
-                bytesRead = 0;
-                nextMeta = metaint;
               }
             }
-          }
-        });
+          });
 
-        res.on('end', () => {
-          scheduleReconnect(streamUrl, token);
-        });
+          res.on('end', () => {
+            scheduleReconnect(streamUrl, token);
+          });
 
-        res.on('error', (err) => {
-          if (!isCurrentClient(token, streamUrl)) return;
-          log('[icy] Response error: ' + err.message);
-          scheduleReconnect(streamUrl, token);
-        });
-      });
+          res.on('error', (err) => {
+            if (!isCurrentClient(token, streamUrl)) return;
+            log('[icy] Response error: ' + err.message);
+            scheduleReconnect(streamUrl, token);
+          });
+        }
+      );
 
       req.on('error', (err) => {
         if (!isCurrentClient(token, streamUrl)) return;

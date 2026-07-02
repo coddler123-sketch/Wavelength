@@ -42,21 +42,21 @@ function add(data) {
 
 function update(id, data) {
   const stations = load();
-  const idx = stations.findIndex(s => s.id === id);
+  const idx = stations.findIndex((s) => s.id === id);
   if (idx === -1) return stations;
   stations[idx] = {
     ...stations[idx],
-    name:      String(data.name      || '').trim() || stations[idx].name,
+    name: String(data.name || '').trim() || stations[idx].name,
     streamUrl: String(data.streamUrl || '').trim() || stations[idx].streamUrl,
-    genre:     String(data.genre     != null ? data.genre : stations[idx].genre).trim() || 'Eigene',
-    iconUrl:   String(data.iconUrl   != null ? data.iconUrl : stations[idx].iconUrl).trim(),
+    genre: String(data.genre != null ? data.genre : stations[idx].genre).trim() || 'Eigene',
+    iconUrl: String(data.iconUrl != null ? data.iconUrl : stations[idx].iconUrl).trim(),
   };
   save(stations);
   return stations;
 }
 
 function remove(id) {
-  const stations = load().filter(s => s.id !== id);
+  const stations = load().filter((s) => s.id !== id);
   save(stations);
   return stations;
 }

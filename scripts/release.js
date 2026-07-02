@@ -7,14 +7,16 @@ if (!['patch', 'minor', 'major'].includes(type)) {
   process.exit(1);
 }
 
-const run = (command, args, options = {}) => execFileSync(command, args, {
-  stdio: 'inherit',
-  ...options,
-});
-const capture = (command, args) => execFileSync(command, args, {
-  encoding: 'utf8',
-  stdio: ['ignore', 'pipe', 'ignore'],
-}).trim();
+const run = (command, args, options = {}) =>
+  execFileSync(command, args, {
+    stdio: 'inherit',
+    ...options,
+  });
+const capture = (command, args) =>
+  execFileSync(command, args, {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  }).trim();
 
 if (capture('git', ['status', '--porcelain'])) {
   console.error('Release aborted: working tree is not clean.');
@@ -29,11 +31,12 @@ if (branch !== 'main') {
 
 const currentVersion = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
 const [major, minor, patch] = currentVersion.split('.').map(Number);
-const version = type === 'major'
-  ? `${major + 1}.0.0`
-  : type === 'minor'
-    ? `${major}.${minor + 1}.0`
-    : `${major}.${minor}.${patch + 1}`;
+const version =
+  type === 'major'
+    ? `${major + 1}.0.0`
+    : type === 'minor'
+      ? `${major}.${minor + 1}.0`
+      : `${major}.${minor}.${patch + 1}`;
 const tag = `v${version}`;
 
 try {

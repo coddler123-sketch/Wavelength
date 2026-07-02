@@ -43,11 +43,11 @@
 - **Play-Button-Gradient**: Monochromatischer Gradient aus der Hauptfarbe des Senders (`color-mix` hell → Accent → dunkel).
 - **Farbextraktion verbessert**: `maxVal < 235`-Filter entfernt — reine Farben (z.B. `#FF0000`) werden jetzt korrekt erkannt. Radio Hamburg und ähnliche Sender mit reinem Rot/Grün/Blau werden endlich eingefärbt.
 - **Visualizer überarbeitet**:
-  - *Flexi*: Seam-Artefakt behoben — Fill/Stroke getrennte Pfade, `closePath()` durch `lineTo(pts[0])` ersetzt.
-  - *Unchained*: Komplett neu als **Sonnenkorona** — 96 Stacheln wachsen von einem leuchtenden Innenring nach außen, langsame Rotation, 2-fach gespiegelte Frequenzmapping.
-  - *Starburst*: Neuer Modus — 4-fach symmetrischer Strahlen-Burst aus dem Zentrum (ehemalige Unchained-Variante, mit Length-Cap).
-  - *Mandala 3D*: Kamera-Shake entfernt, Segmentanzahl fixiert (8), Bass/Treble-Einfluss stark gedämpft — deutlich ruhigere Animation.
-  - *Bars*: Bass zentriert, Höhen außen (gespiegeltes Layout).
+  - _Flexi_: Seam-Artefakt behoben — Fill/Stroke getrennte Pfade, `closePath()` durch `lineTo(pts[0])` ersetzt.
+  - _Unchained_: Komplett neu als **Sonnenkorona** — 96 Stacheln wachsen von einem leuchtenden Innenring nach außen, langsame Rotation, 2-fach gespiegelte Frequenzmapping.
+  - _Starburst_: Neuer Modus — 4-fach symmetrischer Strahlen-Burst aus dem Zentrum (ehemalige Unchained-Variante, mit Length-Cap).
+  - _Mandala 3D_: Kamera-Shake entfernt, Segmentanzahl fixiert (8), Bass/Treble-Einfluss stark gedämpft — deutlich ruhigere Animation.
+  - _Bars_: Bass zentriert, Höhen außen (gespiegeltes Layout).
   - Mehrere schwache Modi entfernt: Waterfall, DNA Helix, Scanner, Retrowave, Plasmakugel, Hyperspace, Mirror.
 - **Tray-Icon**: Wellenform aus dem App-Logo als Bezier-Kurve — kein Sprung mehr beim Start zwischen statischem und gerendertem Icon.
 - **Theme-Picker entfernt**: Festes Nacht-Theme als Basis; Accent-Farben kommen dynamisch vom Sender.

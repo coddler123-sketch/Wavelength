@@ -1,13 +1,14 @@
 import { t } from './i18n.js';
 
 export function connectionLabel(state) {
-  const key = {
-    reconnecting: 'status.reconnecting',
-    muted:        'status.muted',
-    live:         'status.live',
-    connecting:   'status.connecting',
-    stopped:      'status.stopped',
-  }[state] || 'status.stopped';
+  const key =
+    {
+      reconnecting: 'status.reconnecting',
+      muted: 'status.muted',
+      live: 'status.live',
+      connecting: 'status.connecting',
+      stopped: 'status.stopped',
+    }[state] || 'status.stopped';
   return t(key);
 }
 

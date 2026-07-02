@@ -1,18 +1,22 @@
 const { test } = require('node:test');
-const assert   = require('node:assert/strict');
-const fs       = require('fs');
-const path     = require('path');
-const os       = require('os');
-const vm       = require('vm');
-const http     = require('http');
+const assert = require('node:assert/strict');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const vm = require('vm');
+const http = require('http');
 
 const { formatListen, averageLevel, trayState, fakeBar, mediaSessionFields } = require('../src/utils.js');
 const { createIcyMetadataClient } = require('../src/icy-metadata-client.js');
-const { buildTrayStationMenuItems, stationSwitcherSubmenu, trayStationGroupLabel } = require('../src/tray-menu.js');
+const {
+  buildTrayStationMenuItems,
+  stationSwitcherSubmenu,
+  trayStationGroupLabel,
+} = require('../src/tray-menu.js');
 const { validateStations } = require('./validate-stations.js');
 const { extractReleaseNotes, githubReleaseArgs } = require('./release-notes.js');
 
-const src  = (f) => fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8');
+const src = (f) => fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8');
 
 // Minimal HTML query helper — finds an element by id and reads its attributes.
 // Avoids attribute-order sensitivity of plain string includes().
@@ -37,7 +41,7 @@ function htmlHasId(source, id) {
   return new RegExp(`\\bid="${id}"`).test(source);
 }
 
-const main    = src('main.js');
+const main = src('main.js');
 const preload = src('preload.js');
 const stations = src('stations.js');
 const icyMetadataClient = src('icy-metadata-client.js');
@@ -70,9 +74,9 @@ test('averageLevel: einzelner Wert', () => assert.equal(averageLevel([0.75]), 0.
 
 // ── trayState ─────────────────────────────────────────────────
 test('trayState: reconnecting überschreibt alles', () => {
-  assert.equal(trayState('reconnecting', false, true),  'reconnecting');
-  assert.equal(trayState('reconnecting', true,  true),  'reconnecting');
-  assert.equal(trayState('reconnecting', true,  false), 'reconnecting');
+  assert.equal(trayState('reconnecting', false, true), 'reconnecting');
+  assert.equal(trayState('reconnecting', true, true), 'reconnecting');
+  assert.equal(trayState('reconnecting', true, false), 'reconnecting');
 });
 test('trayState: muted (playing)', () => {
   assert.equal(trayState('live', true, true), 'muted');
@@ -140,7 +144,7 @@ test('mediaSessionFields: faellt bei unvollstaendiger Trackinfo sauber zurueck',
 
 // ── IPC-Contract ─────────────────────────────────────────────
 test('IPC: alle preload-send-Kanäle haben ipcMain.on in main.js', () => {
-  const channels = [...preload.matchAll(/ipcRenderer\.send\(['"]([^'"]+)['"]/g)].map(m => m[1]);
+  const channels = [...preload.matchAll(/ipcRenderer\.send\(['"]([^'"]+)['"]/g)].map((m) => m[1]);
   assert.ok(channels.length > 0, 'keine send-Kanäle in preload gefunden');
   for (const ch of channels) {
     assert.ok(
@@ -153,30 +157,36 @@ test('IPC: alle preload-send-Kanäle haben ipcMain.on in main.js', () => {
 test('IPC: alle preload-on-Kanäle werden von main.js gesendet', () => {
   const channels = [
     ...preload.matchAll(/ipcRenderer\.on\(['"]([^'"]+)['"]/g),
-    ...preload.matchAll(/listen\(['"]([^'"]+)['"]/g)
-  ].map(m => m[1]);
+    ...preload.matchAll(/listen\(['"]([^'"]+)['"]/g),
+  ].map((m) => m[1]);
   assert.ok(channels.length > 0, 'keine on-Kanäle in preload gefunden');
   for (const ch of channels) {
-    assert.ok(
-      main.includes(`'${ch}'`) || main.includes(`"${ch}"`),
-      `main.js sendet Kanal '${ch}' nie`
-    );
+    assert.ok(main.includes(`'${ch}'`) || main.includes(`"${ch}"`), `main.js sendet Kanal '${ch}' nie`);
   }
 });
 
 test('IPC: preload-on-Helfer geben Unsubscribe-Funktionen zurück', () => {
   assert.ok(preload.includes('function listen(channel, cb'), 'preload listen helper fehlt');
-  assert.ok(preload.includes('return () => ipcRenderer.removeListener(channel, handler);'), 'preload listener cleanup fehlt');
-  assert.ok(preload.includes("onSetPlaying:    (cb) => listen('set-playing'"), 'onSetPlaying nutzt listen helper nicht');
-  assert.ok(preload.includes("onTrackInfo:     (cb) => listen('track-info'"), 'onTrackInfo nutzt listen helper nicht');
+  assert.ok(
+    preload.includes('return () => ipcRenderer.removeListener(channel, handler);'),
+    'preload listener cleanup fehlt'
+  );
+  assert.ok(
+    /onSetPlaying:\s*\(cb\) => listen\('set-playing'/.test(preload),
+    'onSetPlaying nutzt listen helper nicht'
+  );
+  assert.ok(
+    /onTrackInfo:\s*\(cb\) => listen\('track-info'/.test(preload),
+    'onTrackInfo nutzt listen helper nicht'
+  );
 });
 
 test('IPC: alle preload-invoke-Kanäle haben ipcMain.handle in main.js', () => {
-  const channels = [...preload.matchAll(/ipcRenderer\.invoke\(['"]([^'"]+)['"]/g)].map(m => m[1]);
+  const channels = [...preload.matchAll(/ipcRenderer\.invoke\(['"]([^'"]+)['"]/g)].map((m) => m[1]);
   assert.ok(channels.length > 0, 'keine invoke-Kanäle in preload gefunden');
   for (const ch of channels) {
     assert.ok(
-      main.includes(`ipcMain.handle('${ch}'`) || main.includes(`ipcMain.handle("${ch}"`),
+      new RegExp(`ipcMain\\.handle\\(\\s*['"]${ch}['"]`).test(main),
       `main.js hat kein ipcMain.handle für '${ch}'`
     );
   }
@@ -187,12 +197,15 @@ test('Security: BrowserWindow verwendet kein webSecurity: false', () => {
 });
 
 test('Security: CORS-Header-Hook ist auf Media-Responses begrenzt', () => {
-  assert.ok(main.includes("details.resourceType !== 'media'"), 'CORS-Header darf nicht global fuer alle Responses gesetzt werden');
-  assert.ok(main.includes("Access-Control-Allow-Origin"), 'Media-CORS-Header fehlt');
+  assert.ok(
+    main.includes("details.resourceType !== 'media'"),
+    'CORS-Header darf nicht global fuer alle Responses gesetzt werden'
+  );
+  assert.ok(main.includes('Access-Control-Allow-Origin'), 'Media-CORS-Header fehlt');
 });
 
 test('Runtime: src-Dateien enthalten keine ungeschuetzten console.log-Aufrufe', () => {
-  const runtimeFiles = fs.readdirSync(path.join(__dirname, '..', 'src')).filter(f => f.endsWith('.js'));
+  const runtimeFiles = fs.readdirSync(path.join(__dirname, '..', 'src')).filter((f) => f.endsWith('.js'));
   for (const file of runtimeFiles) {
     const content = src(file);
     assert.ok(!/\bconsole\.log\s*\(/.test(content), `${file} enthält console.log`);
@@ -201,8 +214,11 @@ test('Runtime: src-Dateien enthalten keine ungeschuetzten console.log-Aufrufe', 
 
 test('Runtime: sichtbare Quellen enthalten keine Mojibake-Reste', () => {
   const files = [
-    ...fs.readdirSync(path.join(__dirname, '..', 'src')).filter(f => f.endsWith('.js')).map(f => path.join('src', f)),
-    path.join('src', 'index.html')
+    ...fs
+      .readdirSync(path.join(__dirname, '..', 'src'))
+      .filter((f) => f.endsWith('.js'))
+      .map((f) => path.join('src', f)),
+    path.join('src', 'index.html'),
   ];
   for (const file of files) {
     const content = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
@@ -211,26 +227,56 @@ test('Runtime: sichtbare Quellen enthalten keine Mojibake-Reste', () => {
 });
 
 test('Main: Tray-Updates ignorieren bereits zerstoerte Objekte', () => {
-  assert.ok(main.includes('if (!tray || tray.isDestroyed()) return;'), 'updateTrayMenu muss zerstoerten Tray ignorieren');
-  assert.ok(main.includes('mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()'), 'Tray-Menue darf isVisible nicht auf zerstoertem Fenster aufrufen');
-  assert.ok(main.includes("if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();"), 'hide-window IPC braucht Window-Guard');
+  assert.ok(
+    main.includes('if (!tray || tray.isDestroyed()) return;'),
+    'updateTrayMenu muss zerstoerten Tray ignorieren'
+  );
+  assert.ok(
+    main.includes('mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()'),
+    'Tray-Menue darf isVisible nicht auf zerstoertem Fenster aufrufen'
+  );
+  assert.ok(
+    main.includes('if (mainWindow && !mainWindow.isDestroyed()) mainWindow.hide();'),
+    'hide-window IPC braucht Window-Guard'
+  );
 });
 
 test('Main: ICY-Metadatenclient ignoriert veraltete Reconnect-Events', () => {
   assert.ok(main.includes("require('./icy-metadata-client.js')"), 'main.js muss den ICY-Client importieren');
-  assert.ok(main.includes('const icyMetadataClient = createIcyMetadataClient'), 'main.js muss den ICY-Client initialisieren');
+  assert.ok(
+    main.includes('const icyMetadataClient = createIcyMetadataClient'),
+    'main.js muss den ICY-Client initialisieren'
+  );
   assert.ok(icyMetadataClient.includes('let clientToken = 0'), 'ICY-Client-Token fehlt');
   assert.ok(icyMetadataClient.includes('let currentStreamUrl ='), 'aktuelle ICY-Stream-URL fehlt');
-  assert.ok(icyMetadataClient.includes('function isCurrentClient(token, streamUrl)'), 'ICY-Current-Guard fehlt');
-  assert.ok(icyMetadataClient.includes('if (!isCurrentClient(token, streamUrl)) return;'), 'veraltete ICY-Events werden nicht ignoriert');
-  assert.ok(icyMetadataClient.includes('scheduleReconnect(streamUrl, token)'), 'Reconnect nutzt keinen ICY-Token');
-  assert.ok(icyMetadataClient.includes('if (isCurrentClient(token, streamUrl)) start(streamUrl);'), 'Reconnect-Timer prueft Token nicht erneut');
+  assert.ok(
+    icyMetadataClient.includes('function isCurrentClient(token, streamUrl)'),
+    'ICY-Current-Guard fehlt'
+  );
+  assert.ok(
+    icyMetadataClient.includes('if (!isCurrentClient(token, streamUrl)) return;'),
+    'veraltete ICY-Events werden nicht ignoriert'
+  );
+  assert.ok(
+    icyMetadataClient.includes('scheduleReconnect(streamUrl, token)'),
+    'Reconnect nutzt keinen ICY-Token'
+  );
+  assert.ok(
+    icyMetadataClient.includes('if (isCurrentClient(token, streamUrl)) start(streamUrl);'),
+    'Reconnect-Timer prueft Token nicht erneut'
+  );
 });
 
 test('Main: ICY-Request-Destroy-Fehler werden geloggt', () => {
   assert.ok(icyMetadataClient.includes('function destroyRequest(reason)'), 'destroyRequest Helper fehlt');
-  assert.ok(icyMetadataClient.includes("log('[icy] Request destroy failed'"), 'Destroy-Fehler muessen geloggt werden');
-  assert.ok(!/currentRequest\.destroy\(\);\s*}\s*catch \(_\) \{\}/.test(icyMetadataClient), 'ICY-Destroy darf Fehler nicht still verschlucken');
+  assert.ok(
+    icyMetadataClient.includes("log('[icy] Request destroy failed'"),
+    'Destroy-Fehler muessen geloggt werden'
+  );
+  assert.ok(
+    !/currentRequest\.destroy\(\);\s*}\s*catch \(_\) \{\}/.test(icyMetadataClient),
+    'ICY-Destroy darf Fehler nicht still verschlucken'
+  );
 });
 
 test('ICY Metadata Client: parst StreamTitle aus lokalem Stream', async () => {
@@ -239,24 +285,20 @@ test('ICY Metadata Client: parst StreamTitle aus lokalem Stream', async () => {
   const metadataBlocks = Math.ceil(Buffer.byteLength(metadata) / 16);
   const metadataBuffer = Buffer.alloc(metadataBlocks * 16);
   metadataBuffer.write(metadata);
-  const chunk = Buffer.concat([
-    Buffer.alloc(5),
-    Buffer.from([metadataBlocks]),
-    metadataBuffer,
-  ]);
+  const chunk = Buffer.concat([Buffer.alloc(5), Buffer.from([metadataBlocks]), metadataBuffer]);
 
   const server = http.createServer((_, res) => {
     res.writeHead(200, { 'icy-metaint': '5' });
     res.end(chunk);
   });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 
   const seen = [];
   const client = createIcyMetadataClient({
     userAgent: 'WavelengthRadioPlayer/test',
     log: () => {},
     isPlaying: () => true,
-    onTrackTitle: value => seen.push(value),
+    onTrackTitle: (value) => seen.push(value),
   });
   let currentTitleBeforeStop = '';
 
@@ -275,7 +317,7 @@ test('ICY Metadata Client: parst StreamTitle aus lokalem Stream', async () => {
     currentTitleBeforeStop = client.getCurrentTrackTitle();
   } finally {
     client.stop();
-    await new Promise(resolve => server.close(resolve));
+    await new Promise((resolve) => server.close(resolve));
   }
 
   assert.deepEqual(seen, [title]);
@@ -283,7 +325,10 @@ test('ICY Metadata Client: parst StreamTitle aus lokalem Stream', async () => {
 });
 
 test('Main: Logger macht Rotationsfehler sichtbar', () => {
-  assert.ok(main.includes('[logger] Rotation check failed'), 'Logger-Rotationsfehler muessen sichtbar werden');
+  assert.ok(
+    main.includes('[logger] Rotation check failed'),
+    'Logger-Rotationsfehler muessen sichtbar werden'
+  );
   assert.ok(main.includes("err?.code !== 'ENOENT'"), 'fehlende Logdatei darf kein Rotationsfehler sein');
 });
 
@@ -306,9 +351,14 @@ test('Main: Tray-Stationsmenue ist alphabetisch sortiert', () => {
     { id: 'a', name: 'Äther Radio' },
     { id: 'b', name: 'alpha Radio' },
   ];
-  const items = buildTrayStationMenuItems(stationsForTray, stationsForTray[2], station => selected.push(station.id));
+  const items = buildTrayStationMenuItems(stationsForTray, stationsForTray[2], (station) =>
+    selected.push(station.id)
+  );
 
-  assert.deepEqual(items.map(item => item.label), ['alpha Radio', 'Äther Radio', 'Zebra FM']);
+  assert.deepEqual(
+    items.map((item) => item.label),
+    ['alpha Radio', 'Äther Radio', 'Zebra FM']
+  );
   assert.equal(items[0].checked, true);
   assert.equal(items[1].checked, false);
   items[1].click();
@@ -325,8 +375,14 @@ test('Main: Tray-Stationsmenue gruppiert große Listen alphabetisch', () => {
   const groups = buildTrayStationMenuItems(stationsForTray, stationsForTray[2], () => {}, 2);
 
   assert.equal(trayStationGroupLabel({ name: '1 Radio' }), '0-9');
-  assert.deepEqual(groups.map(group => group.label), ['0-9', 'A', 'Ä', '• B']);
-  assert.deepEqual(groups[3].submenu.map(item => item.label), ['Beta']);
+  assert.deepEqual(
+    groups.map((group) => group.label),
+    ['0-9', 'A', 'Ä', '• B']
+  );
+  assert.deepEqual(
+    groups[3].submenu.map((item) => item.label),
+    ['Beta']
+  );
   assert.equal(groups[3].submenu[0].checked, true);
 });
 
@@ -355,9 +411,18 @@ test('UI: sichtbare Status- und Tooltexte sind deutsch lokalisiert', () => {
   assert.ok(miniPlay, 'Mini-Play-Button fehlt');
   assert.equal(miniPlay.attr('aria-label'), 'Abspielen', 'Mini-Play-Button aria-label ist nicht deutsch');
   assert.equal(miniPlay.attr('title'), 'Abspielen', 'Mini-Play-Button Tooltip ist nicht die Aktion');
-  assert.ok(renderer.includes('btn.title = playLabel;'), 'Play-Button Tooltip wird nicht dynamisch aktualisiert');
-  assert.ok(html.includes('<path d="M 2 1 L 11 6 L 2 11 L 2 1 Z"/>'), 'Mini-Play-Icon muss als morphbarer path definiert sein');
-  assert.ok(renderer.includes("'M 2.5 2.5 L 9.5 2.5 L 9.5 9.5 L 2.5 9.5 Z'"), 'Mini-Play-Icon wird nicht zum Stop-Symbol aktualisiert');
+  assert.ok(
+    renderer.includes('btn.title = playLabel;'),
+    'Play-Button Tooltip wird nicht dynamisch aktualisiert'
+  );
+  assert.ok(
+    /<path d="M 2 1 L 11 6 L 2 11 L 2 1 Z"\s*\/>/.test(html),
+    'Mini-Play-Icon muss als morphbarer path definiert sein'
+  );
+  assert.ok(
+    renderer.includes("'M 2.5 2.5 L 9.5 2.5 L 9.5 9.5 L 2.5 9.5 Z'"),
+    'Mini-Play-Icon wird nicht zum Stop-Symbol aktualisiert'
+  );
   const btnSleep = htmlEl(html, 'btn-sleep');
   assert.ok(btnSleep, 'Sleeptimer-Button fehlt');
   assert.equal(btnSleep.attr('aria-label'), 'Sleeptimer', 'Sleeptimer aria-label ist nicht deutsch');
@@ -365,7 +430,15 @@ test('UI: sichtbare Status- und Tooltexte sind deutsch lokalisiert', () => {
   assert.ok(btnBass, 'Bass-Button fehlt');
   assert.equal(btnBass.attr('aria-label'), 'Bassverstärkung', 'Bass aria-label ist nicht deutsch');
   assert.ok(html.includes('Stream-URL'), 'Stream-URL Label ist nicht deutsch formatiert');
-  for (const legacy of ['Multi-Station Player', 'Wavelength Player', 'aria-label="Play"', 'title="Leertaste"', 'Sleep Timer', 'Bass Boost', 'Stream URL']) {
+  for (const legacy of [
+    'Multi-Station Player',
+    'Wavelength Player',
+    'aria-label="Play"',
+    'title="Leertaste"',
+    'Sleep Timer',
+    'Bass Boost',
+    'Stream URL',
+  ]) {
     assert.ok(!html.includes(legacy), `HTML enthaelt noch altes UI-Label: ${legacy}`);
   }
 });
@@ -389,25 +462,52 @@ test('UI Labels: deutsche Status-, Play- und Medienlabels', async () => {
 
 test('Release: User-Agent nutzt aktuelle Paketversion', () => {
   assert.ok(main.includes('const APP_VERSION = app.getVersion()'), 'main.js muss app.getVersion() nutzen');
-  assert.ok(stations.includes('const APP_VERSION = app.getVersion()'), 'stations.js muss app.getVersion() nutzen');
-  assert.ok(main.includes('const APP_USER_AGENT = `WavelengthRadioPlayer/${APP_VERSION} (Windows Electron App)`'), 'main.js User-Agent muss dynamisch sein');
-  assert.ok(stations.includes('const APP_USER_AGENT = `WavelengthRadioPlayer/${APP_VERSION} (Windows Electron App)`'), 'stations.js User-Agent muss dynamisch sein');
+  assert.ok(
+    stations.includes('const APP_VERSION = app.getVersion()'),
+    'stations.js muss app.getVersion() nutzen'
+  );
+  assert.ok(
+    main.includes('const APP_USER_AGENT = `WavelengthRadioPlayer/${APP_VERSION} (Windows Electron App)`'),
+    'main.js User-Agent muss dynamisch sein'
+  );
+  assert.ok(
+    stations.includes('const APP_USER_AGENT = `WavelengthRadioPlayer/${APP_VERSION} (Windows Electron App)`'),
+    'stations.js User-Agent muss dynamisch sein'
+  );
   assert.ok(!main.includes('WavelengthRadioPlayer/1.0.0'), 'main.js enthaelt noch alten User-Agent');
   assert.ok(!stations.includes('WavelengthRadioPlayer/1.0.0'), 'stations.js enthaelt noch alten User-Agent');
 });
 
 test('Windows: App User Model ID passt zur Build-App-ID', () => {
   assert.equal(pkg.build.appId, 'com.wavelength.player', 'package.json appId unerwartet');
-  assert.ok(main.includes("const APP_ID = 'com.wavelength.player'"), 'main.js muss die Windows App-ID zentral definieren');
+  assert.ok(
+    main.includes("const APP_ID = 'com.wavelength.player'"),
+    'main.js muss die Windows App-ID zentral definieren'
+  );
   assert.ok(main.includes('app.setAppUserModelId(APP_ID)'), 'Windows App User Model ID wird nicht gesetzt');
 });
 
 test('Windows Media Controls: MediaSession und Hardware-Tasten sind verdrahtet', () => {
-  assert.ok(renderer.includes('navigator.mediaSession.metadata = new MediaMetadata'), 'MediaSession-Metadaten fehlen');
-  assert.ok(renderer.includes("navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'"), 'MediaSession playbackState fehlt');
-  assert.ok(renderer.includes("navigator.mediaSession.setActionHandler('play'"), 'MediaSession play handler fehlt');
-  assert.ok(renderer.includes("navigator.mediaSession.setActionHandler('pause'"), 'MediaSession pause handler fehlt');
-  assert.ok(renderer.includes("navigator.mediaSession.setActionHandler('stop'"), 'MediaSession stop handler fehlt');
+  assert.ok(
+    renderer.includes('navigator.mediaSession.metadata = new MediaMetadata'),
+    'MediaSession-Metadaten fehlen'
+  );
+  assert.ok(
+    renderer.includes("navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'"),
+    'MediaSession playbackState fehlt'
+  );
+  assert.ok(
+    renderer.includes("navigator.mediaSession.setActionHandler('play'"),
+    'MediaSession play handler fehlt'
+  );
+  assert.ok(
+    renderer.includes("navigator.mediaSession.setActionHandler('pause'"),
+    'MediaSession pause handler fehlt'
+  );
+  assert.ok(
+    renderer.includes("navigator.mediaSession.setActionHandler('stop'"),
+    'MediaSession stop handler fehlt'
+  );
   assert.ok(main.includes("globalShortcut.register('MediaPlayPause'"), 'MediaPlayPause Shortcut fehlt');
   assert.ok(main.includes("globalShortcut.register('MediaStop'"), 'MediaStop Shortcut fehlt');
 });
@@ -417,7 +517,10 @@ test('Release: Build-Skripte bleiben unsigned und einfach', () => {
   assert.ok(!pkg.scripts['signing:check'], 'signing:check soll nicht mehr Teil des Release-Flows sein');
   assert.ok(!pkg.scripts['build:signed'], 'build:signed soll nicht mehr Teil des Release-Flows sein');
   assert.ok(!fs.existsSync(path.join(__dirname, '..', 'SIGNING.md')), 'SIGNING.md soll entfernt bleiben');
-  assert.ok(!fs.existsSync(path.join(__dirname, 'check-signing.js')), 'check-signing.js soll entfernt bleiben');
+  assert.ok(
+    !fs.existsSync(path.join(__dirname, 'check-signing.js')),
+    'check-signing.js soll entfernt bleiben'
+  );
 });
 
 test('Verify: Release-Check laeuft ohne Build-Schritt', () => {
@@ -426,7 +529,10 @@ test('Verify: Release-Check laeuft ohne Build-Schritt', () => {
   assert.ok(pkg.scripts.verify.includes('ui:audit'), 'verify muss ui:audit ausfuehren');
   assert.ok(pkg.scripts.verify.includes('npm test'), 'verify muss npm test ausfuehren');
   assert.ok(!pkg.scripts.verify.includes('npm run build'), 'verify darf keinen Build ausfuehren');
-  assert.ok(!pkg.scripts.verify.includes('electron-builder'), 'verify darf electron-builder nicht direkt ausfuehren');
+  assert.ok(
+    !pkg.scripts.verify.includes('electron-builder'),
+    'verify darf electron-builder nicht direkt ausfuehren'
+  );
 });
 
 test('UI Audit: laeuft ohne GPU-Hardwarebeschleunigung', () => {
@@ -437,7 +543,10 @@ test('UI Audit: laeuft ohne GPU-Hardwarebeschleunigung', () => {
 test('UI Audit: prueft alle Visualizer-Modi per Canvas-Pixel', () => {
   const audit = fs.readFileSync(path.join(__dirname, 'ui-audit.js'), 'utf8');
   assert.ok(audit.includes('async function auditVisualizerModes(win)'), 'Visualizer-Audit fehlt');
-  assert.ok(audit.includes('window.WavelengthVisualizer?.VISUALIZER_MODES'), 'Visualizer-Audit muss die echte Modusliste nutzen');
+  assert.ok(
+    audit.includes('window.WavelengthVisualizer?.VISUALIZER_MODES'),
+    'Visualizer-Audit muss die echte Modusliste nutzen'
+  );
   assert.ok(audit.includes('ctx.getImageData'), 'Visualizer-Audit muss Canvas-Pixel auswerten');
   assert.ok(audit.includes('miniLitPixels'), 'Mini-Visualizer muss mitgeprueft werden');
 });
@@ -445,23 +554,41 @@ test('UI Audit: prueft alle Visualizer-Modi per Canvas-Pixel', () => {
 test('Window: Hauptfenster bleibt feste 460x520 UI', () => {
   assert.ok(main.includes('full: { width: 460, height: 520 }'), 'Full-View-Größe muss fest definiert sein');
   assert.ok(main.includes('resizable: false'), 'BrowserWindow sollte nicht frei skalierbar sein');
-  assert.ok(main.includes('maxWidth: startSize.width, maxHeight: startSize.height'), 'Fenster-Maximalgröße fehlt');
-  assert.ok(main.includes('fullWidth = SIZES.full.width'), 'gespeicherte Breite darf die feste UI nicht überschreiben');
-  assert.ok(!main.includes('mainWindow.getSize()'), 'Resize-Events dürfen keine freie Full-View-Größe persistieren');
+  assert.ok(
+    /maxWidth:\s*startSize\.width,\s*maxHeight:\s*startSize\.height/.test(main),
+    'Fenster-Maximalgröße fehlt'
+  );
+  assert.ok(
+    main.includes('fullWidth = SIZES.full.width'),
+    'gespeicherte Breite darf die feste UI nicht überschreiben'
+  );
+  assert.ok(
+    !main.includes('mainWindow.getSize()'),
+    'Resize-Events dürfen keine freie Full-View-Größe persistieren'
+  );
 });
 
 test('Stations: NDR 2 verwendet keine bekannten toten URLs', () => {
-  assert.ok(!stations.includes('ndr-ndr2-niedersachsen.icecast.ndr.de'), 'NDR 2 stream host no longer resolves');
+  assert.ok(
+    !stations.includes('ndr-ndr2-niedersachsen.icecast.ndr.de'),
+    'NDR 2 stream host no longer resolves'
+  );
   assert.ok(!stations.includes('NDR_2_logo_2015.png'), 'NDR 2 icon URL returns 404');
 });
 
 test('Stations: Radio Hamburg verwendet das aktuelle Logo', () => {
-  assert.ok(stations.includes('radiohamburg.de/assets/icons/apple-touch-icon.png'), 'Radio Hamburg Logo fehlt oder verweist auf alten Pfad');
+  assert.ok(
+    stations.includes('radiohamburg.de/assets/icons/apple-touch-icon.png'),
+    'Radio Hamburg Logo fehlt oder verweist auf alten Pfad'
+  );
   assert.ok(!stations.includes('Radio_Hamburg_Logo.svg'), 'Radio Hamburg verwendet noch den alten Logo-Pfad');
 });
 
 test('Stations: 1LIVE Diggi hat einen spezifischen Icon-Override vor 1LIVE', () => {
-  assert.ok(stations.includes("'1live diggi': 'https://www1.wdr.de/radio/1live-diggi/"), '1LIVE Diggi Icon-Override fehlt');
+  assert.ok(
+    stations.includes("'1live diggi': 'https://www1.wdr.de/radio/1live-diggi/"),
+    '1LIVE Diggi Icon-Override fehlt'
+  );
   assert.ok(
     stations.indexOf("'1live diggi'") < stations.indexOf("'1live'"),
     '1LIVE Diggi muss vor dem generischen 1LIVE-Match stehen'
@@ -470,13 +597,26 @@ test('Stations: 1LIVE Diggi hat einen spezifischen Icon-Override vor 1LIVE', () 
 
 test('Stations: loadStations fällt bei API-Fehlern auf DEFAULT_STATIONS zurück', () => {
   assert.ok(stations.includes('stations.json'), 'DEFAULT_STATIONS werden nicht aus stations.json geladen');
-  assert.ok(stations.includes('catch (err)') && stations.includes('Failed to fetch stations from Radio Browser'), 'API-Fehler werden nicht abgefangen');
-  assert.ok(stations.includes('mergeStations(DEFAULT_STATIONS, apiStations)'), 'DEFAULT_STATIONS werden nicht mit API/Cache gemerged');
-  assert.ok(stations.includes('return merged.map(normalizeStationLanguage).map(normalizeStationGenre).map(enrichStationIcon)'), 'Stationen werden vor Rückgabe normalisiert');
+  assert.ok(
+    stations.includes('catch (err)') && stations.includes('Failed to fetch stations from Radio Browser'),
+    'API-Fehler werden nicht abgefangen'
+  );
+  assert.ok(
+    stations.includes('mergeStations(DEFAULT_STATIONS, apiStations)'),
+    'DEFAULT_STATIONS werden nicht mit API/Cache gemerged'
+  );
+  assert.ok(
+    stations.includes(
+      'return merged.map(normalizeStationLanguage).map(normalizeStationGenre).map(enrichStationIcon)'
+    ),
+    'Stationen werden vor Rückgabe normalisiert'
+  );
 });
 
 test('Stations: kuratierte Defaults bestehen die Maintenance-Validierung', () => {
-  const stationsJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'assets', 'stations.json'), 'utf8'));
+  const stationsJson = JSON.parse(
+    fs.readFileSync(path.join(__dirname, '..', 'assets', 'stations.json'), 'utf8')
+  );
   assert.deepEqual(validateStations(stationsJson), []);
   assert.ok(pkg.scripts['stations:check'], 'stations:check Script fehlt');
 });
@@ -485,11 +625,23 @@ test('Renderer: selectStation persistiert Auswahl, synchronisiert main ohne Dopp
   const match = renderer.match(/function selectStation\(station, options = \{\}\) \{([\s\S]*?)\n\}/);
   assert.ok(match, 'selectStation nicht gefunden');
   const body = match[1];
-  assert.ok(body.includes("localStorage.setItem('wl.lastStationId', station.id)"), 'letzte Station wird nicht persistiert');
+  assert.ok(
+    body.includes("localStorage.setItem('wl.lastStationId', station.id)"),
+    'letzte Station wird nicht persistiert'
+  );
   assert.ok(!body.includes('api.playPause(true)'), 'selectStation darf keinen zweiten Play-Befehl senden');
-  assert.ok(renderer.includes("selectStation(station, { syncMain: false, startWhenStopped: false })"), 'Main-Sync darf nicht zurück an Main funken');
-  assert.ok(renderer.includes("selectStation(loadedStation, { startWhenStopped: settings.autoplayOnStart })"), 'Initialauswahl nutzt settings.autoplayOnStart');
-  assert.ok(renderer.includes('if (loadBool(LS.playing)) api.playPause(true);'), 'Autoplay-Restore muss force true nutzen');
+  assert.ok(
+    renderer.includes('selectStation(station, { syncMain: false, startWhenStopped: false })'),
+    'Main-Sync darf nicht zurück an Main funken'
+  );
+  assert.ok(
+    renderer.includes('selectStation(loadedStation, { startWhenStopped: settings.autoplayOnStart })'),
+    'Initialauswahl nutzt settings.autoplayOnStart'
+  );
+  assert.ok(
+    renderer.includes('if (loadBool(LS.playing)) api.playPause(true);'),
+    'Autoplay-Restore muss force true nutzen'
+  );
 });
 
 test('Station Selection: Main-Sync und Playback-Restart Regeln', async () => {
@@ -502,13 +654,19 @@ test('Station Selection: Main-Sync und Playback-Restart Regeln', async () => {
 });
 
 test('Main: get-stations-Fallback referenziert importierte DEFAULT_STATIONS', () => {
-  assert.ok(main.includes("const { loadStations, DEFAULT_STATIONS } = require('./stations.js')"), 'DEFAULT_STATIONS wird in main.js nicht importiert');
+  assert.ok(
+    main.includes("const { loadStations, DEFAULT_STATIONS } = require('./stations.js')"),
+    'DEFAULT_STATIONS wird in main.js nicht importiert'
+  );
   assert.ok(main.includes('DEFAULT_STATIONS'), 'get-stations-Fallback referenziert DEFAULT_STATIONS nicht');
 });
 
 test('Renderer Sanitizer: escaped HTML und erlaubt nur HTTP(S)-URLs', async () => {
   const sanitize = await import('../src/renderer-sanitize.mjs');
-  assert.equal(sanitize.escapeHtml(`<img src=x onerror='x'>&"`), '&lt;img src=x onerror=&#39;x&#39;&gt;&amp;&quot;');
+  assert.equal(
+    sanitize.escapeHtml(`<img src=x onerror='x'>&"`),
+    '&lt;img src=x onerror=&#39;x&#39;&gt;&amp;&quot;'
+  );
   assert.equal(sanitize.escapeHtml(null), '');
   assert.equal(sanitize.safeHttpUrl('https://example.com/a b'), 'https://example.com/a%20b');
   assert.equal(sanitize.safeHttpUrl('http://example.com/logo.png'), 'http://example.com/logo.png');
@@ -520,8 +678,14 @@ test('Renderer Sanitizer: escaped HTML und erlaubt nur HTTP(S)-URLs', async () =
 test('Renderer: reconnect meldet reconnecting und setzt bei Erfolg wieder live/stopped', () => {
   assert.ok(renderer.includes('function scheduleReconnect()'), 'scheduleReconnect fehlt');
   assert.ok(renderer.includes('setReconnecting(true)'), 'Reconnect-State wird nicht gesetzt');
-  assert.ok(renderer.includes("if (state.playing) reportConnectionState(state.muted ? 'muted' : 'live')"), 'Live-State wird nach Erfolg nicht gemeldet');
-  assert.ok(renderer.includes("reportConnectionState('stopped')"), 'Stopped-State wird beim Stop nicht gemeldet');
+  assert.ok(
+    renderer.includes("if (state.playing) reportConnectionState(state.muted ? 'muted' : 'live')"),
+    'Live-State wird nach Erfolg nicht gemeldet'
+  );
+  assert.ok(
+    renderer.includes("reportConnectionState('stopped')"),
+    'Stopped-State wird beim Stop nicht gemeldet'
+  );
 });
 
 test('Reconnect Policy: Backoff und Scheduling-Regeln', async () => {
@@ -537,9 +701,18 @@ test('Reconnect Policy: Backoff und Scheduling-Regeln', async () => {
 });
 
 test('Renderer: Sender-Normalisierung nutzt stationGain zwischen analyser und limiter', () => {
-  assert.ok(renderer.includes('state.stationGain = state.audioCtx.createGain()'), 'GainNode wird nicht erstellt');
-  assert.ok(renderer.includes('state.analyser.connect(state.stationGain)'), 'stationGain hängt nicht nach dem analyser');
-  assert.ok(renderer.includes('state.stationGain.connect(limiter)'), 'stationGain hängt nicht vor dem limiter');
+  assert.ok(
+    renderer.includes('state.stationGain = state.audioCtx.createGain()'),
+    'GainNode wird nicht erstellt'
+  );
+  assert.ok(
+    renderer.includes('state.analyser.connect(state.stationGain)'),
+    'stationGain hängt nicht nach dem analyser'
+  );
+  assert.ok(
+    renderer.includes('state.stationGain.connect(limiter)'),
+    'stationGain hängt nicht vor dem limiter'
+  );
 });
 
 test('Station Gain: Regeln fuer Key, Clamp, Label und linearen Gain', async () => {
@@ -562,13 +735,28 @@ test('Renderer: Sender-Trim ist bedienbar verdrahtet', () => {
   assert.ok(htmlHasId(html, 'station-gain-pill'), 'Trim-Pill fehlt');
   assert.ok(!htmlHasId(html, 'btn-station-gain-down'), 'leiser Button sollte nicht permanent sichtbar sein');
   assert.ok(!htmlHasId(html, 'btn-station-gain-up'), 'lauter Button sollte nicht permanent sichtbar sein');
-  assert.ok(renderer.includes("localStorage.removeItem(stationGainKey(state.activeStation.id))"), '0 dB Trim wird nicht zurückgesetzt');
-  assert.ok(renderer.includes("safeAddListener('station-gain-pill', 'click', resetStationGain)"), 'Trim-Pill ist nicht verdrahtet');
+  assert.ok(
+    renderer.includes('localStorage.removeItem(stationGainKey(state.activeStation.id))'),
+    '0 dB Trim wird nicht zurückgesetzt'
+  );
+  assert.ok(
+    renderer.includes("safeAddListener('station-gain-pill', 'click', resetStationGain)"),
+    'Trim-Pill ist nicht verdrahtet'
+  );
   assert.ok(!renderer.includes("case 'BracketLeft'"), 'Klammer-Shortcut sollte nicht verwendet werden');
   assert.ok(!renderer.includes("case 'BracketRight'"), 'Klammer-Shortcut sollte nicht verwendet werden');
-  assert.ok(renderer.includes("case 'ArrowUp'") && renderer.includes("case 'ArrowDown'"), 'Pfeiltasten-Handling fehlt');
-  assert.ok(renderer.includes('if (e.altKey) adjustStationGain(STATION_GAIN_STEP_DB)'), 'Alt+Pfeil hoch für Sender lauter fehlt');
-  assert.ok(renderer.includes('if (e.altKey) adjustStationGain(-STATION_GAIN_STEP_DB)'), 'Alt+Pfeil runter für Sender leiser fehlt');
+  assert.ok(
+    renderer.includes("case 'ArrowUp'") && renderer.includes("case 'ArrowDown'"),
+    'Pfeiltasten-Handling fehlt'
+  );
+  assert.ok(
+    renderer.includes('if (e.altKey) adjustStationGain(STATION_GAIN_STEP_DB)'),
+    'Alt+Pfeil hoch für Sender lauter fehlt'
+  );
+  assert.ok(
+    renderer.includes('if (e.altKey) adjustStationGain(-STATION_GAIN_STEP_DB)'),
+    'Alt+Pfeil runter für Sender leiser fehlt'
+  );
 });
 
 test('Renderer State: kaputte gespeicherte Listen werden bereinigt', () => {
@@ -578,13 +766,16 @@ test('Renderer State: kaputte gespeicherte Listen werden bereinigt', () => {
     ['wl.recentStations', '["one","two"]'],
   ]);
   const code = src('renderer-state.js')
-    .replace("export const audio = document.getElementById('audio');", "const audio = document.getElementById('audio');")
+    .replace(
+      "export const audio = document.getElementById('audio');",
+      "const audio = document.getElementById('audio');"
+    )
     .replace('export const state = {', 'globalThis.__state = {');
   const context = {
     document: { getElementById: () => ({}) },
     localStorage: {
-      getItem: key => storage.get(key) ?? null,
-      removeItem: key => removed.push(key),
+      getItem: (key) => storage.get(key) ?? null,
+      removeItem: (key) => removed.push(key),
     },
   };
 
@@ -597,7 +788,10 @@ test('Renderer State: kaputte gespeicherte Listen werden bereinigt', () => {
 
 test('UI: Status-Badges bleiben einzeilig', () => {
   const css = src('index.css');
-  assert.ok(/\.listen-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(css), 'Listen-Badge darf nicht umbrechen');
+  assert.ok(
+    /\.listen-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(css),
+    'Listen-Badge darf nicht umbrechen'
+  );
   assert.ok(/\.live-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(css), 'Live-Badge darf nicht umbrechen');
   assert.ok(/\.sleep-badge\s*\{[\s\S]*?white-space:\s*nowrap/.test(css), 'Sleep-Badge darf nicht umbrechen');
 });
@@ -605,7 +799,9 @@ test('UI: Status-Badges bleiben einzeilig', () => {
 // ── window-state ─────────────────────────────────────────────
 const windowState = require('../src/window-state.js');
 
-function tmpFile() { return path.join(os.tmpdir(), `ws-test-${Math.random().toString(36).slice(2)}.json`); }
+function tmpFile() {
+  return path.join(os.tmpdir(), `ws-test-${Math.random().toString(36).slice(2)}.json`);
+}
 const noop = () => {};
 
 test('windowState.load: gibt null zurück wenn Datei fehlt', () => {
@@ -629,7 +825,10 @@ test('windowState.load: parst gültige Position korrekt', () => {
 
 test('windowState.load: parst gültige Position und Größe korrekt', () => {
   const f = tmpFile();
-  fs.writeFileSync(f, JSON.stringify({ x: 100, y: 200, width: 450, height: 480, isMini: true, dockMini: false }));
+  fs.writeFileSync(
+    f,
+    JSON.stringify({ x: 100, y: 200, width: 450, height: 480, isMini: true, dockMini: false })
+  );
   const s = windowState.load(f, noop);
   assert.deepEqual(s, { x: 100, y: 200, width: 450, height: 480, isMini: true, dockMini: false });
   fs.unlinkSync(f);
@@ -699,7 +898,14 @@ Module._load = function (req, ...args) {
   if (req === 'electron') return { app: { getPath: () => stationsTmpDir, getVersion: () => pkg.version } };
   return _origLoad.call(this, req, ...args);
 };
-const { mapStation, mergeStations, DEFAULT_STATIONS, homepageFavicon, localizeGenreLabel, localizeLanguageLabel } = require('../src/stations.js');
+const {
+  mapStation,
+  mergeStations,
+  DEFAULT_STATIONS,
+  homepageFavicon,
+  localizeGenreLabel,
+  localizeLanguageLabel,
+} = require('../src/stations.js');
 Module._load = _origLoad;
 
 const minimalDto = {
@@ -789,10 +995,23 @@ test('localizeGenreLabel: unbekannte Tags werden lesbar kapitalisiert', () => {
 });
 
 test('mapStation: schwache Radio-Browser-Tags werden uebersprungen', () => {
-  assert.equal(mapStation({ ...minimalDto, name: 'TOP 100 CLUB CHARTS', tags: '#charts,#edm,#house,chillout' }).genre, 'Elektronik');
-  assert.equal(mapStation({ ...minimalDto, name: '- 0 N - 2000s on Radio', tags: '00er,00s,2000er,pop' }).genre, '2000er');
-  assert.equal(mapStation({ ...minimalDto, name: 'B5 aktuell', tags: 'ard,bayerischer rundfunk,information,news' }).genre, 'Nachrichten');
-  assert.equal(mapStation({ ...minimalDto, name: 'Berliner Rundfunk 91.4', tags: 'berlin,pop' }).genre, 'Pop');
+  assert.equal(
+    mapStation({ ...minimalDto, name: 'TOP 100 CLUB CHARTS', tags: '#charts,#edm,#house,chillout' }).genre,
+    'Elektronik'
+  );
+  assert.equal(
+    mapStation({ ...minimalDto, name: '- 0 N - 2000s on Radio', tags: '00er,00s,2000er,pop' }).genre,
+    '2000er'
+  );
+  assert.equal(
+    mapStation({ ...minimalDto, name: 'B5 aktuell', tags: 'ard,bayerischer rundfunk,information,news' })
+      .genre,
+    'Nachrichten'
+  );
+  assert.equal(
+    mapStation({ ...minimalDto, name: 'Berliner Rundfunk 91.4', tags: 'berlin,pop' }).genre,
+    'Pop'
+  );
   assert.equal(mapStation({ ...minimalDto, name: 'MANGORADIO', tags: 'music,variety' }).genre, 'Mix');
 });
 
@@ -823,9 +1042,18 @@ test('mapStation: language-Fallback auf "Deutsch" wenn leer', () => {
 });
 
 test('mapStation: deutsche Radio-Browser-Sender bevorzugen Deutsch vor Englisch', () => {
-  assert.equal(mapStation({ ...minimalDto, name: '__80S__ by rautemusik', language: 'english,german' }).language, 'Deutsch');
-  assert.equal(mapStation({ ...minimalDto, name: '90s90s HipHop & Rap', language: 'english' }).language, 'Deutsch');
-  assert.equal(mapStation({ ...minimalDto, name: 'TOP 100 Club Charts', language: 'english,german' }).language, 'Deutsch');
+  assert.equal(
+    mapStation({ ...minimalDto, name: '__80S__ by rautemusik', language: 'english,german' }).language,
+    'Deutsch'
+  );
+  assert.equal(
+    mapStation({ ...minimalDto, name: '90s90s HipHop & Rap', language: 'english' }).language,
+    'Deutsch'
+  );
+  assert.equal(
+    mapStation({ ...minimalDto, name: 'TOP 100 Club Charts', language: 'english,german' }).language,
+    'Deutsch'
+  );
 });
 
 test('localizeLanguageLabel: nicht-deutsche Sprachen werden fuer Filter lokalisiert', () => {
@@ -847,11 +1075,46 @@ test('mapStation: fehlende optionale Felder ergeben leere Strings', () => {
 });
 
 // ── stations.js – mergeStations ───────────────────────────────
-const curatedA = { id: 'c1', name: 'Radio Eins', streamUrl: 'https://a.de/stream', genre: 'Pop', country: 'DE', language: 'German' };
-const curatedB = { id: 'c2', name: 'Jazz FM',    streamUrl: 'https://b.de/stream', genre: 'Jazz', country: 'DE', language: 'German' };
-const apiNew   = { id: 'a1', name: 'Rock Radio', streamUrl: 'https://c.de/stream', genre: 'Rock', country: 'DE', language: 'German' };
-const apiDupName   = { id: 'a2', name: 'Radio Eins', streamUrl: 'https://other.de/stream', genre: 'Pop', country: 'DE', language: 'German' };
-const apiDupStream = { id: 'a3', name: 'Anderer Name', streamUrl: 'https://a.de/stream', genre: 'Pop', country: 'DE', language: 'German' };
+const curatedA = {
+  id: 'c1',
+  name: 'Radio Eins',
+  streamUrl: 'https://a.de/stream',
+  genre: 'Pop',
+  country: 'DE',
+  language: 'German',
+};
+const curatedB = {
+  id: 'c2',
+  name: 'Jazz FM',
+  streamUrl: 'https://b.de/stream',
+  genre: 'Jazz',
+  country: 'DE',
+  language: 'German',
+};
+const apiNew = {
+  id: 'a1',
+  name: 'Rock Radio',
+  streamUrl: 'https://c.de/stream',
+  genre: 'Rock',
+  country: 'DE',
+  language: 'German',
+};
+const apiDupName = {
+  id: 'a2',
+  name: 'Radio Eins',
+  streamUrl: 'https://other.de/stream',
+  genre: 'Pop',
+  country: 'DE',
+  language: 'German',
+};
+const apiDupStream = {
+  id: 'a3',
+  name: 'Anderer Name',
+  streamUrl: 'https://a.de/stream',
+  genre: 'Pop',
+  country: 'DE',
+  language: 'German',
+};
 
 test('mergeStations: kuratierte Stationen kommen immer zuerst', () => {
   const result = mergeStations([curatedA, curatedB], [apiNew]);
@@ -862,34 +1125,58 @@ test('mergeStations: kuratierte Stationen kommen immer zuerst', () => {
 
 test('mergeStations: API-Duplikat per Name wird übersprungen', () => {
   const result = mergeStations([curatedA], [apiDupName, apiNew]);
-  assert.ok(!result.find(s => s.id === 'a2'), 'Duplikat per Name darf nicht enthalten sein');
-  assert.ok(result.find(s => s.id === 'a1'), 'neue Station muss enthalten sein');
+  assert.ok(!result.find((s) => s.id === 'a2'), 'Duplikat per Name darf nicht enthalten sein');
+  assert.ok(
+    result.find((s) => s.id === 'a1'),
+    'neue Station muss enthalten sein'
+  );
 });
 
 test('mergeStations: API-Duplikat per Stream-URL wird übersprungen', () => {
   const result = mergeStations([curatedA], [apiDupStream]);
-  assert.ok(!result.find(s => s.id === 'a3'), 'Duplikat per URL darf nicht enthalten sein');
+  assert.ok(!result.find((s) => s.id === 'a3'), 'Duplikat per URL darf nicht enthalten sein');
 });
 
 test('mergeStations: API-Duplikat per Stream-URL ignoriert Protokoll und Query', () => {
   const curated = [{ ...curatedA, streamUrl: 'https://radio.example/live.mp3' }];
   const api = [{ ...apiNew, id: 'a4', streamUrl: 'http://radio.example/live.mp3?aggregator=web' }];
   const result = mergeStations(curated, api);
-  assert.ok(!result.find(s => s.id === 'a4'), 'Duplikat per URL mit http/query darf nicht enthalten sein');
+  assert.ok(!result.find((s) => s.id === 'a4'), 'Duplikat per URL mit http/query darf nicht enthalten sein');
 });
 
 test('mergeStations: API-Duplikat per Radio-Browser-Namenszusatz wird übersprungen', () => {
   const curated = [{ ...curatedA, name: 'Deutschlandfunk' }];
   const api = [{ ...apiNew, id: 'a5', name: 'Deutschlandfunk | DLF | MP3 128k' }];
   const result = mergeStations(curated, api);
-  assert.ok(!result.find(s => s.id === 'a5'), 'Radio-Browser-Namenszusatz darf kein Duplikat erzeugen');
+  assert.ok(!result.find((s) => s.id === 'a5'), 'Radio-Browser-Namenszusatz darf kein Duplikat erzeugen');
 });
 
 test('mergeStations: regionale Namensvarianten bleiben erhalten', () => {
-  const curated = [{ id: 'ndr-info', name: 'NDR Info', streamUrl: 'https://example.test/ndrinfo/niedersachsen.mp3', genre: 'News', country: 'DE', language: 'German' }];
-  const api = [{ id: 'ndr-info-hamburg', name: 'NDR Info (Hamburg)', streamUrl: 'https://example.test/ndrinfo/hamburg.mp3', genre: 'News', country: 'DE', language: 'German' }];
+  const curated = [
+    {
+      id: 'ndr-info',
+      name: 'NDR Info',
+      streamUrl: 'https://example.test/ndrinfo/niedersachsen.mp3',
+      genre: 'News',
+      country: 'DE',
+      language: 'German',
+    },
+  ];
+  const api = [
+    {
+      id: 'ndr-info-hamburg',
+      name: 'NDR Info (Hamburg)',
+      streamUrl: 'https://example.test/ndrinfo/hamburg.mp3',
+      genre: 'News',
+      country: 'DE',
+      language: 'German',
+    },
+  ];
   const result = mergeStations(curated, api);
-  assert.ok(result.find(s => s.id === 'ndr-info-hamburg'), 'regionale Varianten dürfen nicht als Namensduplikat entfernt werden');
+  assert.ok(
+    result.find((s) => s.id === 'ndr-info-hamburg'),
+    'regionale Varianten dürfen nicht als Namensduplikat entfernt werden'
+  );
 });
 
 test('mergeStations: leere API-Liste gibt nur kuratierte zurück', () => {
@@ -905,8 +1192,8 @@ test('mergeStations: leere kuratierte Liste gibt API-Stationen zurück', () => {
 
 test('mergeStations: Namensvergleich ist case-insensitiv und ignoriert Sonderzeichen', () => {
   const curated = [{ ...curatedA, name: 'Radio-Eins!' }];
-  const api     = [{ ...apiDupName, name: 'radio eins' }];
-  const result  = mergeStations(curated, api);
+  const api = [{ ...apiDupName, name: 'radio eins' }];
+  const result = mergeStations(curated, api);
   assert.equal(result.length, 1, 'Duplikat mit anderem Casing/Sonderzeichen muss erkannt werden');
 });
 
@@ -915,27 +1202,105 @@ test('stations: Cache-Roundtrip schreibt und liest Stationen korrekt', async () 
   // loadStations mit frischem Cache in stationsTmpDir — kein Netzwerkaufruf nötig
   const cacheFile = path.join(stationsTmpDir, 'stations-cache.json');
   const fakeStations = [
-    { id: 'fake1', name: 'Fake FM', streamUrl: 'https://fake.fm/stream', genre: 'Pop', country: 'DE', language: 'German', iconUrl: '', website: '' },
+    {
+      id: 'fake1',
+      name: 'Fake FM',
+      streamUrl: 'https://fake.fm/stream',
+      genre: 'Pop',
+      country: 'DE',
+      language: 'German',
+      iconUrl: '',
+      website: '',
+    },
   ];
   fs.writeFileSync(cacheFile, JSON.stringify({ timestamp: Date.now(), stations: fakeStations }), 'utf8');
 
   const { loadStations: loadFresh } = require('../src/stations.js');
   const result = await loadFresh();
   assert.ok(Array.isArray(result), 'loadStations muss ein Array zurückgeben');
-  assert.ok(result.length >= fakeStations.length, 'Ergebnis muss mindestens die gecachten Stationen enthalten');
-  assert.ok(result.find(s => s.id === 'fake1'), 'gecachte Station muss im Ergebnis sein');
+  assert.ok(
+    result.length >= fakeStations.length,
+    'Ergebnis muss mindestens die gecachten Stationen enthalten'
+  );
+  assert.ok(
+    result.find((s) => s.id === 'fake1'),
+    'gecachte Station muss im Ergebnis sein'
+  );
 });
 
 test('stations: alte Cache-Genres werden vor Rueckgabe normalisiert', async () => {
   const cacheFile = path.join(stationsTmpDir, 'stations-cache.json');
   const staleStations = [
-    { id: 'wdr4-cache', name: 'WDR4', streamUrl: 'https://wdr4.test/stream', genre: 'Radio', country: 'DE', language: 'German', iconUrl: '', website: '' },
-    { id: 'swr1-cache', name: 'SWR1 BW', streamUrl: 'https://swr1.test/stream', genre: 'Radio', country: 'DE', language: 'German', iconUrl: '', website: '' },
-    { id: 'berlin-cache', name: 'Berliner Rundfunk 91.4', streamUrl: 'https://berlin.test/stream', genre: 'Berlin', country: 'DE', language: 'German', iconUrl: '', website: '' },
-    { id: 'b5-cache', name: 'B5 aktuell', streamUrl: 'https://b5.test/stream', genre: 'Ard', country: 'DE', language: 'German', iconUrl: '', website: '' },
-    { id: 'mango-cache', name: 'MANGORADIO', streamUrl: 'https://mango.test/stream', genre: 'Music', country: 'DE', language: 'German', iconUrl: '', website: '' },
-    { id: 'compound-cache', name: 'Compound Genre Test', streamUrl: 'https://compound.test/stream', genre: 'Wissen / pop', country: 'DE', language: 'German', iconUrl: '', website: '' },
-    { id: 'cultural-cache', name: 'Cultural News Test', streamUrl: 'https://cultural.test/stream', genre: 'Cultural news', country: 'DE', language: 'German', iconUrl: '', website: '' },
+    {
+      id: 'wdr4-cache',
+      name: 'WDR4',
+      streamUrl: 'https://wdr4.test/stream',
+      genre: 'Radio',
+      country: 'DE',
+      language: 'German',
+      iconUrl: '',
+      website: '',
+    },
+    {
+      id: 'swr1-cache',
+      name: 'SWR1 BW',
+      streamUrl: 'https://swr1.test/stream',
+      genre: 'Radio',
+      country: 'DE',
+      language: 'German',
+      iconUrl: '',
+      website: '',
+    },
+    {
+      id: 'berlin-cache',
+      name: 'Berliner Rundfunk 91.4',
+      streamUrl: 'https://berlin.test/stream',
+      genre: 'Berlin',
+      country: 'DE',
+      language: 'German',
+      iconUrl: '',
+      website: '',
+    },
+    {
+      id: 'b5-cache',
+      name: 'B5 aktuell',
+      streamUrl: 'https://b5.test/stream',
+      genre: 'Ard',
+      country: 'DE',
+      language: 'German',
+      iconUrl: '',
+      website: '',
+    },
+    {
+      id: 'mango-cache',
+      name: 'MANGORADIO',
+      streamUrl: 'https://mango.test/stream',
+      genre: 'Music',
+      country: 'DE',
+      language: 'German',
+      iconUrl: '',
+      website: '',
+    },
+    {
+      id: 'compound-cache',
+      name: 'Compound Genre Test',
+      streamUrl: 'https://compound.test/stream',
+      genre: 'Wissen / pop',
+      country: 'DE',
+      language: 'German',
+      iconUrl: '',
+      website: '',
+    },
+    {
+      id: 'cultural-cache',
+      name: 'Cultural News Test',
+      streamUrl: 'https://cultural.test/stream',
+      genre: 'Cultural news',
+      country: 'DE',
+      language: 'German',
+      iconUrl: '',
+      website: '',
+    },
   ];
   fs.writeFileSync(cacheFile, JSON.stringify({ timestamp: Date.now(), stations: staleStations }), 'utf8');
 
@@ -948,13 +1313,13 @@ test('stations: alte Cache-Genres werden vor Rueckgabe normalisiert', async () =
   Module._load = _origLoad;
   const result = await loadFresh();
 
-  assert.equal(result.find(s => s.id === 'wdr4-cache')?.genre, 'Oldies');
-  assert.equal(result.find(s => s.id === 'swr1-cache')?.genre, 'Oldies');
-  assert.equal(result.find(s => s.id === 'berlin-cache')?.genre, 'Pop');
-  assert.equal(result.find(s => s.id === 'b5-cache')?.genre, 'Nachrichten');
-  assert.equal(result.find(s => s.id === 'mango-cache')?.genre, 'Mix');
-  assert.equal(result.find(s => s.id === 'compound-cache')?.genre, 'Wissen / Pop');
-  assert.equal(result.find(s => s.id === 'cultural-cache')?.genre, 'Kultur / Nachrichten');
+  assert.equal(result.find((s) => s.id === 'wdr4-cache')?.genre, 'Oldies');
+  assert.equal(result.find((s) => s.id === 'swr1-cache')?.genre, 'Oldies');
+  assert.equal(result.find((s) => s.id === 'berlin-cache')?.genre, 'Pop');
+  assert.equal(result.find((s) => s.id === 'b5-cache')?.genre, 'Nachrichten');
+  assert.equal(result.find((s) => s.id === 'mango-cache')?.genre, 'Mix');
+  assert.equal(result.find((s) => s.id === 'compound-cache')?.genre, 'Wissen / Pop');
+  assert.equal(result.find((s) => s.id === 'cultural-cache')?.genre, 'Kultur / Nachrichten');
 });
 
 test('DEFAULT_STATIONS: Array mit mindestens 10 Einträgen', () => {
@@ -964,11 +1329,11 @@ test('DEFAULT_STATIONS: Array mit mindestens 10 Einträgen', () => {
 
 test('DEFAULT_STATIONS: alle Einträge haben Pflichtfelder', () => {
   for (const s of DEFAULT_STATIONS) {
-    assert.ok(s.id,        `Station ohne id: ${s.name}`);
-    assert.ok(s.name,      `Station ohne name: ${s.id}`);
+    assert.ok(s.id, `Station ohne id: ${s.name}`);
+    assert.ok(s.name, `Station ohne name: ${s.id}`);
     assert.ok(s.streamUrl, `Station ohne streamUrl: ${s.name}`);
-    assert.ok(s.genre,     `Station ohne genre: ${s.name}`);
-    assert.ok(s.country,   `Station ohne country: ${s.name}`);
+    assert.ok(s.genre, `Station ohne genre: ${s.name}`);
+    assert.ok(s.country, `Station ohne country: ${s.name}`);
     assert.ok(s.streamUrl.startsWith('https://'), `streamUrl nicht HTTPS: ${s.name}`);
     assert.ok(!s.iconUrl || s.iconUrl.startsWith('https://'), `iconUrl nicht HTTPS: ${s.name}`);
   }
@@ -979,21 +1344,32 @@ test('Stations: High-Res-Icon-Overrides verwenden HTTPS', () => {
 });
 
 test('DEFAULT_STATIONS: Sprachlabels sind deutsch lokalisiert', () => {
-  assert.ok(DEFAULT_STATIONS.some(s => s.language === 'Deutsch'), 'Deutsch fehlt in Default-Stationen');
-  assert.ok(!DEFAULT_STATIONS.some(s => s.language === 'German'), 'Default-Stationen duerfen nicht German anzeigen');
+  assert.ok(
+    DEFAULT_STATIONS.some((s) => s.language === 'Deutsch'),
+    'Deutsch fehlt in Default-Stationen'
+  );
+  assert.ok(
+    !DEFAULT_STATIONS.some((s) => s.language === 'German'),
+    'Default-Stationen duerfen nicht German anzeigen'
+  );
 });
 
 test('Stations: Maintenance-Validierung lehnt englische Sprachlabels ab', () => {
-  const errors = validateStations([{
-    id: 'test-radio',
-    name: 'Test Radio',
-    streamUrl: 'https://example.com/live.mp3',
-    iconUrl: 'https://example.com/icon.png',
-    genre: 'Pop',
-    country: 'DE',
-    language: 'German',
-  }]);
-  assert.ok(errors.some(error => error.includes('language should use localized label')), errors.join('\n'));
+  const errors = validateStations([
+    {
+      id: 'test-radio',
+      name: 'Test Radio',
+      streamUrl: 'https://example.com/live.mp3',
+      iconUrl: 'https://example.com/icon.png',
+      genre: 'Pop',
+      country: 'DE',
+      language: 'German',
+    },
+  ]);
+  assert.ok(
+    errors.some((error) => error.includes('language should use localized label')),
+    errors.join('\n')
+  );
 });
 
 // ── visualizer.js – Smoke Tests ───────────────────────────────
@@ -1002,14 +1378,20 @@ const vizSrc = src('visualizer.js');
 test('visualizer: VISUALIZER_MODES ist definiert und enthält mindestens 9 Modi', () => {
   const match = vizSrc.match(/VISUALIZER_MODES\s*=\s*\[([^\]]+)\]/);
   assert.ok(match, 'VISUALIZER_MODES nicht gefunden');
-  const modes = match[1].split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean);
+  const modes = match[1]
+    .split(',')
+    .map((s) => s.trim().replace(/['"]/g, ''))
+    .filter(Boolean);
   assert.ok(modes.length >= 9, `Zu wenige Visualizer-Modi: ${modes.length}`);
 });
 
 test('visualizer: alle VISUALIZER_MODES haben ein VISUALIZER_LABELS-Eintrag', () => {
   const modesMatch = vizSrc.match(/VISUALIZER_MODES\s*=\s*\[([^\]]+)\]/);
   assert.ok(modesMatch, 'VISUALIZER_MODES nicht gefunden');
-  const modes = modesMatch[1].split(',').map(s => s.trim().replace(/['"]/g, '')).filter(Boolean);
+  const modes = modesMatch[1]
+    .split(',')
+    .map((s) => s.trim().replace(/['"]/g, ''))
+    .filter(Boolean);
   for (const mode of modes) {
     assert.ok(vizSrc.includes(`${mode}:`), `Kein VISUALIZER_LABELS-Eintrag für Modus '${mode}'`);
   }
@@ -1028,8 +1410,11 @@ test('visualizer: HiDPI-Support via devicePixelRatio', () => {
 });
 
 test('visualizer: UMD-Export kompatibel mit Node und Browser', () => {
-  assert.ok(vizSrc.includes("window.WavelengthVisualizer"), 'Browser-Export fehlt');
-  assert.ok(vizSrc.includes("typeof module !== 'undefined'") || vizSrc.includes('typeof module !=='), 'Node-Export-Guard fehlt');
+  assert.ok(vizSrc.includes('window.WavelengthVisualizer'), 'Browser-Export fehlt');
+  assert.ok(
+    vizSrc.includes("typeof module !== 'undefined'") || vizSrc.includes('typeof module !=='),
+    'Node-Export-Guard fehlt'
+  );
 });
 
 test('Release Notes: extrahiert nur den Abschnitt der aktuellen Version', () => {
@@ -1044,8 +1429,15 @@ test('GitHub Release: Build-Artefakte bleiben einzelne Argumente', () => {
   const args = githubReleaseArgs('2.0.0', '- Neu', [installer, portable]);
 
   assert.deepEqual(args, [
-    'release', 'create', 'v2.0.0', '--title', 'Wavelength v2.0.0',
-    '--notes', '- Neu', installer, portable,
+    'release',
+    'create',
+    'v2.0.0',
+    '--title',
+    'Wavelength v2.0.0',
+    '--notes',
+    '- Neu',
+    installer,
+    portable,
   ]);
 });
 
@@ -1057,7 +1449,10 @@ test('visualizer: Flexi-Ring ist an der Spektrumnaht glatt', () => {
 
   assert.equal(ring[0], 1);
   assert.ok(Math.abs(ring[1] - ring[127]) < 1e-6, 'Flexi-Ring muss an der Naht symmetrisch sein');
-  assert.ok(Math.abs(ring[0] - ring[1]) < 0.05, 'Flexi-Ring darf am Bass-Uebergang keinen radialen Spike bilden');
+  assert.ok(
+    Math.abs(ring[0] - ring[1]) < 0.05,
+    'Flexi-Ring darf am Bass-Uebergang keinen radialen Spike bilden'
+  );
 });
 
 test('visualizer: Animationstempo ist unabhaengig von der Bildrate', () => {
@@ -1085,12 +1480,12 @@ test('visualizer: stop entfernt geplanten Frame vor erneutem start', (t) => {
   const callbacks = new Map();
   let nextFrameId = 1;
   let cancelledFrames = 0;
-  global.requestAnimationFrame = callback => {
+  global.requestAnimationFrame = (callback) => {
     const id = nextFrameId++;
     callbacks.set(id, callback);
     return id;
   };
-  global.cancelAnimationFrame = id => {
+  global.cancelAnimationFrame = (id) => {
     cancelledFrames++;
     callbacks.delete(id);
   };
@@ -1099,18 +1494,21 @@ test('visualizer: stop entfernt geplanten Frame vor erneutem start', (t) => {
   global.localStorage = { getItem: () => 'bars', setItem() {} };
 
   const gradient = { addColorStop() {} };
-  const context = new Proxy({}, {
-    get(target, property) {
-      if (property === 'createLinearGradient' || property === 'createRadialGradient') return () => gradient;
-      if (property === 'measureText') return () => ({ width: 10 });
-      if (!(property in target)) target[property] = () => {};
-      return target[property];
-    },
-    set(target, property, value) {
-      target[property] = value;
-      return true;
-    },
-  });
+  const context = new Proxy(
+    {},
+    {
+      get(target, property) {
+        if (property === 'createLinearGradient' || property === 'createRadialGradient') return () => gradient;
+        if (property === 'measureText') return () => ({ width: 10 });
+        if (!(property in target)) target[property] = () => {};
+        return target[property];
+      },
+      set(target, property, value) {
+        target[property] = value;
+        return true;
+      },
+    }
+  );
   const createCanvas = () => ({
     width: 300,
     height: 100,
@@ -1151,97 +1549,97 @@ test('visualizer: stop entfernt geplanten Frame vor erneutem start', (t) => {
 const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList } = require('../src/utils.js');
 
 test('DEFAULT_STATIONS: kein kuratierter Sender landet unter Sonstige', () => {
-  const uncategorized = DEFAULT_STATIONS
-    .filter(station => getStationCategory(station.genre) === 'Sonstige')
-    .map(station => `${station.name} (${station.genre})`);
+  const uncategorized = DEFAULT_STATIONS.filter(
+    (station) => getStationCategory(station.genre) === 'Sonstige'
+  ).map((station) => `${station.name} (${station.genre})`);
   assert.deepEqual(uncategorized, []);
 });
 
 test('getStationCategory: Pop-Genres werden erkannt', () => {
-  assert.equal(getStationCategory('Pop'),    'Pop & Charts');
+  assert.equal(getStationCategory('Pop'), 'Pop & Charts');
   assert.equal(getStationCategory('Top 40'), 'Pop & Charts');
-  assert.equal(getStationCategory('Hits'),   'Pop & Charts');
-  assert.equal(getStationCategory('Mix'),    'Pop & Charts');
+  assert.equal(getStationCategory('Hits'), 'Pop & Charts');
+  assert.equal(getStationCategory('Mix'), 'Pop & Charts');
 });
 
 test('getStationCategory: Jahrzehnte und Oldies werden erkannt', () => {
-  assert.equal(getStationCategory('70s'),          'Oldies & Jahrzehnte');
-  assert.equal(getStationCategory('1980s'),        'Oldies & Jahrzehnte');
-  assert.equal(getStationCategory('90er'),         'Oldies & Jahrzehnte');
-  assert.equal(getStationCategory('00er'),         'Oldies & Jahrzehnte');
+  assert.equal(getStationCategory('70s'), 'Oldies & Jahrzehnte');
+  assert.equal(getStationCategory('1980s'), 'Oldies & Jahrzehnte');
+  assert.equal(getStationCategory('90er'), 'Oldies & Jahrzehnte');
+  assert.equal(getStationCategory('00er'), 'Oldies & Jahrzehnte');
   assert.equal(getStationCategory('Pop / Oldies'), 'Oldies & Jahrzehnte');
-  assert.equal(getStationCategory('Retro'),        'Oldies & Jahrzehnte');
+  assert.equal(getStationCategory('Retro'), 'Oldies & Jahrzehnte');
 });
 
 test('getStationCategory: Rock/Alternative-Genres werden erkannt', () => {
-  assert.equal(getStationCategory('Rock'),        'Rock & Metal');
-  assert.equal(getStationCategory('Metal'),       'Rock & Metal');
+  assert.equal(getStationCategory('Rock'), 'Rock & Metal');
+  assert.equal(getStationCategory('Metal'), 'Rock & Metal');
   assert.equal(getStationCategory('Alternative'), 'Rock & Metal');
-  assert.equal(getStationCategory('Indie'),       'Rock & Metal');
+  assert.equal(getStationCategory('Indie'), 'Rock & Metal');
 });
 
 test('getStationCategory: Elektronik/Dance-Genres werden erkannt', () => {
-  assert.equal(getStationCategory('Electro'),    'Elektronik & Dance');
+  assert.equal(getStationCategory('Electro'), 'Elektronik & Dance');
   assert.equal(getStationCategory('Electronic'), 'Elektronik & Dance');
   assert.equal(getStationCategory('Elektronik'), 'Elektronik & Dance');
-  assert.equal(getStationCategory('Techno'),     'Elektronik & Dance');
-  assert.equal(getStationCategory('Trance'),     'Elektronik & Dance');
-  assert.equal(getStationCategory('House'),      'Elektronik & Dance');
-  assert.equal(getStationCategory('Dance'),      'Elektronik & Dance');
+  assert.equal(getStationCategory('Techno'), 'Elektronik & Dance');
+  assert.equal(getStationCategory('Trance'), 'Elektronik & Dance');
+  assert.equal(getStationCategory('House'), 'Elektronik & Dance');
+  assert.equal(getStationCategory('Dance'), 'Elektronik & Dance');
 });
 
 test('getStationCategory: Ambient/Chillout-Genres werden erkannt', () => {
-  assert.equal(getStationCategory('Ambient'),           'Ambient/Chillout');
-  assert.equal(getStationCategory('Chillout'),          'Ambient/Chillout');
+  assert.equal(getStationCategory('Ambient'), 'Ambient/Chillout');
+  assert.equal(getStationCategory('Chillout'), 'Ambient/Chillout');
   assert.equal(getStationCategory('Chillout / Lounge'), 'Ambient/Chillout');
-  assert.equal(getStationCategory('Lofi'),              'Ambient/Chillout');
-  assert.equal(getStationCategory('Instrumental'),      'Ambient/Chillout');
-  assert.equal(getStationCategory('Easy Listening'),    'Ambient/Chillout');
-  assert.equal(getStationCategory('Leichte Musik'),     'Ambient/Chillout');
+  assert.equal(getStationCategory('Lofi'), 'Ambient/Chillout');
+  assert.equal(getStationCategory('Instrumental'), 'Ambient/Chillout');
+  assert.equal(getStationCategory('Easy Listening'), 'Ambient/Chillout');
+  assert.equal(getStationCategory('Leichte Musik'), 'Ambient/Chillout');
 });
 
 test('getStationCategory: Hip-Hop/R&B-Genres werden erkannt', () => {
-  assert.equal(getStationCategory('Hiphop'),   'Hip-Hop & R&B');
-  assert.equal(getStationCategory('Hip Hop'),  'Hip-Hop & R&B');
-  assert.equal(getStationCategory('Hip-Hop'),  'Hip-Hop & R&B');
-  assert.equal(getStationCategory('Rap'),      'Hip-Hop & R&B');
-  assert.equal(getStationCategory('R&B'),      'Hip-Hop & R&B');
+  assert.equal(getStationCategory('Hiphop'), 'Hip-Hop & R&B');
+  assert.equal(getStationCategory('Hip Hop'), 'Hip-Hop & R&B');
+  assert.equal(getStationCategory('Hip-Hop'), 'Hip-Hop & R&B');
+  assert.equal(getStationCategory('Rap'), 'Hip-Hop & R&B');
+  assert.equal(getStationCategory('R&B'), 'Hip-Hop & R&B');
   assert.equal(getStationCategory('Hip-Hop / Pop'), 'Hip-Hop & R&B');
 });
 
 test('getStationCategory: Klassik-Genres werden erkannt', () => {
-  assert.equal(getStationCategory('Classic'),   'Klassik & Jazz');
+  assert.equal(getStationCategory('Classic'), 'Klassik & Jazz');
   assert.equal(getStationCategory('Classical'), 'Klassik & Jazz');
-  assert.equal(getStationCategory('Opera'),     'Klassik & Jazz');
-  assert.equal(getStationCategory('Symphony'),  'Klassik & Jazz');
+  assert.equal(getStationCategory('Opera'), 'Klassik & Jazz');
+  assert.equal(getStationCategory('Symphony'), 'Klassik & Jazz');
 });
 
 test('getStationCategory: Wissen/Kultur-Genres werden erkannt', () => {
-  assert.equal(getStationCategory('Wissen'),       'Wissen & Kultur');
-  assert.equal(getStationCategory('Culture'),      'Wissen & Kultur');
+  assert.equal(getStationCategory('Wissen'), 'Wissen & Kultur');
+  assert.equal(getStationCategory('Culture'), 'Wissen & Kultur');
   assert.equal(getStationCategory('Wissen / Pop'), 'Wissen & Kultur');
 });
 
 test('getStationCategory: Nachrichten/Talk-Genres werden erkannt', () => {
-  assert.equal(getStationCategory('News'),        'Nachrichten & Talk');
+  assert.equal(getStationCategory('News'), 'Nachrichten & Talk');
   assert.equal(getStationCategory('Information'), 'Nachrichten & Talk');
   assert.equal(getStationCategory('Public radio'), 'Nachrichten & Talk');
-  assert.equal(getStationCategory('Talk'),        'Nachrichten & Talk');
+  assert.equal(getStationCategory('Talk'), 'Nachrichten & Talk');
   assert.equal(getStationCategory('Nachrichten'), 'Nachrichten & Talk');
 });
 
 test('getStationCategory: Schlager/Weltmusik-Genres werden erkannt', () => {
-  assert.equal(getStationCategory('Schlager'),  'Schlager & Weltmusik');
-  assert.equal(getStationCategory('Country'),   'Schlager & Weltmusik');
-  assert.equal(getStationCategory('Global'),    'Schlager & Weltmusik');
+  assert.equal(getStationCategory('Schlager'), 'Schlager & Weltmusik');
+  assert.equal(getStationCategory('Country'), 'Schlager & Weltmusik');
+  assert.equal(getStationCategory('Global'), 'Schlager & Weltmusik');
   assert.equal(getStationCategory('Weltmusik'), 'Schlager & Weltmusik');
-  assert.equal(getStationCategory('World'),     'Schlager & Weltmusik');
+  assert.equal(getStationCategory('World'), 'Schlager & Weltmusik');
   assert.notEqual(getStationCategory('Oldies'), 'Schlager & Weltmusik');
 });
 
 test('getStationCategory: Fallback auf Sonstige', () => {
-  assert.equal(getStationCategory(null),    'Sonstige');
-  assert.equal(getStationCategory(''),      'Sonstige');
+  assert.equal(getStationCategory(null), 'Sonstige');
+  assert.equal(getStationCategory(''), 'Sonstige');
   assert.equal(getStationCategory('Polka'), 'Sonstige');
 });
 
@@ -1254,10 +1652,10 @@ test('getLanguageLabel: Filter-Sprachen werden eingedeutscht', () => {
 
 // ── utils: filterStations ─────────────────────────
 const STATIONS = [
-  { id: 'a', name: 'Radio Pop',  genre: 'Pop',  language: 'de', country: 'Germany' },
-  { id: 'b', name: 'Rock FM',    genre: 'Rock', language: 'de', country: 'Germany' },
-  { id: 'c', name: 'Jazz Cafe',  genre: 'Jazz', language: 'en', country: 'USA'     },
-  { id: 'd', name: 'NRJ',        genre: 'Pop',  language: 'fr', country: 'France'  },
+  { id: 'a', name: 'Radio Pop', genre: 'Pop', language: 'de', country: 'Germany' },
+  { id: 'b', name: 'Rock FM', genre: 'Rock', language: 'de', country: 'Germany' },
+  { id: 'c', name: 'Jazz Cafe', genre: 'Jazz', language: 'en', country: 'USA' },
+  { id: 'd', name: 'NRJ', genre: 'Pop', language: 'fr', country: 'France' },
 ];
 
 test('filterStations: ohne Filter alle zurück', () => {
@@ -1267,13 +1665,13 @@ test('filterStations: ohne Filter alle zurück', () => {
 test('filterStations: Genre-Filter', () => {
   const r = filterStations(STATIONS, { genre: 'Pop & Charts' });
   assert.equal(r.length, 2);
-  assert.ok(r.every(s => s.genre === 'Pop'));
+  assert.ok(r.every((s) => s.genre === 'Pop'));
 });
 
 test('filterStations: Sprach-Filter', () => {
   const r = filterStations(STATIONS, { lang: 'Deutsch' });
   assert.equal(r.length, 2);
-  assert.ok(r.every(s => getLanguageLabel(s.language) === 'Deutsch'));
+  assert.ok(r.every((s) => getLanguageLabel(s.language) === 'Deutsch'));
 });
 
 test('filterStations: Textsuche nach Name', () => {
@@ -1291,7 +1689,10 @@ test('filterStations: Textsuche nach Country', () => {
 test('filterStations: Favoriten-Filter', () => {
   const r = filterStations(STATIONS, { favorites: ['b', 'c'], favFilterActive: true });
   assert.equal(r.length, 2);
-  assert.deepEqual(r.map(s => s.id), ['b', 'c']);
+  assert.deepEqual(
+    r.map((s) => s.id),
+    ['b', 'c']
+  );
 });
 
 test('filterStations: Genre + Sprache kombiniert', () => {
@@ -1304,17 +1705,17 @@ test('filterStations: Bitrate-Filter schließt niedrige Bitraten aus', () => {
   const withBitrate = [
     { id: 'a', name: 'HQ', genre: 'Pop', language: 'de', country: 'DE', bitrate: 320 },
     { id: 'b', name: 'MQ', genre: 'Pop', language: 'de', country: 'DE', bitrate: 128 },
-    { id: 'c', name: 'LQ', genre: 'Pop', language: 'de', country: 'DE', bitrate: 48  },
+    { id: 'c', name: 'LQ', genre: 'Pop', language: 'de', country: 'DE', bitrate: 48 },
   ];
   const r = filterStations(withBitrate, { minBitrate: 128 });
   assert.equal(r.length, 2);
-  assert.ok(r.every(s => s.bitrate >= 128));
+  assert.ok(r.every((s) => s.bitrate >= 128));
 });
 
 test('filterStations: Bitrate-Filter ignoriert Custom-Stationen', () => {
   const withCustom = [
     { id: 'x', name: 'Eigen', genre: 'Eigene', language: 'de', country: 'DE', isCustom: true },
-    { id: 'y', name: 'LQ',    genre: 'Pop',    language: 'de', country: 'DE', bitrate: 32   },
+    { id: 'y', name: 'LQ', genre: 'Pop', language: 'de', country: 'DE', bitrate: 32 },
   ];
   const r = filterStations(withCustom, { minBitrate: 128 });
   assert.equal(r.length, 1);
@@ -1323,15 +1724,24 @@ test('filterStations: Bitrate-Filter ignoriert Custom-Stationen', () => {
 
 test('Renderer: Sprachfilter zeigt lokalisierte Labels', () => {
   assert.ok(renderer.includes('getLanguageLabel'), 'Renderer nutzt keine lokalisierten Sprachlabels');
-  assert.ok(renderer.includes("appendOption(langSelect, '', t('filter.all.languages'))"), 'Default-Sprachfilter fehlt');
-  assert.ok(renderer.includes('getLanguageLabel(s.language)'), 'Sprachfilter-Optionen werden nicht lokalisiert');
+  assert.ok(
+    renderer.includes("appendOption(langSelect, '', t('filter.all.languages'))"),
+    'Default-Sprachfilter fehlt'
+  );
+  assert.ok(
+    renderer.includes('getLanguageLabel(s.language)'),
+    'Sprachfilter-Optionen werden nicht lokalisiert'
+  );
 });
 
 test('Renderer: Genre-Filter enthaelt Oldies & Jahrzehnte und Ambient/Chillout', () => {
   assert.ok(renderer.includes("'filter.cat.oldies'"), 'Oldies/Jahrzehnte-Kategorie fehlt im Genre-Filter');
   assert.ok(renderer.includes("'filter.cat.ambient'"), 'Ambient/Chillout-Kategorie fehlt im Genre-Filter');
   assert.ok(renderer.includes("'filter.cat.other'"), 'Sonstige-Kategorie fehlt im Genre-Filter');
-  assert.ok(!renderer.includes("'Sonstige / Ambient'"), 'Alter Sonstige/Ambient-Mix darf nicht mehr im Genre-Filter stehen');
+  assert.ok(
+    !renderer.includes("'Sonstige / Ambient'"),
+    'Alter Sonstige/Ambient-Mix darf nicht mehr im Genre-Filter stehen'
+  );
 });
 
 // ── utils: buildRecentsList ───────────────────────
