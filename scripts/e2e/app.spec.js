@@ -179,3 +179,76 @@ test('Mini-Modus umschalten zeigt Mini-View', async () => {
   await expect(body).not.toHaveClass(/mini-mode/);
   await expect(miniView).toBeHidden();
 });
+
+// Regression für v1.7.6: Kaltstart im Mini-Modus mit aktivem WebGL-Modus →
+// Expand darf keinen verzerrten Visualizer hinterlassen (Buffer muss der
+// Layout-Box entsprechen). Braucht eine eigene App-Instanz mit eigenem
+// userData-Verzeichnis, weil der Mini-Zustand über einen Neustart hinweg
+// persistiert werden muss.
+test('Mini-Kaltstart → Voll: WebGL-Canvas-Buffer entspricht Layout-Box', async () => {
+  test.setTimeout(120_000);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wavelength-e2e-mini-'));
+
+  const launchApp = async () => {
+    const a = await electron.launch({
+      args: [ROOT, `--user-data-dir=${dir}`],
+      env: { ...process.env, NODE_ENV: 'test' },
+    });
+    const w = await a.firstWindow();
+    await a.evaluate(({ BrowserWindow }) => {
+      const [x] = BrowserWindow.getAllWindows();
+      if (x) x.show();
+    });
+    await w.waitForLoadState('domcontentloaded');
+    await w.waitForSelector('.station-item', { state: 'attached', timeout: 45_000 });
+    await w.evaluate(() => {
+      localStorage.setItem('wl.onboardingDone', '1');
+      localStorage.setItem('wl.shortcutsHintSeen', '1');
+      const m = document.getElementById('onboarding-modal');
+      if (m) m.classList.add('hidden');
+    });
+    return { a, w };
+  };
+
+  const quit = async (a) => {
+    try {
+      await a.evaluate(() => process.exit(0));
+    } catch (_) {}
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  };
+
+  // Lauf 1: WebGL-Modus aktivieren, in den Mini-Modus wechseln, beenden
+  {
+    const { a, w } = await launchApp();
+    await w.evaluate(() => localStorage.setItem('wl.visualizerMode', 'mandala3d'));
+    await w.locator('#btn-toggle-mini').click();
+    await w.waitForTimeout(500);
+    await quit(a);
+  }
+
+  // Lauf 2: Kaltstart landet im Mini-Modus, dann expandieren und Größen prüfen
+  {
+    const { a, w } = await launchApp();
+    await expect(w.locator('body')).toHaveClass(/mini-mode/);
+    await w.locator('#mini-expand').click();
+    await w.waitForSelector('#visualizer-webgl', { state: 'attached', timeout: 10_000 });
+    await w.waitForTimeout(1000); // ResizeObserver-Debounce + erster WebGL-Frame
+
+    const m = await w.evaluate(() => {
+      const c = document.getElementById('visualizer-webgl');
+      const r = c.getBoundingClientRect();
+      return {
+        buffer: { w: c.width, h: c.height },
+        rect: { w: Math.round(r.width), h: Math.round(r.height) },
+        dpr: window.devicePixelRatio,
+      };
+    });
+    // Muss die Voll-Ansicht füllen, nicht die stale Mini-Größe (290×56) behalten
+    expect(m.rect.w).toBeGreaterThan(300);
+    expect(Math.abs(m.buffer.w - Math.round(m.rect.w * m.dpr))).toBeLessThanOrEqual(2);
+    expect(Math.abs(m.buffer.h - Math.round(m.rect.h * m.dpr))).toBeLessThanOrEqual(2);
+    await quit(a);
+  }
+
+  fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+});
