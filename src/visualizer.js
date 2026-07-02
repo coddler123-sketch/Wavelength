@@ -115,9 +115,6 @@
     let primaryColorVec = null;
     let secondaryColorVec = null;
     let tertiaryColorVec = null;
-    let primaryColorStr = 'rgba(0, 240, 255, 1.0)';
-    let secondaryColorStr = 'rgba(112, 0, 255, 1.0)';
-    let tertiaryColorStr = 'rgba(255, 0, 153, 1.0)';
 
     const primaryColorStrAlpha = (a) =>
       primaryColorVec
@@ -436,63 +433,6 @@
       canvasCtx.restore();
     }
 
-    function drawDNA(values, W, H) {
-      const avg = averageLevel(values);
-      const amp = H * (0.28 + avg * 0.12);
-      const freq = (2 * Math.PI * 2) / W;
-      const phase1 = clock * 1.2;
-      const phase2 = phase1 + Math.PI;
-      const STEPS = Math.floor(W / 3);
-
-      canvasCtx.save();
-      canvasCtx.lineCap = 'round';
-
-      for (let i = 0; i <= STEPS; i++) {
-        if (i % 4 !== 0) continue;
-        const x = (i / STEPS) * W;
-        const y1 = H / 2 + Math.sin(x * freq + phase1) * amp;
-        const y2 = H / 2 + Math.sin(x * freq + phase2) * amp;
-        const fi = Math.floor((i / STEPS) * values.length);
-        const v = values[fi] || 0;
-        canvasCtx.strokeStyle =
-          v > 0.48 ? `rgba(0, 240, 255, ${0.15 + v * 0.45})` : `rgba(112, 0, 255, ${0.1 + v * 0.35})`;
-        canvasCtx.lineWidth = 1 + v * 1.2;
-        canvasCtx.beginPath();
-        canvasCtx.moveTo(x, y1);
-        canvasCtx.lineTo(x, y2);
-        canvasCtx.stroke();
-      }
-
-      const grad1 = canvasCtx.createLinearGradient(0, 0, W, 0);
-      grad1.addColorStop(0, 'rgba(112, 0, 255, 0.55)');
-      grad1.addColorStop(0.5, 'rgba(0, 114, 255, 0.95)');
-      grad1.addColorStop(1, 'rgba(112, 0, 255, 0.55)');
-
-      const grad2 = canvasCtx.createLinearGradient(0, 0, W, 0);
-      grad2.addColorStop(0, 'rgba(0, 240, 255, 0.38)');
-      grad2.addColorStop(0.5, 'rgba(0, 240, 255, 0.78)');
-      grad2.addColorStop(1, 'rgba(0, 240, 255, 0.38)');
-
-      for (const [grad, phase] of [
-        [grad1, phase1],
-        [grad2, phase2],
-      ]) {
-        canvasCtx.strokeStyle = grad;
-        canvasCtx.lineWidth = 2.5;
-        canvasCtx.shadowColor = phase === phase1 ? 'rgba(112, 0, 255, 0.45)' : 'rgba(0, 240, 255, 0.35)';
-        canvasCtx.shadowBlur = 8;
-        canvasCtx.beginPath();
-        for (let i = 0; i <= STEPS; i++) {
-          const x = (i / STEPS) * W;
-          const y = H / 2 + Math.sin(x * freq + phase) * amp;
-          if (i === 0) canvasCtx.moveTo(x, y);
-          else canvasCtx.lineTo(x, y);
-        }
-        canvasCtx.stroke();
-      }
-      canvasCtx.restore();
-    }
-
     function drawParticles(values, W, H) {
       const avg = averageLevel(values);
 
@@ -571,35 +511,6 @@
         canvasCtx.shadowBlur = age * 8;
         canvasCtx.beginPath();
         canvasCtx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-        canvasCtx.stroke();
-      }
-      canvasCtx.restore();
-    }
-
-    function drawScanner(values, W, H) {
-      const rows = 13;
-      const rowGap = H / (rows + 1);
-
-      canvasCtx.save();
-      canvasCtx.lineCap = 'round';
-      for (let row = 0; row < rows; row++) {
-        const y = rowGap * (row + 1);
-        const value = values[Math.floor((row / rows) * values.length)] || 0;
-        const left = W * (0.09 + value * 0.14);
-        const right = W * (0.91 - value * 0.14);
-
-        canvasCtx.strokeStyle = row % 3 === 0 ? 'rgba(0, 240, 255, 0.22)' : 'rgba(112, 0, 255, 0.24)';
-        canvasCtx.lineWidth = 1;
-        canvasCtx.beginPath();
-        canvasCtx.moveTo(left, y);
-        canvasCtx.lineTo(right, y);
-        canvasCtx.stroke();
-
-        canvasCtx.strokeStyle = value > 0.48 ? 'rgba(0, 240, 255, 0.95)' : 'rgba(0, 114, 255, 0.68)';
-        canvasCtx.lineWidth = 1.6 + value * 2.2;
-        canvasCtx.beginPath();
-        canvasCtx.moveTo(W / 2 - value * W * 0.38, y);
-        canvasCtx.lineTo(W / 2 + value * W * 0.38, y);
         canvasCtx.stroke();
       }
       canvasCtx.restore();
@@ -1353,16 +1264,10 @@
         primaryColorVec = null;
         secondaryColorVec = null;
         tertiaryColorVec = null;
-        primaryColorStr = 'rgba(0, 240, 255, 1.0)';
-        secondaryColorStr = 'rgba(112, 0, 255, 1.0)';
-        tertiaryColorStr = 'rgba(255, 0, 153, 1.0)';
       } else {
         primaryColorVec = [c1[0] / 255, c1[1] / 255, c1[2] / 255];
         secondaryColorVec = [c2[0] / 255, c2[1] / 255, c2[2] / 255];
         tertiaryColorVec = [c3[0] / 255, c3[1] / 255, c3[2] / 255];
-        primaryColorStr = `rgba(${c1[0]}, ${c1[1]}, ${c1[2]}, 1.0)`;
-        secondaryColorStr = `rgba(${c2[0]}, ${c2[1]}, ${c2[2]}, 1.0)`;
-        tertiaryColorStr = `rgba(${c3[0]}, ${c3[1]}, ${c3[2]}, 1.0)`;
       }
       const state = getState();
       if (!state.playing || !running) drawIdle();
