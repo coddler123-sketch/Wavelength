@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "test": "node scripts/smoke-check.js && node scripts/test.js",
+    "coverage": "node --test --experimental-test-coverage scripts/test.js",
     "verify": "npm run lint && npm run format:check && npm run stations:check && npm run ui:audit && npm test",
     "build:icon": "node scripts/build-icon.js",
     "build": "electron-builder --win --x64",
