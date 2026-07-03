@@ -1286,18 +1286,6 @@ body.reconnecting #mini-playstop {
   border-radius: 6px;
 }
 
-#btn-bass[data-level='1'] {
-  background: color-mix(in srgb, var(--accent) 9.5%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 20%, transparent);
-  color: var(--accent);
-}
-#btn-bass[data-level='2'] {
-  background: rgba(255, 191, 105, 0.13);
-  border-color: rgba(255, 191, 105, 0.26);
-  color: var(--accent3);
-  box-shadow: none;
-}
-
 .vol-mute-btn {
   border: none;
   background: transparent;
@@ -1599,6 +1587,61 @@ input[type='range']:active::-webkit-slider-thumb {
   color: #fff;
 }
 .context-menu-item.active:hover::after {
+  color: #fff;
+}
+
+/* ── Equalizer Popover ────────────────────────────── */
+.eq-popover {
+  position: absolute;
+  background: rgba(16, 19, 29, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.58),
+    0 0 12px rgba(94, 232, 239, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  width: 220px;
+  z-index: 50;
+}
+.eq-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.eq-row label {
+  width: 44px;
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.eq-row input[type='range'] {
+  flex: 1;
+  min-width: 0;
+}
+.eq-val {
+  width: 40px;
+  font-size: 10px;
+  text-align: right;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+.eq-reset-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 5px 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 11px;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.eq-reset-btn:hover {
+  background: rgba(47, 125, 246, 0.82);
   color: #fff;
 }
 

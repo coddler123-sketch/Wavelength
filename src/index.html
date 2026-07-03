@@ -401,11 +401,13 @@
             </button>
             <button
               class="action-btn"
-              id="btn-bass"
-              data-i18n-title="tooltip.bass"
-              data-i18n-aria="tooltip.bass"
-              title="Bassverstärkung · B"
-              aria-label="Bassverstärkung"
+              id="btn-eq"
+              data-i18n-title="tooltip.eq"
+              data-i18n-aria="tooltip.eq"
+              title="Equalizer · B"
+              aria-label="Equalizer"
+              aria-haspopup="true"
+              aria-expanded="false"
             >
               <svg
                 width="15"
@@ -585,6 +587,53 @@
 
     <!-- ── Visualizer Context Menu ──────────────────────── -->
     <div id="viz-context-menu" class="context-menu hidden"></div>
+
+    <!-- ── Equalizer Popover ────────────────────────────── -->
+    <div id="eq-popover" class="eq-popover hidden">
+      <div class="eq-row">
+        <label for="eq-bass" data-i18n="eq.band.bass">Bass</label>
+        <input
+          type="range"
+          id="eq-bass"
+          min="-15"
+          max="15"
+          value="0"
+          step="1"
+          data-i18n-aria="eq.band.bass"
+          aria-label="Bass"
+        />
+        <span class="eq-val" id="eq-bass-val">0 dB</span>
+      </div>
+      <div class="eq-row">
+        <label for="eq-mid" data-i18n="eq.band.mid">Mid</label>
+        <input
+          type="range"
+          id="eq-mid"
+          min="-15"
+          max="15"
+          value="0"
+          step="1"
+          data-i18n-aria="eq.band.mid"
+          aria-label="Mid"
+        />
+        <span class="eq-val" id="eq-mid-val">0 dB</span>
+      </div>
+      <div class="eq-row">
+        <label for="eq-treble" data-i18n="eq.band.treble">Treble</label>
+        <input
+          type="range"
+          id="eq-treble"
+          min="-15"
+          max="15"
+          value="0"
+          step="1"
+          data-i18n-aria="eq.band.treble"
+          aria-label="Treble"
+        />
+        <span class="eq-val" id="eq-treble-val">0 dB</span>
+      </div>
+      <button id="eq-reset" class="eq-reset-btn" data-i18n="eq.reset">Zurücksetzen</button>
+    </div>
 
     <!-- ── About Modal Overlay ─────────────────────────── -->
     <div
