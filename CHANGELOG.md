@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.7
+
+- refactor: eliminate all eslint warnings, enforce --max-warnings 0
+- refactor: remove dead visualizer code (drawDNA, drawScanner, unused color strings)
+- refactor: extract WebGL shader sources into visualizer-shaders.js
+- chore: add npm run coverage via node --experimental-test-coverage
+- chore: enforce lint + prettier in verify gate, apply formatting
+- fix: sync stale 2D canvas buffer immediately when switching back from WebGL
+- test: add e2e regression for mini cold start → full WebGL canvas sizing
+
 ## 1.7.6
 
 - fix: size WebGL canvas from its own layout box, not the hidden 2D canvas
