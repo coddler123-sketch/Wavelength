@@ -96,7 +96,7 @@ for (const channel of [
   assert(preload.includes(channel), `preload missing IPC channel: ${channel}`);
 }
 
-for (const marker of ['showToast', 'BASS_GAINS', 'WavelengthVisualizer.create']) {
+for (const marker of ['showToast', 'setEqBand', 'WavelengthVisualizer.create']) {
   assert(renderer.includes(marker), `renderer missing marker: ${marker}`);
 }
 assert(utils.includes('getStationCategory'), 'utils.js missing getStationCategory');
