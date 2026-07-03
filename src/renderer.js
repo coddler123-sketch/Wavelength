@@ -1,21 +1,17 @@
 import { loadSettings, saveSettings, applyTheme } from './settings.js';
-import { setLang, getLang, t, applyI18n, displayGenre } from './i18n.js';
+import { setLang, t, applyI18n, displayGenre } from './i18n.js';
 import { state } from './renderer-state.js';
 import {
   LS,
   loadInt,
   loadBool,
-  saveBool,
   stationTodayKey,
   stationTotalKey,
   stationGainKey,
   updatePlayUI,
   updateListenBadge,
-  reportConnectionState,
   displayTrackInfo,
-  setActiveStationName,
   updateVolSlider,
-  applyStationGain,
   adjustStationGain,
   resetStationGain,
   STATION_GAIN_STEP_DB,
@@ -33,19 +29,7 @@ import {
   showShortcutsModal,
   hideShortcutsModal,
 } from './renderer-ui.js';
-import {
-  BASS_GAINS,
-  applyBassBoost,
-  cycleBassBoost,
-  startPlay,
-  stopPlay,
-  updateMediaSession,
-  startListenTimer,
-  stopListenTimer,
-  scheduleReconnect,
-  cancelReconnect,
-  RECONNECT_DELAYS,
-} from './renderer-audio.js';
+import { applyBassBoost, cycleBassBoost, startPlay, stopPlay, updateMediaSession } from './renderer-audio.js';
 import {
   renderStations,
   showStationsLoading,
@@ -56,7 +40,6 @@ import {
   toggleFavorite,
   updatePlayerFavStar,
   openStationEditor,
-  closeStationEditor,
   initStationEditor,
 } from './renderer-stations.js';
 

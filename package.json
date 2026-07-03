@@ -9,7 +9,7 @@
     "smoke": "node scripts/smoke-check.js",
     "ui:audit": "electron scripts/ui-audit.js",
     "stations:check": "node scripts/validate-stations.js",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "format:check": "prettier --check .",
     "test": "node scripts/smoke-check.js && node scripts/test.js",
     "coverage": "node --test --experimental-test-coverage scripts/test.js",

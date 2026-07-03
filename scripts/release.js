@@ -43,7 +43,7 @@ try {
   capture('git', ['rev-parse', '--verify', '--quiet', `refs/tags/${tag}`]);
   console.error(`Release aborted: tag ${tag} already exists.`);
   process.exit(1);
-} catch (_) {}
+} catch {}
 
 run(process.execPath, ['scripts/bump-version.js', type]);
 console.log(`\nPreparing ${tag}...\n`);
@@ -51,7 +51,7 @@ console.log(`\nPreparing ${tag}...\n`);
 let lastRelease = '';
 try {
   lastRelease = capture('git', ['describe', '--tags', '--abbrev=0', '--match', 'v[0-9]*']);
-} catch (_) {}
+} catch {}
 
 const logArgs = ['log'];
 if (lastRelease) logArgs.push(`${lastRelease}..HEAD`);

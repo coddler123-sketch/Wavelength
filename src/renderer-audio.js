@@ -4,7 +4,6 @@ import {
   saveBool,
   stationTodayKey,
   stationTotalKey,
-  loadInt,
   updatePlayUI,
   reportConnectionState,
   displayTrackInfo,
@@ -15,7 +14,6 @@ import {
 import { bassTooltip, MEDIA_SESSION_FALLBACK } from './ui-labels.mjs';
 import { t } from './i18n.js';
 import {
-  RECONNECT_DELAYS,
   shouldScheduleReconnect,
   reconnectDelayForAttempt,
   nextReconnectAttempt,

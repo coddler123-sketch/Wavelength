@@ -37,7 +37,7 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   try {
     await app.evaluate(() => process.exit(0));
-  } catch (_) {}
+  } catch {}
   await new Promise((resolve) => setTimeout(resolve, 500));
   fs.rmSync(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 });
@@ -63,7 +63,6 @@ test('Play/Stop-Button ändert aria-label beim Klick', async () => {
 });
 
 test('Station auswählen aktualisiert den Sendernamen', async () => {
-  const first = win.locator('.station-item').first();
   const stationName = await win.evaluate(
     () => document.querySelector('.station-item .station-item-name')?.textContent?.trim() ?? ''
   );
@@ -213,7 +212,7 @@ test('Mini-Kaltstart → Voll: WebGL-Canvas-Buffer entspricht Layout-Box', async
   const quit = async (a) => {
     try {
       await a.evaluate(() => process.exit(0));
-    } catch (_) {}
+    } catch {}
     await new Promise((resolve) => setTimeout(resolve, 500));
   };
 

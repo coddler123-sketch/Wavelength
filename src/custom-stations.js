@@ -10,7 +10,7 @@ function load() {
       const data = JSON.parse(fs.readFileSync(CUSTOM_FILE, 'utf8'));
       if (Array.isArray(data)) return data;
     }
-  } catch (_) {}
+  } catch {}
   return [];
 }
 

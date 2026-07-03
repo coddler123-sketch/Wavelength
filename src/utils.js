@@ -207,5 +207,4 @@
   exports.filterStations = filterStations;
   exports.buildRecentsList = buildRecentsList;
   exports.mediaSessionFields = mediaSessionFields;
-  // eslint-disable-next-line no-undef
 })(typeof module !== 'undefined' ? module.exports : (window.utils = {}));

@@ -551,7 +551,7 @@ function updateDynamicThemeFromIcon(iconUrl) {
         return;
       }
 
-      const [h, s, l] = rgbToHsl(bestR, bestG, bestB);
+      const [h, s] = rgbToHsl(bestR, bestG, bestB);
       const neonS = Math.max(0.85, s);
       const neonL1 = 0.52;
       const neonL2 = 0.48;

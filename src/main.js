@@ -9,13 +9,11 @@ const {
   screen,
   globalShortcut,
   Notification,
-  dialog,
   shell,
   powerMonitor,
   session,
 } = require('electron');
 const { autoUpdater } = require('electron-updater');
-const { trayState: computeTrayState } = require('./utils.js');
 const { loadStations, DEFAULT_STATIONS } = require('./stations.js');
 const customStations = require('./custom-stations.js');
 const { buildTrayStationMenuItems, stationSwitcherSubmenu, setTrayLang, tr } = require('./tray-menu.js');
@@ -194,10 +192,6 @@ function getIconPath(name) {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'assets', name)
     : path.join(__dirname, '..', 'assets', name);
-}
-
-function trayState() {
-  return computeTrayState(connectionState, isMuted, isPlaying);
 }
 
 function getFallbackTrayIcon() {
@@ -608,7 +602,7 @@ function findMisnamedAutostartEntries() {
       if (exeInValue === myExe) results.push(name);
     }
     return results;
-  } catch (_) {
+  } catch {
     return [];
   }
 }
@@ -629,7 +623,7 @@ function toggleAutostart() {
       try {
         execSync(`reg delete "${RUN_KEY}" /v "${name}" /f`, { stdio: 'pipe' });
         log(`[autostart] Removed misnamed autostart entry: ${name}`);
-      } catch (_) {}
+      } catch {}
     }
   }
   updateTrayMenu();
@@ -652,10 +646,10 @@ function cleanupOrphanedAutostart() {
         try {
           execSync(`reg delete "${RUN_KEY}" /v "${name}" /f`, { stdio: 'pipe' });
           log(`[autostart] Removed misnamed/orphaned entry "${name}" → ${exeInValue}`);
-        } catch (_) {}
+        } catch {}
       }
     }
-  } catch (_) {}
+  } catch {}
 }
 
 function showFirstRunHint() {
@@ -822,7 +816,7 @@ ipcMain.handle(
         const timer = setTimeout(() => {
           try {
             req.abort();
-          } catch (_) {}
+          } catch {}
           resolve({ ok: false, error: 'timeout' });
         }, 5000);
         req.on('response', (res) => {
@@ -848,7 +842,7 @@ function getIconCacheDir() {
     iconCacheDir = path.join(app.getPath('userData'), 'icons');
     try {
       fs.mkdirSync(iconCacheDir, { recursive: true });
-    } catch (_) {}
+    } catch {}
     const versionFile = path.join(iconCacheDir, '_version');
     try {
       if (fs.readFileSync(versionFile, 'utf8').trim() !== ICON_CACHE_VERSION) throw new Error();
@@ -858,7 +852,7 @@ function getIconCacheDir() {
           if (f !== '_version') fs.unlinkSync(path.join(iconCacheDir, f));
         }
         fs.writeFileSync(versionFile, ICON_CACHE_VERSION);
-      } catch (_) {}
+      } catch {}
     }
   }
   return iconCacheDir;
@@ -904,9 +898,9 @@ function cacheCleanup() {
     for (const { fp } of files.slice(ICON_MAX_FILES)) {
       try {
         fs.unlinkSync(fp);
-      } catch (_) {}
+      } catch {}
     }
-  } catch (_) {}
+  } catch {}
 }
 
 function readFromDisk(url) {
@@ -968,7 +962,7 @@ ipcMain.handle('cache-icon', async (e, url) => {
     iconMemCache.set(url, dataUrl);
     try {
       fs.writeFileSync(path.join(getIconCacheDir(), `${urlHash(url)}.${ext}`), buf);
-    } catch (_) {}
+    } catch {}
     if (iconMemCache.size % 50 === 0) cacheCleanup();
     return dataUrl;
   } catch {
