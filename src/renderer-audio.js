@@ -1,6 +1,7 @@
 import { state, audio } from './renderer-state.js';
 import {
   LS,
+  loadInt,
   saveBool,
   stationTodayKey,
   stationTotalKey,
@@ -11,7 +12,7 @@ import {
   applyStationGain,
   updateListenBadge,
 } from './renderer-ui.js';
-import { bassTooltip, MEDIA_SESSION_FALLBACK } from './ui-labels.mjs';
+import { MEDIA_SESSION_FALLBACK } from './ui-labels.mjs';
 import { t } from './i18n.js';
 import {
   shouldScheduleReconnect,
@@ -24,25 +25,40 @@ export { RECONNECT_DELAYS } from './reconnect-policy.mjs';
 const api = window.electronAPI;
 const { mediaSessionFields } = window.utils;
 
-// ── Bass Boost ───────────────────────────────────
-export const BASS_GAINS = [0, 6, 12];
+// ── Equalizer ────────────────────────────────────
+export const EQ_MIN_DB = -15;
+export const EQ_MAX_DB = 15;
 
-export function applyBassBoost() {
-  if (state.bassFilter) state.bassFilter.gain.value = BASS_GAINS[state.bassBoostLevel];
-  const btn = document.getElementById('btn-bass');
-  if (!btn) return;
-  btn.classList.toggle('active', state.bassBoostLevel > 0);
-  btn.dataset.level = String(state.bassBoostLevel);
-  btn.title = bassTooltip(state.bassBoostLevel);
+const EQ_BAND_MAP = {
+  bass: { filterKey: 'eqBassFilter', dbKey: 'eqBassDb', lsKey: 'eqBass' },
+  mid: { filterKey: 'eqMidFilter', dbKey: 'eqMidDb', lsKey: 'eqMid' },
+  treble: { filterKey: 'eqTrebleFilter', dbKey: 'eqTrebleDb', lsKey: 'eqTreble' },
+};
+
+export function setEqBand(band, db) {
+  const map = EQ_BAND_MAP[band];
+  if (!map) return;
+  const clamped = Math.max(EQ_MIN_DB, Math.min(EQ_MAX_DB, db));
+  state[map.dbKey] = clamped;
+  if (state[map.filterKey]) state[map.filterKey].gain.value = clamped;
+  localStorage.setItem(LS[map.lsKey], String(clamped));
 }
 
-export function cycleBassBoost() {
-  state.bassBoostLevel = (state.bassBoostLevel + 1) % BASS_GAINS.length;
-  localStorage.setItem(LS.bass, String(state.bassBoostLevel));
-  applyBassBoost();
-  const bassLevelLabel =
-    [t('tooltip.bass.off'), '+6 dB', '+12 dB'][state.bassBoostLevel] ?? t('tooltip.bass.off');
-  showToast(`Bass ${bassLevelLabel}`);
+export function loadEqFromStorage() {
+  setEqBand('bass', loadInt(LS.eqBass, 0));
+  setEqBand('mid', loadInt(LS.eqMid, 0));
+  setEqBand('treble', loadInt(LS.eqTreble, 0));
+}
+
+export function resetEqBands() {
+  setEqBand('bass', 0);
+  setEqBand('mid', 0);
+  setEqBand('treble', 0);
+}
+
+export function resetEq() {
+  resetEqBands();
+  showToast(t('toast.eq.reset'));
 }
 
 // ── Audio Context ────────────────────────────────
@@ -57,10 +73,21 @@ export function initAudioCtx() {
   state.analyser.fftSize = 256;
   state.analyser.smoothingTimeConstant = 0.82;
 
-  state.bassFilter = state.audioCtx.createBiquadFilter();
-  state.bassFilter.type = 'lowshelf';
-  state.bassFilter.frequency.value = 200;
-  state.bassFilter.gain.value = BASS_GAINS[state.bassBoostLevel];
+  state.eqBassFilter = state.audioCtx.createBiquadFilter();
+  state.eqBassFilter.type = 'lowshelf';
+  state.eqBassFilter.frequency.value = 200;
+  state.eqBassFilter.gain.value = state.eqBassDb;
+
+  state.eqMidFilter = state.audioCtx.createBiquadFilter();
+  state.eqMidFilter.type = 'peaking';
+  state.eqMidFilter.frequency.value = 1000;
+  state.eqMidFilter.Q.value = 1;
+  state.eqMidFilter.gain.value = state.eqMidDb;
+
+  state.eqTrebleFilter = state.audioCtx.createBiquadFilter();
+  state.eqTrebleFilter.type = 'highshelf';
+  state.eqTrebleFilter.frequency.value = 4000;
+  state.eqTrebleFilter.gain.value = state.eqTrebleDb;
 
   state.stationGain = state.audioCtx.createGain();
   applyStationGain();
@@ -72,8 +99,10 @@ export function initAudioCtx() {
   limiter.attack.value = 0.003;
   limiter.release.value = 0.25;
 
-  source.connect(state.bassFilter);
-  state.bassFilter.connect(state.analyser);
+  source.connect(state.eqBassFilter);
+  state.eqBassFilter.connect(state.eqMidFilter);
+  state.eqMidFilter.connect(state.eqTrebleFilter);
+  state.eqTrebleFilter.connect(state.analyser);
   state.analyser.connect(state.stationGain);
   state.stationGain.connect(limiter);
   limiter.connect(state.audioCtx.destination);

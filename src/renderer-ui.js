@@ -25,7 +25,9 @@ export const LS = {
   muted: 'wl.muted',
   playing: 'wl.playing',
   vizMode: 'wl.visualizerMode',
-  bass: 'wl.bassBoost',
+  eqBass: 'wl.eqBass',
+  eqMid: 'wl.eqMid',
+  eqTreble: 'wl.eqTreble',
   listenDate: 'wl.listenDate',
   listenOverallTotal: 'wl.listenOverallTotalMs',
 };
