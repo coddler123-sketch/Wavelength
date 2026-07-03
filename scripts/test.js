@@ -1545,6 +1545,125 @@ test('visualizer: stop entfernt geplanten Frame vor erneutem start', (t) => {
   visualizer.stop();
 });
 
+test('visualizer: alle Modi zeichnen ohne Fehler auf einem Mock-Canvas', (t) => {
+  const previous = {
+    window: global.window,
+    document: global.document,
+    localStorage: global.localStorage,
+    requestAnimationFrame: global.requestAnimationFrame,
+    cancelAnimationFrame: global.cancelAnimationFrame,
+  };
+  t.after(() => Object.assign(global, previous));
+
+  const callbacks = new Map();
+  let nextFrameId = 1;
+  global.requestAnimationFrame = (cb) => {
+    const id = nextFrameId++;
+    callbacks.set(id, cb);
+    return id;
+  };
+  global.cancelAnimationFrame = (id) => callbacks.delete(id);
+  global.window = { devicePixelRatio: 2, addEventListener() {} };
+  global.document = { body: { classList: { contains: () => false } } };
+  global.localStorage = { getItem: () => 'bars', setItem() {} };
+
+  let ctxCalls = 0;
+  const gradient = { addColorStop() {} };
+  const makeContext = () =>
+    new Proxy(
+      {},
+      {
+        get(target, property) {
+          ctxCalls++;
+          if (property === 'createLinearGradient' || property === 'createRadialGradient')
+            return () => gradient;
+          if (property === 'measureText') return () => ({ width: 10 });
+          if (property === 'getImageData') return () => ({ data: new Uint8ClampedArray(4) });
+          if (!(property in target)) target[property] = () => {};
+          return target[property];
+        },
+        set(target, property, value) {
+          target[property] = value;
+          return true;
+        },
+      }
+    );
+  const createCanvas = () => {
+    const context = makeContext();
+    return {
+      width: 300,
+      height: 100,
+      offsetWidth: 300,
+      offsetHeight: 100,
+      style: {},
+      getContext: () => context,
+      getBoundingClientRect: () => ({ width: 300, height: 100 }),
+      setAttribute() {},
+      addEventListener() {},
+    };
+  };
+
+  const state = { playing: false, windowVisible: true, muted: false };
+  const analyser = {
+    frequencyBinCount: 128,
+    fftSize: 256,
+    getByteFrequencyData(buf) {
+      for (let i = 0; i < buf.length; i++) buf[i] = (i * 7) % 256;
+    },
+    getByteTimeDomainData(buf) {
+      for (let i = 0; i < buf.length; i++) buf[i] = 128 + Math.round(Math.sin(i / 5) * 60);
+    },
+  };
+  const viz = require('../src/visualizer.js');
+  const visualizer = viz.create({
+    canvas: createCanvas(),
+    miniCanvas: createCanvas(),
+    storageKey: 'test.visualizer.modes',
+    averageLevel: () => 0.4,
+    getAnalyser: () => analyser,
+    getState: () => state,
+    onLevel() {},
+    showToast() {},
+  });
+
+  visualizer.resize(); // HiDPI-Buffer-Pfad (dpr=2)
+  visualizer.setColors([255, 64, 0], [0, 255, 128], [64, 0, 255]);
+
+  // Jeder Modus zeichnet mindestens zwei Idle-Frames (stateful Puffer wie
+  // Waterfall/Particles brauchen einen zweiten Durchlauf)
+  for (const mode of viz.VISUALIZER_MODES) {
+    ctxCalls = 0;
+    assert.doesNotThrow(() => {
+      visualizer.setMode(mode); // zeichnet drawIdle, weil nicht playing
+      visualizer.drawIdle();
+    }, `Modus '${mode}' wirft beim Zeichnen`);
+    assert.equal(visualizer.getMode(), mode);
+    assert.ok(ctxCalls > 0, `Modus '${mode}' hat keine Canvas-Operationen ausgeführt`);
+  }
+
+  // Aktiver Frame-Loop mit echten Analyser-Daten über mehrere Ticks
+  visualizer.setMode('bars');
+  state.playing = true;
+  visualizer.start();
+  let timestamp = 1000;
+  for (let i = 0; i < 3; i++) {
+    const [id, cb] = callbacks.entries().next().value;
+    callbacks.delete(id);
+    cb((timestamp += 16.7));
+  }
+  // Fenster unsichtbar → Loop muss sich selbst beenden
+  state.windowVisible = false;
+  const [lastId, lastCb] = callbacks.entries().next().value;
+  callbacks.delete(lastId);
+  lastCb(timestamp + 16.7);
+  assert.equal(callbacks.size, 0, 'Loop muss bei unsichtbarem Fenster stoppen');
+
+  visualizer.setColors(null); // Reset auf Default-Farben
+  visualizer.resetMode();
+  assert.equal(visualizer.getMode(), 'bars');
+  visualizer.stop();
+});
+
 // ── utils: getStationCategory ─────────────────────
 const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList } = require('../src/utils.js');
 
