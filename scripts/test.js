@@ -426,9 +426,9 @@ test('UI: sichtbare Status- und Tooltexte sind deutsch lokalisiert', () => {
   const btnSleep = htmlEl(html, 'btn-sleep');
   assert.ok(btnSleep, 'Sleeptimer-Button fehlt');
   assert.equal(btnSleep.attr('aria-label'), 'Sleeptimer', 'Sleeptimer aria-label ist nicht deutsch');
-  const btnBass = htmlEl(html, 'btn-bass');
-  assert.ok(btnBass, 'Bass-Button fehlt');
-  assert.equal(btnBass.attr('aria-label'), 'Bassverstärkung', 'Bass aria-label ist nicht deutsch');
+  const btnEq = htmlEl(html, 'btn-eq');
+  assert.ok(btnEq, 'Equalizer-Button fehlt');
+  assert.equal(btnEq.attr('aria-label'), 'Equalizer', 'Equalizer aria-label ist nicht deutsch');
   assert.ok(html.includes('Stream-URL'), 'Stream-URL Label ist nicht deutsch formatiert');
   for (const legacy of [
     'Multi-Station Player',
@@ -452,7 +452,6 @@ test('UI Labels: deutsche Status-, Play- und Medienlabels', async () => {
   assert.equal(labels.connectionLabel('unknown'), 'Gestoppt');
   assert.equal(labels.playStopLabel(true), 'Stoppen');
   assert.equal(labels.playStopLabel(false), 'Abspielen');
-  assert.equal(labels.bassTooltip(1), 'Bassverstärkung: +6 dB');
   assert.deepEqual(labels.MEDIA_SESSION_FALLBACK, {
     title: 'Livestream',
     artist: 'Wavelength',

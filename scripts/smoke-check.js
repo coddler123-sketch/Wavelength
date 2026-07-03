@@ -75,7 +75,7 @@ for (const id of [
   'viz-toast',
   'live-status',
   'listen-badge',
-  'btn-bass',
+  'btn-eq',
   'station-gain-pill',
   'station-search',
   'station-list',
