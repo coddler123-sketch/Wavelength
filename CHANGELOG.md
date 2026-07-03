@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.8
+
+- test: draw every visualizer mode on a mock canvas in Node
+
 ## 1.7.7
 
 - refactor: eliminate all eslint warnings, enforce --max-warnings 0
