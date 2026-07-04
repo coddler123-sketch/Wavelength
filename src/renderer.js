@@ -29,7 +29,15 @@ import {
   showShortcutsModal,
   hideShortcutsModal,
 } from './renderer-ui.js';
-import { applyBassBoost, cycleBassBoost, startPlay, stopPlay, updateMediaSession } from './renderer-audio.js';
+import {
+  setEqBand,
+  resetEqBands,
+  resetEq,
+  loadEqFromStorage,
+  startPlay,
+  stopPlay,
+  updateMediaSession,
+} from './renderer-audio.js';
 import {
   renderStations,
   showStationsLoading,
@@ -98,8 +106,7 @@ function resetLocalSettings() {
   }
   updateVolSlider(80);
   setMuted(false);
-  state.bassBoostLevel = 0;
-  applyBassBoost();
+  resetEqBands();
   state.visualizer.resetMode();
   updatePlayUI();
   updateListenBadge();
@@ -125,7 +132,6 @@ safeAddListener('mini-expand', 'click', () => triggerToggleMini());
 safeAddListener('btn-hide', 'click', () => api.hideWindow());
 safeAddListener('mini-hide', 'click', () => api.hideWindow());
 safeAddListener('btn-sleep', 'click', () => api.cycleSleepTimer());
-safeAddListener('btn-bass', 'click', cycleBassBoost);
 safeAddListener('station-gain-pill', 'click', resetStationGain);
 safeAddListener('visualizer', 'click', () => state.visualizer.toggleMode());
 
@@ -187,6 +193,64 @@ if (vizCanvas && contextMenu) {
   });
   document.addEventListener('click', (e) => {
     if (!contextMenu.contains(e.target)) contextMenu.classList.add('hidden');
+  });
+}
+
+// ── Equalizer Popover ─────────────────────────────
+const eqBtn = document.getElementById('btn-eq');
+const eqPopover = document.getElementById('eq-popover');
+const eqBands = [
+  { band: 'bass', slider: document.getElementById('eq-bass'), val: document.getElementById('eq-bass-val'), dbKey: 'eqBassDb' },
+  { band: 'mid', slider: document.getElementById('eq-mid'), val: document.getElementById('eq-mid-val'), dbKey: 'eqMidDb' },
+  { band: 'treble', slider: document.getElementById('eq-treble'), val: document.getElementById('eq-treble-val'), dbKey: 'eqTrebleDb' },
+];
+
+function refreshEqSliders() {
+  for (const { slider, val, dbKey } of eqBands) {
+    if (!slider || !val) continue;
+    slider.value = String(state[dbKey]);
+    val.textContent = `${state[dbKey]} dB`;
+  }
+}
+
+function openEqPopover() {
+  if (!eqBtn || !eqPopover) return;
+  refreshEqSliders();
+  const rect = eqBtn.getBoundingClientRect();
+  eqPopover.style.left = Math.min(rect.left, window.innerWidth - 236) + 'px';
+  eqPopover.style.top = rect.bottom + 6 + 'px';
+  eqPopover.classList.remove('hidden');
+  eqBtn.setAttribute('aria-expanded', 'true');
+}
+function closeEqPopover() {
+  if (!eqPopover || !eqBtn) return;
+  eqPopover.classList.add('hidden');
+  eqBtn.setAttribute('aria-expanded', 'false');
+}
+function toggleEqPopover() {
+  if (!eqPopover) return;
+  if (eqPopover.classList.contains('hidden')) openEqPopover();
+  else closeEqPopover();
+}
+
+if (eqBtn && eqPopover) {
+  eqBtn.addEventListener('click', toggleEqPopover);
+  document.addEventListener('click', (e) => {
+    if (!eqPopover.classList.contains('hidden') && !eqPopover.contains(e.target) && e.target !== eqBtn) {
+      closeEqPopover();
+    }
+  });
+  for (const { band, slider, val } of eqBands) {
+    if (!slider) continue;
+    slider.addEventListener('input', () => {
+      const db = parseInt(slider.value, 10);
+      setEqBand(band, db);
+      if (val) val.textContent = `${db} dB`;
+    });
+  }
+  safeAddListener('eq-reset', 'click', () => {
+    resetEq();
+    refreshEqSliders();
   });
 }
 
@@ -308,7 +372,7 @@ document.addEventListener('keydown', (e) => {
       api.toggleMute();
       break;
     case 'KeyB':
-      cycleBassBoost();
+      toggleEqPopover();
       break;
     case 'KeyV':
       state.visualizer.toggleMode();
@@ -575,8 +639,7 @@ if (historyModalEl) {
 
   updateVolSlider(loadInt(LS.vol, 80), false);
   setMuted(loadBool(LS.muted));
-  state.bassBoostLevel = loadInt(LS.bass, 0);
-  applyBassBoost();
+  loadEqFromStorage();
   updatePlayUI();
 
   state.visualizer.drawIdle();
@@ -676,7 +739,6 @@ async function saveAndClose() {
   populateFilters();
   renderStations();
   updateListenBadge();
-  applyBassBoost();
   updatePlayUI();
   if (state.activeStation) {
     const gainDb = loadInt(stationGainKey(state.activeStation.id), 0);
