@@ -90,6 +90,47 @@
   padding: 24px 16px;
 }
 
+.stats-overall {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.stats-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+.stats-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.stats-name {
+  color: var(--text);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+  margin-right: 8px;
+}
+.stats-time {
+  color: var(--text-dim);
+  font-size: 10px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.stats-empty {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 11px;
+  padding: 24px 16px;
+}
+
 /* â”€â”€ Settings Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .settings-modal-content {
   min-width: 320px;

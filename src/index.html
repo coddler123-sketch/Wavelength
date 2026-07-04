@@ -888,6 +888,24 @@
       </div>
     </div>
 
+    <!-- ── Listening Stats Modal Overlay ────────────── -->
+    <div
+      id="stats-modal"
+      class="modal-overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="stats-modal-title"
+    >
+      <div class="modal-content history-modal">
+        <h2 class="modal-title" id="stats-modal-title" data-i18n="stats.title">Hörstatistik</h2>
+        <div class="stats-overall" id="stats-overall"></div>
+        <div id="stats-list" class="history-list" aria-live="polite"></div>
+        <div class="modal-buttons modal-buttons--full">
+          <button class="modal-btn" id="stats-close-btn" data-i18n="about.close">Schließen</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Settings Modal ───────────────────────────── -->
     <div
       id="settings-modal"
@@ -930,6 +948,13 @@
               <input type="checkbox" id="setting-autostart" />
               <span data-i18n="settings.autostart">Mit Windows starten</span>
             </label>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title" data-i18n="settings.stats">Statistik</div>
+            <button class="modal-btn modal-btn-ghost" id="btn-show-stats" data-i18n="stats.show">
+              Statistik anzeigen
+            </button>
           </div>
         </div>
 
