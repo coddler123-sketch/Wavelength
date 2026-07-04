@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.3
+
+- ci: fix Prettier CI failures since v1.7.7 by enforcing --end-of-line lf explicitly
+- ci: add format:write script for consistent local formatting
+
 ## 1.9.2
 
 - ci: also upload dist/latest.yml to GitHub release so electron-updater can detect new versions
