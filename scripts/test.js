@@ -1664,7 +1664,7 @@ test('visualizer: alle Modi zeichnen ohne Fehler auf einem Mock-Canvas', (t) => 
 });
 
 // ── utils: getStationCategory ─────────────────────
-const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList } = require('../src/utils.js');
+const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList, buildStatsList } = require('../src/utils.js');
 
 test('DEFAULT_STATIONS: kein kuratierter Sender landet unter Sonstige', () => {
   const uncategorized = DEFAULT_STATIONS.filter(
@@ -1879,4 +1879,39 @@ test('buildRecentsList: begrenzt auf max 5', () => {
 
 test('buildRecentsList: leere Liste', () => {
   assert.deepEqual(buildRecentsList([], 'x'), ['x']);
+});
+
+// ── utils: buildStatsList ─────────────────────────
+test('buildStatsList: sortiert nach Gesamt-Hördauer absteigend', () => {
+  const stations = [
+    { id: 'a', name: 'Sender A' },
+    { id: 'b', name: 'Sender B' },
+  ];
+  const listenData = { a: { total: 1000, today: 0 }, b: { total: 5000, today: 200 } };
+  const result = buildStatsList(stations, listenData);
+  assert.equal(result[0].id, 'b');
+  assert.equal(result[1].id, 'a');
+});
+
+test('buildStatsList: filtert Sender ohne Hördauer heraus', () => {
+  const stations = [
+    { id: 'a', name: 'Sender A' },
+    { id: 'b', name: 'Sender B' },
+  ];
+  const listenData = { a: { total: 0, today: 0 } };
+  const result = buildStatsList(stations, listenData);
+  assert.deepEqual(result, []);
+});
+
+test('buildStatsList: fehlende listenData ergibt gefilterte leere Liste', () => {
+  const stations = [{ id: 'a', name: 'Sender A' }];
+  const result = buildStatsList(stations, {});
+  assert.deepEqual(result, []);
+});
+
+test('buildStatsList: enthält id, name, total und today pro Sender', () => {
+  const stations = [{ id: 'a', name: 'Sender A' }];
+  const listenData = { a: { total: 3000, today: 1000 } };
+  const result = buildStatsList(stations, listenData);
+  assert.deepEqual(result, [{ id: 'a', name: 'Sender A', total: 3000, today: 1000 }]);
 });
