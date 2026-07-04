@@ -200,9 +200,24 @@ if (vizCanvas && contextMenu) {
 const eqBtn = document.getElementById('btn-eq');
 const eqPopover = document.getElementById('eq-popover');
 const eqBands = [
-  { band: 'bass', slider: document.getElementById('eq-bass'), val: document.getElementById('eq-bass-val'), dbKey: 'eqBassDb' },
-  { band: 'mid', slider: document.getElementById('eq-mid'), val: document.getElementById('eq-mid-val'), dbKey: 'eqMidDb' },
-  { band: 'treble', slider: document.getElementById('eq-treble'), val: document.getElementById('eq-treble-val'), dbKey: 'eqTrebleDb' },
+  {
+    band: 'bass',
+    slider: document.getElementById('eq-bass'),
+    val: document.getElementById('eq-bass-val'),
+    dbKey: 'eqBassDb',
+  },
+  {
+    band: 'mid',
+    slider: document.getElementById('eq-mid'),
+    val: document.getElementById('eq-mid-val'),
+    dbKey: 'eqMidDb',
+  },
+  {
+    band: 'treble',
+    slider: document.getElementById('eq-treble'),
+    val: document.getElementById('eq-treble-val'),
+    dbKey: 'eqTrebleDb',
+  },
 ];
 
 function refreshEqSliders() {
@@ -236,7 +251,11 @@ function toggleEqPopover() {
 if (eqBtn && eqPopover) {
   eqBtn.addEventListener('click', toggleEqPopover);
   document.addEventListener('click', (e) => {
-    if (!eqPopover.classList.contains('hidden') && !eqPopover.contains(e.target) && e.target !== eqBtn) {
+    if (
+      !eqPopover.classList.contains('hidden') &&
+      !eqPopover.contains(e.target) &&
+      !eqBtn.contains(e.target)
+    ) {
       closeEqPopover();
     }
   });
