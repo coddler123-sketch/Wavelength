@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.2
+
+- fix: fill station icons edge-to-edge instead of letterboxing
+- fix(stations): replace dead ENERGY Deutschland stream URL
+
 ## 1.8.1
 
 - fix: keep eq-popover within window bounds when the trigger button sits mid-window
