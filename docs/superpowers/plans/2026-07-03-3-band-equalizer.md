@@ -14,25 +14,26 @@
 
 ## File Structure
 
-| File | Change |
-|------|--------|
-| `scripts/smoke-check.js` | Required-id check: `btn-bass` → `btn-eq` |
-| `scripts/test.js` | HTML-label test + UI-Labels test updated for new EQ button/removed bassTooltip |
-| `src/renderer-state.js` | Replace `bassFilter`/`bassBoostLevel` with 3 filter refs + 3 dB values |
-| `src/renderer-ui.js` | Replace `LS.bass` with `LS.eqBass`/`LS.eqMid`/`LS.eqTreble` |
-| `src/ui-labels.mjs` | Remove `bassTooltip()` |
-| `src/renderer-audio.js` | Replace bass-boost chain/functions with 3-band EQ chain/functions |
-| `src/index.html` | Replace `#btn-bass` with `#btn-eq`; add `#eq-popover` markup |
-| `src/index.css` | Remove old `#btn-bass[data-level]` rules; add `.eq-popover` styles |
-| `src/i18n.js` | Remove `tooltip.bass*` keys; add `tooltip.eq`, `toast.eq.reset`, `eq.reset`, `eq.band.*` (DE+EN) |
-| `src/renderer.js` | Update imports; wire popover open/close, slider inputs, reset button, `KeyB` shortcut; replace 3 call sites of `applyBassBoost()` |
-| `scripts/e2e/app.spec.js` | New E2E test for popover open/slider/reset/persistence |
+| File                      | Change                                                                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/smoke-check.js`  | Required-id check: `btn-bass` → `btn-eq`                                                                                          |
+| `scripts/test.js`         | HTML-label test + UI-Labels test updated for new EQ button/removed bassTooltip                                                    |
+| `src/renderer-state.js`   | Replace `bassFilter`/`bassBoostLevel` with 3 filter refs + 3 dB values                                                            |
+| `src/renderer-ui.js`      | Replace `LS.bass` with `LS.eqBass`/`LS.eqMid`/`LS.eqTreble`                                                                       |
+| `src/ui-labels.mjs`       | Remove `bassTooltip()`                                                                                                            |
+| `src/renderer-audio.js`   | Replace bass-boost chain/functions with 3-band EQ chain/functions                                                                 |
+| `src/index.html`          | Replace `#btn-bass` with `#btn-eq`; add `#eq-popover` markup                                                                      |
+| `src/index.css`           | Remove old `#btn-bass[data-level]` rules; add `.eq-popover` styles                                                                |
+| `src/i18n.js`             | Remove `tooltip.bass*` keys; add `tooltip.eq`, `toast.eq.reset`, `eq.reset`, `eq.band.*` (DE+EN)                                  |
+| `src/renderer.js`         | Update imports; wire popover open/close, slider inputs, reset button, `KeyB` shortcut; replace 3 call sites of `applyBassBoost()` |
+| `scripts/e2e/app.spec.js` | New E2E test for popover open/slider/reset/persistence                                                                            |
 
 ---
 
 ### Task 1: Update existing unit tests to expect the new EQ UI (red)
 
 **Files:**
+
 - Modify: `scripts/smoke-check.js:78`
 - Modify: `scripts/test.js:429-431`
 - Modify: `scripts/test.js:455`
@@ -56,17 +57,17 @@ to:
 Find this block (around line 429-431):
 
 ```js
-  const btnBass = htmlEl(html, 'btn-bass');
-  assert.ok(btnBass, 'Bass-Button fehlt');
-  assert.equal(btnBass.attr('aria-label'), 'Bassverstärkung', 'Bass aria-label ist nicht deutsch');
+const btnBass = htmlEl(html, 'btn-bass');
+assert.ok(btnBass, 'Bass-Button fehlt');
+assert.equal(btnBass.attr('aria-label'), 'Bassverstärkung', 'Bass aria-label ist nicht deutsch');
 ```
 
 Replace with:
 
 ```js
-  const btnEq = htmlEl(html, 'btn-eq');
-  assert.ok(btnEq, 'Equalizer-Button fehlt');
-  assert.equal(btnEq.attr('aria-label'), 'Equalizer', 'Equalizer aria-label ist nicht deutsch');
+const btnEq = htmlEl(html, 'btn-eq');
+assert.ok(btnEq, 'Equalizer-Button fehlt');
+assert.equal(btnEq.attr('aria-label'), 'Equalizer', 'Equalizer aria-label ist nicht deutsch');
 ```
 
 - [ ] **Step 3: Remove the bassTooltip assertion from the UI-Labels test**
@@ -74,7 +75,7 @@ Replace with:
 Find and delete this line (around line 455):
 
 ```js
-  assert.equal(labels.bassTooltip(1), 'Bassverstärkung: +6 dB');
+assert.equal(labels.bassTooltip(1), 'Bassverstärkung: +6 dB');
 ```
 
 - [ ] **Step 4: Run the tests and confirm they fail (red)**
@@ -97,6 +98,7 @@ git commit -m "test: expect new #btn-eq element ahead of equalizer implementatio
 ### Task 2: Data model & Web Audio EQ chain
 
 **Files:**
+
 - Modify: `src/renderer-state.js`
 - Modify: `src/renderer-ui.js`
 - Modify: `src/ui-labels.mjs`
@@ -258,64 +260,64 @@ export function resetEq() {
 Find the audio chain in `initAudioCtx()`:
 
 ```js
-  state.bassFilter = state.audioCtx.createBiquadFilter();
-  state.bassFilter.type = 'lowshelf';
-  state.bassFilter.frequency.value = 200;
-  state.bassFilter.gain.value = BASS_GAINS[state.bassBoostLevel];
+state.bassFilter = state.audioCtx.createBiquadFilter();
+state.bassFilter.type = 'lowshelf';
+state.bassFilter.frequency.value = 200;
+state.bassFilter.gain.value = BASS_GAINS[state.bassBoostLevel];
 
-  state.stationGain = state.audioCtx.createGain();
-  applyStationGain();
+state.stationGain = state.audioCtx.createGain();
+applyStationGain();
 
-  const limiter = state.audioCtx.createDynamicsCompressor();
-  limiter.threshold.value = -1.5;
-  limiter.knee.value = 0;
-  limiter.ratio.value = 20;
-  limiter.attack.value = 0.003;
-  limiter.release.value = 0.25;
+const limiter = state.audioCtx.createDynamicsCompressor();
+limiter.threshold.value = -1.5;
+limiter.knee.value = 0;
+limiter.ratio.value = 20;
+limiter.attack.value = 0.003;
+limiter.release.value = 0.25;
 
-  source.connect(state.bassFilter);
-  state.bassFilter.connect(state.analyser);
-  state.analyser.connect(state.stationGain);
-  state.stationGain.connect(limiter);
-  limiter.connect(state.audioCtx.destination);
+source.connect(state.bassFilter);
+state.bassFilter.connect(state.analyser);
+state.analyser.connect(state.stationGain);
+state.stationGain.connect(limiter);
+limiter.connect(state.audioCtx.destination);
 ```
 
 Replace with:
 
 ```js
-  state.eqBassFilter = state.audioCtx.createBiquadFilter();
-  state.eqBassFilter.type = 'lowshelf';
-  state.eqBassFilter.frequency.value = 200;
-  state.eqBassFilter.gain.value = state.eqBassDb;
+state.eqBassFilter = state.audioCtx.createBiquadFilter();
+state.eqBassFilter.type = 'lowshelf';
+state.eqBassFilter.frequency.value = 200;
+state.eqBassFilter.gain.value = state.eqBassDb;
 
-  state.eqMidFilter = state.audioCtx.createBiquadFilter();
-  state.eqMidFilter.type = 'peaking';
-  state.eqMidFilter.frequency.value = 1000;
-  state.eqMidFilter.Q.value = 1;
-  state.eqMidFilter.gain.value = state.eqMidDb;
+state.eqMidFilter = state.audioCtx.createBiquadFilter();
+state.eqMidFilter.type = 'peaking';
+state.eqMidFilter.frequency.value = 1000;
+state.eqMidFilter.Q.value = 1;
+state.eqMidFilter.gain.value = state.eqMidDb;
 
-  state.eqTrebleFilter = state.audioCtx.createBiquadFilter();
-  state.eqTrebleFilter.type = 'highshelf';
-  state.eqTrebleFilter.frequency.value = 4000;
-  state.eqTrebleFilter.gain.value = state.eqTrebleDb;
+state.eqTrebleFilter = state.audioCtx.createBiquadFilter();
+state.eqTrebleFilter.type = 'highshelf';
+state.eqTrebleFilter.frequency.value = 4000;
+state.eqTrebleFilter.gain.value = state.eqTrebleDb;
 
-  state.stationGain = state.audioCtx.createGain();
-  applyStationGain();
+state.stationGain = state.audioCtx.createGain();
+applyStationGain();
 
-  const limiter = state.audioCtx.createDynamicsCompressor();
-  limiter.threshold.value = -1.5;
-  limiter.knee.value = 0;
-  limiter.ratio.value = 20;
-  limiter.attack.value = 0.003;
-  limiter.release.value = 0.25;
+const limiter = state.audioCtx.createDynamicsCompressor();
+limiter.threshold.value = -1.5;
+limiter.knee.value = 0;
+limiter.ratio.value = 20;
+limiter.attack.value = 0.003;
+limiter.release.value = 0.25;
 
-  source.connect(state.eqBassFilter);
-  state.eqBassFilter.connect(state.eqMidFilter);
-  state.eqMidFilter.connect(state.eqTrebleFilter);
-  state.eqTrebleFilter.connect(state.analyser);
-  state.analyser.connect(state.stationGain);
-  state.stationGain.connect(limiter);
-  limiter.connect(state.audioCtx.destination);
+source.connect(state.eqBassFilter);
+state.eqBassFilter.connect(state.eqMidFilter);
+state.eqMidFilter.connect(state.eqTrebleFilter);
+state.eqTrebleFilter.connect(state.analyser);
+state.analyser.connect(state.stationGain);
+state.stationGain.connect(limiter);
+limiter.connect(state.audioCtx.destination);
 ```
 
 - [ ] **Step 5: Run lint to confirm no dead references remain in the files touched so far**
@@ -335,6 +337,7 @@ git commit -m "feat: replace bass-boost filter chain with 3-band EQ (bass/mid/tr
 ### Task 3: HTML markup, CSS, and i18n keys
 
 **Files:**
+
 - Modify: `src/index.html`
 - Modify: `src/index.css`
 - Modify: `src/i18n.js`
@@ -344,71 +347,71 @@ git commit -m "feat: replace bass-boost filter chain with 3-band EQ (bass/mid/tr
 Find:
 
 ```html
-            <button
-              class="action-btn"
-              id="btn-bass"
-              data-i18n-title="tooltip.bass"
-              data-i18n-aria="tooltip.bass"
-              title="Bassverstärkung · B"
-              aria-label="Bassverstärkung"
-            >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <line x1="4" y1="21" x2="4" y2="14" />
-                <line x1="4" y1="10" x2="4" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12" y2="3" />
-                <line x1="20" y1="21" x2="20" y2="16" />
-                <line x1="20" y1="12" x2="20" y2="3" />
-                <line x1="2" y1="14" x2="6" y2="14" />
-                <line x1="10" y1="12" x2="14" y2="12" />
-                <line x1="18" y1="16" x2="22" y2="16" />
-              </svg>
-            </button>
+<button
+  class="action-btn"
+  id="btn-bass"
+  data-i18n-title="tooltip.bass"
+  data-i18n-aria="tooltip.bass"
+  title="Bassverstärkung · B"
+  aria-label="Bassverstärkung"
+>
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <line x1="4" y1="21" x2="4" y2="14" />
+    <line x1="4" y1="10" x2="4" y2="3" />
+    <line x1="12" y1="21" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12" y2="3" />
+    <line x1="20" y1="21" x2="20" y2="16" />
+    <line x1="20" y1="12" x2="20" y2="3" />
+    <line x1="2" y1="14" x2="6" y2="14" />
+    <line x1="10" y1="12" x2="14" y2="12" />
+    <line x1="18" y1="16" x2="22" y2="16" />
+  </svg>
+</button>
 ```
 
 Replace with:
 
 ```html
-            <button
-              class="action-btn"
-              id="btn-eq"
-              data-i18n-title="tooltip.eq"
-              data-i18n-aria="tooltip.eq"
-              title="Equalizer · B"
-              aria-label="Equalizer"
-              aria-haspopup="true"
-              aria-expanded="false"
-            >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <line x1="4" y1="21" x2="4" y2="14" />
-                <line x1="4" y1="10" x2="4" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="12" />
-                <line x1="12" y1="8" x2="12" y2="3" />
-                <line x1="20" y1="21" x2="20" y2="16" />
-                <line x1="20" y1="12" x2="20" y2="3" />
-                <line x1="2" y1="14" x2="6" y2="14" />
-                <line x1="10" y1="12" x2="14" y2="12" />
-                <line x1="18" y1="16" x2="22" y2="16" />
-              </svg>
-            </button>
+<button
+  class="action-btn"
+  id="btn-eq"
+  data-i18n-title="tooltip.eq"
+  data-i18n-aria="tooltip.eq"
+  title="Equalizer · B"
+  aria-label="Equalizer"
+  aria-haspopup="true"
+  aria-expanded="false"
+>
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <line x1="4" y1="21" x2="4" y2="14" />
+    <line x1="4" y1="10" x2="4" y2="3" />
+    <line x1="12" y1="21" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12" y2="3" />
+    <line x1="20" y1="21" x2="20" y2="16" />
+    <line x1="20" y1="12" x2="20" y2="3" />
+    <line x1="2" y1="14" x2="6" y2="14" />
+    <line x1="10" y1="12" x2="14" y2="12" />
+    <line x1="18" y1="16" x2="22" y2="16" />
+  </svg>
+</button>
 ```
 
 - [ ] **Step 2: Add the EQ popover markup next to the visualizer context menu**
@@ -416,62 +419,62 @@ Replace with:
 Find:
 
 ```html
-    <!-- ── Visualizer Context Menu ──────────────────────── -->
-    <div id="viz-context-menu" class="context-menu hidden"></div>
+<!-- ── Visualizer Context Menu ──────────────────────── -->
+<div id="viz-context-menu" class="context-menu hidden"></div>
 ```
 
 Replace with:
 
 ```html
-    <!-- ── Visualizer Context Menu ──────────────────────── -->
-    <div id="viz-context-menu" class="context-menu hidden"></div>
+<!-- ── Visualizer Context Menu ──────────────────────── -->
+<div id="viz-context-menu" class="context-menu hidden"></div>
 
-    <!-- ── Equalizer Popover ────────────────────────────── -->
-    <div id="eq-popover" class="eq-popover hidden">
-      <div class="eq-row">
-        <label for="eq-bass" data-i18n="eq.band.bass">Bass</label>
-        <input
-          type="range"
-          id="eq-bass"
-          min="-15"
-          max="15"
-          value="0"
-          step="1"
-          data-i18n-aria="eq.band.bass"
-          aria-label="Bass"
-        />
-        <span class="eq-val" id="eq-bass-val">0 dB</span>
-      </div>
-      <div class="eq-row">
-        <label for="eq-mid" data-i18n="eq.band.mid">Mid</label>
-        <input
-          type="range"
-          id="eq-mid"
-          min="-15"
-          max="15"
-          value="0"
-          step="1"
-          data-i18n-aria="eq.band.mid"
-          aria-label="Mid"
-        />
-        <span class="eq-val" id="eq-mid-val">0 dB</span>
-      </div>
-      <div class="eq-row">
-        <label for="eq-treble" data-i18n="eq.band.treble">Treble</label>
-        <input
-          type="range"
-          id="eq-treble"
-          min="-15"
-          max="15"
-          value="0"
-          step="1"
-          data-i18n-aria="eq.band.treble"
-          aria-label="Treble"
-        />
-        <span class="eq-val" id="eq-treble-val">0 dB</span>
-      </div>
-      <button id="eq-reset" class="eq-reset-btn" data-i18n="eq.reset">Zurücksetzen</button>
-    </div>
+<!-- ── Equalizer Popover ────────────────────────────── -->
+<div id="eq-popover" class="eq-popover hidden">
+  <div class="eq-row">
+    <label for="eq-bass" data-i18n="eq.band.bass">Bass</label>
+    <input
+      type="range"
+      id="eq-bass"
+      min="-15"
+      max="15"
+      value="0"
+      step="1"
+      data-i18n-aria="eq.band.bass"
+      aria-label="Bass"
+    />
+    <span class="eq-val" id="eq-bass-val">0 dB</span>
+  </div>
+  <div class="eq-row">
+    <label for="eq-mid" data-i18n="eq.band.mid">Mid</label>
+    <input
+      type="range"
+      id="eq-mid"
+      min="-15"
+      max="15"
+      value="0"
+      step="1"
+      data-i18n-aria="eq.band.mid"
+      aria-label="Mid"
+    />
+    <span class="eq-val" id="eq-mid-val">0 dB</span>
+  </div>
+  <div class="eq-row">
+    <label for="eq-treble" data-i18n="eq.band.treble">Treble</label>
+    <input
+      type="range"
+      id="eq-treble"
+      min="-15"
+      max="15"
+      value="0"
+      step="1"
+      data-i18n-aria="eq.band.treble"
+      aria-label="Treble"
+    />
+    <span class="eq-val" id="eq-treble-val">0 dB</span>
+  </div>
+  <button id="eq-reset" class="eq-reset-btn" data-i18n="eq.reset">Zurücksetzen</button>
+</div>
 ```
 
 - [ ] **Step 3: Remove the old bass-boost button styles from index.css**
@@ -612,6 +615,7 @@ git commit -m "feat: add equalizer popover markup, styles, and i18n strings"
 ### Task 4: Wire up interactivity in renderer.js
 
 **Files:**
+
 - Modify: `src/renderer.js`
 
 - [ ] **Step 1: Update imports**
@@ -641,18 +645,18 @@ import {
 Find (around line 100-102, inside a reset-to-defaults routine):
 
 ```js
-  updateVolSlider(80);
-  setMuted(false);
-  state.bassBoostLevel = 0;
-  applyBassBoost();
+updateVolSlider(80);
+setMuted(false);
+state.bassBoostLevel = 0;
+applyBassBoost();
 ```
 
 Replace with:
 
 ```js
-  updateVolSlider(80);
-  setMuted(false);
-  resetEqBands();
+updateVolSlider(80);
+setMuted(false);
+resetEqBands();
 ```
 
 - [ ] **Step 3: Replace the startup-load call site**
@@ -660,18 +664,18 @@ Replace with:
 Find (around line 576-579):
 
 ```js
-  updateVolSlider(loadInt(LS.vol, 80), false);
-  setMuted(loadBool(LS.muted));
-  state.bassBoostLevel = loadInt(LS.bass, 0);
-  applyBassBoost();
+updateVolSlider(loadInt(LS.vol, 80), false);
+setMuted(loadBool(LS.muted));
+state.bassBoostLevel = loadInt(LS.bass, 0);
+applyBassBoost();
 ```
 
 Replace with:
 
 ```js
-  updateVolSlider(loadInt(LS.vol, 80), false);
-  setMuted(loadBool(LS.muted));
-  loadEqFromStorage();
+updateVolSlider(loadInt(LS.vol, 80), false);
+setMuted(loadBool(LS.muted));
+loadEqFromStorage();
 ```
 
 - [ ] **Step 4: Remove the now-redundant call site after language change**
@@ -679,16 +683,16 @@ Replace with:
 Find (around line 679, in the settings-save flow):
 
 ```js
-  updateListenBadge();
-  applyBassBoost();
-  updatePlayUI();
+updateListenBadge();
+applyBassBoost();
+updatePlayUI();
 ```
 
 Replace with:
 
 ```js
-  updateListenBadge();
-  updatePlayUI();
+updateListenBadge();
+updatePlayUI();
 ```
 
 (The line above it, `applyI18n();`, already re-applies `data-i18n-title`/`data-i18n-aria` on `#btn-eq` and the popover labels — no separate JS refresh needed since the EQ UI has no per-language numeric labels like the old bass tooltip did.)
@@ -707,14 +711,28 @@ Find the existing Visualizer Context Menu block (ends with):
 Immediately after that closing `}`, insert:
 
 ```js
-
 // ── Equalizer Popover ─────────────────────────────
 const eqBtn = document.getElementById('btn-eq');
 const eqPopover = document.getElementById('eq-popover');
 const eqBands = [
-  { band: 'bass', slider: document.getElementById('eq-bass'), val: document.getElementById('eq-bass-val'), dbKey: 'eqBassDb' },
-  { band: 'mid', slider: document.getElementById('eq-mid'), val: document.getElementById('eq-mid-val'), dbKey: 'eqMidDb' },
-  { band: 'treble', slider: document.getElementById('eq-treble'), val: document.getElementById('eq-treble-val'), dbKey: 'eqTrebleDb' },
+  {
+    band: 'bass',
+    slider: document.getElementById('eq-bass'),
+    val: document.getElementById('eq-bass-val'),
+    dbKey: 'eqBassDb',
+  },
+  {
+    band: 'mid',
+    slider: document.getElementById('eq-mid'),
+    val: document.getElementById('eq-mid-val'),
+    dbKey: 'eqMidDb',
+  },
+  {
+    band: 'treble',
+    slider: document.getElementById('eq-treble'),
+    val: document.getElementById('eq-treble-val'),
+    dbKey: 'eqTrebleDb',
+  },
 ];
 
 function refreshEqSliders() {
@@ -810,6 +828,7 @@ git commit -m "feat: wire up equalizer popover interaction and replace bass-boos
 ### Task 5: Add E2E test for the equalizer popover
 
 **Files:**
+
 - Modify: `scripts/e2e/app.spec.js`
 
 - [ ] **Step 1: Add the test**

@@ -15,13 +15,14 @@ Web Audio API bietet keinen fertigen Mehrband-EQ-Node. Die Kette aus drei `Biqua
 
 Ersetzt den einzelnen `bassFilter` durch drei Filter in Serie:
 
-| Band | Typ | Frequenz | Q |
-|------|-----|----------|---|
-| Bass | `lowshelf` | 200 Hz | — |
-| Mid | `peaking` | 1000 Hz | 1 |
-| Treble | `highshelf` | 4000 Hz | — |
+| Band   | Typ         | Frequenz | Q   |
+| ------ | ----------- | -------- | --- |
+| Bass   | `lowshelf`  | 200 Hz   | —   |
+| Mid    | `peaking`   | 1000 Hz  | 1   |
+| Treble | `highshelf` | 4000 Hz  | —   |
 
 Neue Kette:
+
 ```
 source → eqBass → eqMid → eqTreble → analyser → stationGain → limiter → destination
 ```
@@ -43,6 +44,7 @@ Jeder Regler: **−15 dB bis +15 dB**, Default **0 dB**.
 ## Datenfluss & Persistenz
 
 Drei neue `localStorage`-Keys in `LS` (`renderer-ui.js`):
+
 ```js
 eqBass: 'wl.eqBass',
 eqMid: 'wl.eqMid',
