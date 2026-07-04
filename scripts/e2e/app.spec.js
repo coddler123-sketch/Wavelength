@@ -321,6 +321,46 @@ test('Hörstatistik-Modal zeigt gehörten Sender nach Wiedergabe', async () => {
   const overallText = await win.locator('#stats-overall').textContent();
   expect(overallText.length).toBeGreaterThan(0);
 
+  // Verify the stats list has non-zero width — guards against invisible-content regressions.
+  const listWidth = await win.evaluate(() => {
+    const el = document.getElementById('stats-list');
+    return el ? el.getBoundingClientRect().width : 0;
+  });
+  expect(listWidth).toBeGreaterThan(0);
+
   await win.locator('#stats-close-btn').click();
   await expect(win.locator('#stats-modal')).toBeHidden();
+});
+
+test('Modals haben sichtbare Inhalte (kein Zero-Width-Container)', async () => {
+  // About-Modal
+  await win.locator('#btn-about').click();
+  await expect(win.locator('#about-modal')).toBeVisible();
+  const aboutVersionWidth = await win.evaluate(
+    () => document.getElementById('about-version')?.getBoundingClientRect().width ?? 0
+  );
+  expect(aboutVersionWidth).toBeGreaterThan(0);
+  await win.locator('#about-ok-btn').click();
+  await expect(win.locator('#about-modal')).toBeHidden();
+
+  // Track-History-Modal: Inhaltsfläche hat Breite
+  await win.locator('#track-info-container').click();
+  await expect(win.locator('#history-modal')).toBeVisible();
+  const historyListWidth = await win.evaluate(
+    () => document.querySelector('#history-modal .history-list')?.getBoundingClientRect().width ?? 0
+  );
+  expect(historyListWidth).toBeGreaterThan(0);
+  await win.locator('#history-close-btn').click();
+  await expect(win.locator('#history-modal')).toBeHidden();
+
+  // Settings-Modal: erste Zeile sichtbar
+  await win.locator('#btn-settings').click();
+  await expect(win.locator('#settings-modal')).toBeVisible();
+  const settingsContentWidth = await win.evaluate(
+    () =>
+      document.querySelector('#settings-modal .settings-modal-content')?.getBoundingClientRect().width ?? 0
+  );
+  expect(settingsContentWidth).toBeGreaterThan(0);
+  await win.locator('#settings-close-btn').click();
+  await expect(win.locator('#settings-modal')).toBeHidden();
 });

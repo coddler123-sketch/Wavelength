@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.9.2
+
+- ci: also upload dist/latest.yml to GitHub release so electron-updater can detect new versions
+
+## 1.9.1
+
+- fix: stats modal list items now visible (add width: 100% to .history-list)
+- style: custom scrollbar styling for stats and history modal lists
+- fix: mouse wheel no longer changes volume when a modal is open or inside a scrollable list
+- refactor: volume slider fill moved from inline style to CSS custom property (--vol-fill)
+- test: add getBoundingClientRect width checks to catch zero-width container regressions
+- test: add visual modal content test for about, history, and settings modals
+
 ## 1.9.0
 
 - style: apply prettier formatting to stats view files

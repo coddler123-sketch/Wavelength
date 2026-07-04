@@ -297,7 +297,7 @@ export function updateVolSlider(val, persist = true) {
   const sliderFill = (el, thumbPx) => {
     const w = el.offsetWidth;
     const pct = w > thumbPx ? ((thumbPx / w) * 100).toFixed(2) + '%' : val + '%';
-    el.style.background = `linear-gradient(to right, var(--accent2) 0%, var(--accent2) ${pct}, var(--surface2) ${pct})`;
+    el.style.setProperty('--vol-fill', pct);
   };
   const thumbOffset = (sliderEl, thumbW) => {
     const w = sliderEl.offsetWidth;

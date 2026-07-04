@@ -1384,7 +1384,12 @@ input[type='range'] {
   appearance: none;
   height: 4px;
   border-radius: 2px;
-  background: var(--surface2);
+  background: linear-gradient(
+    to right,
+    var(--accent2) 0%,
+    var(--accent2) var(--vol-fill, 0%),
+    var(--surface2) var(--vol-fill, 0%)
+  );
   cursor: pointer;
   -webkit-app-region: no-drag;
   margin: 8px 0;
