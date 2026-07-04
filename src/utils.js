@@ -183,6 +183,18 @@
     return [newId, ...ids.filter((x) => x !== newId)].slice(0, max);
   }
 
+  function buildStatsList(stations, listenData) {
+    return stations
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        total: listenData[s.id]?.total ?? 0,
+        today: listenData[s.id]?.today ?? 0,
+      }))
+      .filter((s) => s.total > 0)
+      .sort((a, b) => b.total - a.total);
+  }
+
   function mediaSessionFields(trackInfo, stationName) {
     const station = String(stationName || 'Wavelength').trim() || 'Wavelength';
     const track = String(trackInfo || '').trim();
@@ -206,5 +218,6 @@
   exports.getLanguageLabel = getLanguageLabel;
   exports.filterStations = filterStations;
   exports.buildRecentsList = buildRecentsList;
+  exports.buildStatsList = buildStatsList;
   exports.mediaSessionFields = mediaSessionFields;
 })(typeof module !== 'undefined' ? module.exports : (window.utils = {}));
