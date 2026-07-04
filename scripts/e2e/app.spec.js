@@ -251,3 +251,30 @@ test('Mini-Kaltstart → Voll: WebGL-Canvas-Buffer entspricht Layout-Box', async
 
   fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 });
+
+test('Equalizer-Popover: Slider setzen, Reset, Persistenz', async () => {
+  const btn = win.locator('#btn-eq');
+  const popover = win.locator('#eq-popover');
+  await expect(popover).toBeHidden();
+
+  await btn.click();
+  await expect(popover).toBeVisible();
+
+  await win.evaluate(() => {
+    const el = document.getElementById('eq-bass');
+    el.value = '6';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await expect(win.locator('#eq-bass-val')).toHaveText('6 dB');
+
+  const stored = await win.evaluate(() => localStorage.getItem('wl.eqBass'));
+  expect(stored).toBe('6');
+
+  await win.locator('#eq-reset').click();
+  await expect(win.locator('#eq-bass-val')).toHaveText('0 dB');
+  const storedAfterReset = await win.evaluate(() => localStorage.getItem('wl.eqBass'));
+  expect(storedAfterReset).toBe('0');
+
+  await btn.click();
+  await expect(popover).toBeHidden();
+});
