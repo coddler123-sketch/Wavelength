@@ -43,6 +43,17 @@ export function loadInt(key, fallback) {
   const v = parseInt(localStorage.getItem(key), 10);
   return Number.isFinite(v) ? v : fallback;
 }
+
+export function collectListenData(stations) {
+  const data = {};
+  for (const s of stations) {
+    data[s.id] = {
+      total: loadInt(stationTotalKey(s.id), 0),
+      today: loadInt(stationTodayKey(s.id), 0),
+    };
+  }
+  return data;
+}
 export function loadBool(key) {
   return localStorage.getItem(key) === '1';
 }
