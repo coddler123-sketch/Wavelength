@@ -299,3 +299,28 @@ test('Equalizer-Popover: Slider setzen, Reset, Persistenz', async () => {
   await btn.click();
   await expect(popover).toBeHidden();
 });
+
+test('Hörstatistik-Modal zeigt gehörten Sender nach Wiedergabe', async () => {
+  // Play/stop briefly so at least one station accrues listen time.
+  const playBtn = win.locator('#btn-playstop');
+  const wasPlaying = (await playBtn.getAttribute('aria-pressed')) === 'true';
+  if (!wasPlaying) {
+    await playBtn.click({ force: true });
+    await win.waitForTimeout(1200);
+    await playBtn.click({ force: true });
+    await win.waitForTimeout(200);
+  }
+
+  await win.locator('#btn-settings').click();
+  await expect(win.locator('#settings-modal')).toBeVisible();
+
+  await win.locator('#btn-show-stats').click();
+  await expect(win.locator('#settings-modal')).toBeHidden();
+  await expect(win.locator('#stats-modal')).toBeVisible();
+
+  const overallText = await win.locator('#stats-overall').textContent();
+  expect(overallText.length).toBeGreaterThan(0);
+
+  await win.locator('#stats-close-btn').click();
+  await expect(win.locator('#stats-modal')).toBeHidden();
+});
