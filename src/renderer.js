@@ -654,7 +654,9 @@ function renderStatsList() {
     const time = document.createElement('div');
     time.className = 'stats-time';
     time.textContent =
-      s.today > 0 ? `${formatListen(s.total)} · ${t('stats.today', formatListen(s.today))}` : formatListen(s.total);
+      s.today > 0
+        ? `${formatListen(s.total)} · ${t('stats.today', formatListen(s.today))}`
+        : formatListen(s.total);
     item.appendChild(name);
     item.appendChild(time);
     list.appendChild(item);

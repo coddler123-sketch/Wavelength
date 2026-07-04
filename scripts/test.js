@@ -1664,7 +1664,13 @@ test('visualizer: alle Modi zeichnen ohne Fehler auf einem Mock-Canvas', (t) => 
 });
 
 // ── utils: getStationCategory ─────────────────────
-const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList, buildStatsList } = require('../src/utils.js');
+const {
+  getStationCategory,
+  getLanguageLabel,
+  filterStations,
+  buildRecentsList,
+  buildStatsList,
+} = require('../src/utils.js');
 
 test('DEFAULT_STATIONS: kein kuratierter Sender landet unter Sonstige', () => {
   const uncategorized = DEFAULT_STATIONS.filter(
