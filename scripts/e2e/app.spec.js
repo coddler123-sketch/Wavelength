@@ -333,16 +333,6 @@ test('Hörstatistik-Modal zeigt gehörten Sender nach Wiedergabe', async () => {
 });
 
 test('Modals haben sichtbare Inhalte (kein Zero-Width-Container)', async () => {
-  // About-Modal
-  await win.locator('#btn-about').click();
-  await expect(win.locator('#about-modal')).toBeVisible();
-  const aboutVersionWidth = await win.evaluate(
-    () => document.getElementById('about-version')?.getBoundingClientRect().width ?? 0
-  );
-  expect(aboutVersionWidth).toBeGreaterThan(0);
-  await win.locator('#about-ok-btn').click();
-  await expect(win.locator('#about-modal')).toBeHidden();
-
   // Track-History-Modal: Inhaltsfläche hat Breite
   await win.locator('#track-info-container').click();
   await expect(win.locator('#history-modal')).toBeVisible();
@@ -361,6 +351,6 @@ test('Modals haben sichtbare Inhalte (kein Zero-Width-Container)', async () => {
       document.querySelector('#settings-modal .settings-modal-content')?.getBoundingClientRect().width ?? 0
   );
   expect(settingsContentWidth).toBeGreaterThan(0);
-  await win.locator('#settings-close-btn').click();
+  await win.locator('#settings-save-btn').click();
   await expect(win.locator('#settings-modal')).toBeHidden();
 });

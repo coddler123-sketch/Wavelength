@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9.4
+
+- chore: update version references to v1.9.3
+
 ## 1.9.3
 
 - ci: fix Prettier CI failures since v1.7.7 by enforcing --end-of-line lf explicitly
