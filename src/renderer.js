@@ -28,6 +28,7 @@ import {
   hideAboutModal,
   showShortcutsModal,
   hideShortcutsModal,
+  collectListenData,
 } from './renderer-ui.js';
 import {
   setEqBand,
@@ -73,7 +74,7 @@ window.addEventListener('unhandledrejection', (e) => {
 });
 
 // ── Visualizer ───────────────────────────────────
-const { averageLevel } = window.utils;
+const { averageLevel, formatListen, buildStatsList } = window.utils;
 state.visualizer = WavelengthVisualizer.create({
   canvas: document.getElementById('visualizer'),
   miniCanvas: document.getElementById('mini-visualizer'),
@@ -627,6 +628,56 @@ const historyModalEl = document.getElementById('history-modal');
 if (historyModalEl) {
   historyModalEl.addEventListener('click', (e) => {
     if (e.target === historyModalEl) hideHistoryModal();
+  });
+}
+
+// ── Listening Stats ──────────────────────────────
+function renderStatsList() {
+  const list = document.getElementById('stats-list');
+  const overall = document.getElementById('stats-overall');
+  if (!list) return;
+  const listenData = collectListenData(state.allStations);
+  const stats = buildStatsList(state.allStations, listenData);
+  const overallMs = loadInt(LS.listenOverallTotal, 0);
+  if (overall) overall.textContent = t('stats.overall', formatListen(overallMs));
+  list.innerHTML = '';
+  if (stats.length === 0) {
+    list.innerHTML = `<div class="stats-empty">${t('stats.empty')}</div>`;
+    return;
+  }
+  for (const s of stats) {
+    const item = document.createElement('div');
+    item.className = 'stats-item';
+    const name = document.createElement('div');
+    name.className = 'stats-name';
+    name.textContent = s.name;
+    const time = document.createElement('div');
+    time.className = 'stats-time';
+    time.textContent =
+      s.today > 0 ? `${formatListen(s.total)} · ${t('stats.today', formatListen(s.today))}` : formatListen(s.total);
+    item.appendChild(name);
+    item.appendChild(time);
+    list.appendChild(item);
+  }
+}
+function showStatsModal() {
+  const modal = document.getElementById('stats-modal');
+  if (!modal) return;
+  renderStatsList();
+  modal.classList.remove('hidden');
+}
+function hideStatsModal() {
+  document.getElementById('stats-modal')?.classList.add('hidden');
+}
+safeAddListener('btn-show-stats', 'click', () => {
+  document.getElementById('settings-modal')?.classList.add('hidden');
+  showStatsModal();
+});
+safeAddListener('stats-close-btn', 'click', hideStatsModal);
+const statsModalEl = document.getElementById('stats-modal');
+if (statsModalEl) {
+  statsModalEl.addEventListener('click', (e) => {
+    if (e.target === statsModalEl) hideStatsModal();
   });
 }
 
