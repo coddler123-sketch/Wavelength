@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8.1
+
+- fix: keep eq-popover within window bounds when the trigger button sits mid-window
+
 ## 1.8.0
 
 - fix: update shortcuts-help label for B key from bass boost to equalizer
