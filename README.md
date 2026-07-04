@@ -4,7 +4,7 @@ Wavelength is a compact Windows Electron radio player for curated stations and R
 
 ## Status
 
-Current version: `1.9.1`
+Current version: `1.9.3`
 
 The Windows installer is intentionally unsigned. Code signing certificates are out of scope for this project.
 
