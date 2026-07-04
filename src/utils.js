@@ -184,12 +184,14 @@
   }
 
   function buildStatsList(stations, listenData) {
-    return stations
-      .map((s) => ({
-        id: s.id,
-        name: s.name,
-        total: listenData[s.id]?.total ?? 0,
-        today: listenData[s.id]?.today ?? 0,
+    const nameMap = new Map(stations.map((s) => [s.id, s.name]));
+    const allIds = new Set([...stations.map((s) => s.id), ...Object.keys(listenData)]);
+    return Array.from(allIds)
+      .map((id) => ({
+        id,
+        name: nameMap.get(id) ?? listenData[id]?.name ?? id,
+        total: listenData[id]?.total ?? 0,
+        today: listenData[id]?.today ?? 0,
       }))
       .filter((s) => s.total > 0)
       .sort((a, b) => b.total - a.total);

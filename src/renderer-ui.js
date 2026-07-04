@@ -38,6 +38,9 @@ export function stationTodayKey(id) {
 export function stationTotalKey(id) {
   return `wl.listenTotalMs_${id}`;
 }
+export function stationNameKey(id) {
+  return `wl.stationName_${id}`;
+}
 
 export function loadInt(key, fallback) {
   const v = parseInt(localStorage.getItem(key), 10);
@@ -46,11 +49,19 @@ export function loadInt(key, fallback) {
 
 export function collectListenData(stations) {
   const data = {};
-  for (const s of stations) {
-    data[s.id] = {
-      total: loadInt(stationTotalKey(s.id), 0),
-      today: loadInt(stationTodayKey(s.id), 0),
+  const prefix = 'wl.listenTotalMs_';
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(prefix)) continue;
+    const id = key.slice(prefix.length);
+    data[id] = {
+      total: loadInt(stationTotalKey(id), 0),
+      today: loadInt(stationTodayKey(id), 0),
+      name: localStorage.getItem(stationNameKey(id)) || null,
     };
+  }
+  for (const s of stations) {
+    if (!data[s.id]) data[s.id] = { total: 0, today: 0 };
   }
   return data;
 }

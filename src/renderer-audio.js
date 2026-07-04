@@ -5,6 +5,7 @@ import {
   saveBool,
   stationTodayKey,
   stationTotalKey,
+  stationNameKey,
   updatePlayUI,
   reportConnectionState,
   displayTrackInfo,
@@ -197,6 +198,9 @@ function addListenTime(ms) {
   localStorage.setItem(stationTodayKey(id), String(today));
   localStorage.setItem(stationTotalKey(id), String(total));
   localStorage.setItem(LS.listenOverallTotal, String(overall));
+  if (!localStorage.getItem(stationNameKey(id))) {
+    localStorage.setItem(stationNameKey(id), state.activeStation.name);
+  }
   updateListenBadge();
 }
 

@@ -29,6 +29,7 @@ import {
   showShortcutsModal,
   hideShortcutsModal,
   collectListenData,
+  stationNameKey,
 } from './renderer-ui.js';
 import {
   setEqBand,
@@ -423,6 +424,7 @@ document.addEventListener('keydown', (e) => {
 window.addEventListener(
   'wheel',
   (e) => {
+    if (e.target.closest('.history-list')) return;
     const picker = e.target.closest('.station-picker');
     if (picker) {
       const list = document.getElementById('station-list');
@@ -430,6 +432,7 @@ window.addEventListener(
       return;
     }
     if (e.target.closest('#viz-context-menu') || e.target.closest('.context-menu')) return;
+    if (document.querySelector('.modal-overlay:not(.hidden)')) return;
     e.preventDefault();
     const vol = parseInt(document.getElementById('vol-slider').value, 10);
     updateVolSlider(Math.max(0, Math.min(100, vol + (e.deltaY < 0 ? 5 : -5))));
@@ -636,6 +639,11 @@ function renderStatsList() {
   const list = document.getElementById('stats-list');
   const overall = document.getElementById('stats-overall');
   if (!list) return;
+  for (const s of state.allStations) {
+    if (!localStorage.getItem(stationNameKey(s.id))) {
+      localStorage.setItem(stationNameKey(s.id), s.name);
+    }
+  }
   const listenData = collectListenData(state.allStations);
   const stats = buildStatsList(state.allStations, listenData);
   const overallMs = loadInt(LS.listenOverallTotal, 0);
