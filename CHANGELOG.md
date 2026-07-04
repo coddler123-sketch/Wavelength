@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.9.0
+
+- style: apply prettier formatting to stats view files
+- style: apply prettier formatting to stats-view plan/spec markdown
+- test: add e2e coverage for listening stats modal
+- feat: wire up listening stats modal open/close/render
+- feat: add listening stats modal markup, styles, and i18n strings
+- feat: add collectListenData localStorage reader for stats view
+- feat: add buildStatsList pure function to utils.js
+- test: add failing tests for buildStatsList ahead of stats view implementation
+- docs: add implementation plan for listening stats view
+- docs: add design spec for listening stats view
+
 ## 1.8.2
 
 - fix: fill station icons edge-to-edge instead of letterboxing
