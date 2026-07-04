@@ -231,10 +231,19 @@ function refreshEqSliders() {
 function openEqPopover() {
   if (!eqBtn || !eqPopover) return;
   refreshEqSliders();
-  const rect = eqBtn.getBoundingClientRect();
-  eqPopover.style.left = Math.min(rect.left, window.innerWidth - 236) + 'px';
-  eqPopover.style.top = rect.bottom + 6 + 'px';
+  // Unhide first so offsetHeight reflects real layout, not the display:none default.
   eqPopover.classList.remove('hidden');
+  const rect = eqBtn.getBoundingClientRect();
+  const popoverWidth = eqPopover.offsetWidth || 220;
+  const popoverHeight = eqPopover.offsetHeight;
+  const left = Math.max(8, Math.min(rect.left, window.innerWidth - popoverWidth - 8));
+  let top = rect.bottom + 6;
+  if (top + popoverHeight > window.innerHeight - 8) {
+    top = rect.top - popoverHeight - 6;
+  }
+  top = Math.max(8, top);
+  eqPopover.style.left = left + 'px';
+  eqPopover.style.top = top + 'px';
   eqBtn.setAttribute('aria-expanded', 'true');
 }
 function closeEqPopover() {

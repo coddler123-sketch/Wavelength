@@ -260,6 +260,27 @@ test('Equalizer-Popover: Slider setzen, Reset, Persistenz', async () => {
   await btn.click();
   await expect(popover).toBeVisible();
 
+  // Regression: the popover must fit entirely within the fixed 460×520 window
+  // (the trigger button sits mid-window, not at the top, so a naive
+  // open-downward-only positioning clips the bottom rows off-screen).
+  const bounds = await win.evaluate(() => {
+    const r = document.getElementById('eq-popover').getBoundingClientRect();
+    return {
+      top: r.top,
+      bottom: r.bottom,
+      left: r.left,
+      right: r.right,
+      winW: window.innerWidth,
+      winH: window.innerHeight,
+    };
+  });
+  expect(bounds.top).toBeGreaterThanOrEqual(0);
+  expect(bounds.bottom).toBeLessThanOrEqual(bounds.winH);
+  expect(bounds.left).toBeGreaterThanOrEqual(0);
+  expect(bounds.right).toBeLessThanOrEqual(bounds.winW);
+  await expect(win.locator('#eq-treble')).toBeInViewport();
+  await expect(win.locator('#eq-reset')).toBeInViewport();
+
   await win.evaluate(() => {
     const el = document.getElementById('eq-bass');
     el.value = '6';
