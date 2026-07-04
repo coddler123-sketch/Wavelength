@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.8.0
+
+- fix: update shortcuts-help label for B key from bass boost to equalizer
+- style: apply prettier formatting to plan/spec markdown
+- test: add e2e coverage for equalizer popover open/slider/reset/persistence
+- fix: eq-popover closing itself on the click that opens it
+- feat: wire up equalizer popover interaction and replace bass-boost shortcut
+- fix: align eq-popover z-index with the context-menu pattern it's modeled on
+- fix: update smoke-check marker from BASS_GAINS to setEqBand
+- feat: add equalizer popover markup, styles, and i18n strings
+- feat: replace bass-boost filter chain with 3-band EQ (bass/mid/treble)
+- test: expect new #btn-eq element ahead of equalizer implementation
+- docs: add implementation plan for 3-band equalizer
+- docs: add design spec for 3-band equalizer feature
+
 ## 1.7.8
 
 - test: draw every visualizer mode on a mock canvas in Node
