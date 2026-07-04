@@ -14,22 +14,23 @@
 
 ## File Structure
 
-| File | Change |
-|------|--------|
-| `scripts/test.js` | New unit tests for `buildStatsList` |
-| `src/utils.js` | New pure function `buildStatsList(stations, listenData)` |
-| `src/renderer-ui.js` | New function `collectListenData(stations)` |
-| `src/index.html` | New "Statistik" section in `#settings-modal`; new `#stats-modal` |
-| `src/index.css` | New `.stats-*` styles |
-| `src/i18n.js` | New keys: `settings.stats`, `stats.show`, `stats.title`, `stats.overall`, `stats.today`, `stats.empty` (DE+EN) |
-| `src/renderer.js` | Import `collectListenData`; destructure `buildStatsList`/`formatListen` from `window.utils`; new render/show/hide functions + wiring |
-| `scripts/e2e/app.spec.js` | New E2E test |
+| File                      | Change                                                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `scripts/test.js`         | New unit tests for `buildStatsList`                                                                                                  |
+| `src/utils.js`            | New pure function `buildStatsList(stations, listenData)`                                                                             |
+| `src/renderer-ui.js`      | New function `collectListenData(stations)`                                                                                           |
+| `src/index.html`          | New "Statistik" section in `#settings-modal`; new `#stats-modal`                                                                     |
+| `src/index.css`           | New `.stats-*` styles                                                                                                                |
+| `src/i18n.js`             | New keys: `settings.stats`, `stats.show`, `stats.title`, `stats.overall`, `stats.today`, `stats.empty` (DE+EN)                       |
+| `src/renderer.js`         | Import `collectListenData`; destructure `buildStatsList`/`formatListen` from `window.utils`; new render/show/hide functions + wiring |
+| `scripts/e2e/app.spec.js` | New E2E test                                                                                                                         |
 
 ---
 
 ### Task 1: Write failing unit tests for `buildStatsList` (red)
 
 **Files:**
+
 - Modify: `scripts/test.js`
 
 - [ ] **Step 1: Add `buildStatsList` to the utils.js require**
@@ -43,7 +44,13 @@ const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList }
 Replace with:
 
 ```js
-const { getStationCategory, getLanguageLabel, filterStations, buildRecentsList, buildStatsList } = require('../src/utils.js');
+const {
+  getStationCategory,
+  getLanguageLabel,
+  filterStations,
+  buildRecentsList,
+  buildStatsList,
+} = require('../src/utils.js');
 ```
 
 - [ ] **Step 2: Add the tests**
@@ -104,6 +111,7 @@ git commit -m "test: add failing tests for buildStatsList ahead of stats view im
 ### Task 2: Implement `buildStatsList` in utils.js (green)
 
 **Files:**
+
 - Modify: `src/utils.js`
 
 - [ ] **Step 1: Add the function**
@@ -111,26 +119,25 @@ git commit -m "test: add failing tests for buildStatsList ahead of stats view im
 Find (around line 182, right after `buildRecentsList`):
 
 ```js
-  function buildRecentsList(ids, newId, max = 5) {
-    return [newId, ...ids.filter((x) => x !== newId)].slice(0, max);
-  }
+function buildRecentsList(ids, newId, max = 5) {
+  return [newId, ...ids.filter((x) => x !== newId)].slice(0, max);
+}
 ```
 
 Add immediately after it:
 
 ```js
-
-  function buildStatsList(stations, listenData) {
-    return stations
-      .map((s) => ({
-        id: s.id,
-        name: s.name,
-        total: listenData[s.id]?.total ?? 0,
-        today: listenData[s.id]?.today ?? 0,
-      }))
-      .filter((s) => s.total > 0)
-      .sort((a, b) => b.total - a.total);
-  }
+function buildStatsList(stations, listenData) {
+  return stations
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      total: listenData[s.id]?.total ?? 0,
+      today: listenData[s.id]?.today ?? 0,
+    }))
+    .filter((s) => s.total > 0)
+    .sort((a, b) => b.total - a.total);
+}
 ```
 
 - [ ] **Step 2: Export it**
@@ -138,14 +145,14 @@ Add immediately after it:
 Find (around line 208):
 
 ```js
-  exports.buildRecentsList = buildRecentsList;
+exports.buildRecentsList = buildRecentsList;
 ```
 
 Replace with:
 
 ```js
-  exports.buildRecentsList = buildRecentsList;
-  exports.buildStatsList = buildStatsList;
+exports.buildRecentsList = buildRecentsList;
+exports.buildStatsList = buildStatsList;
 ```
 
 - [ ] **Step 3: Run the tests and confirm they pass**
@@ -165,6 +172,7 @@ git commit -m "feat: add buildStatsList pure function to utils.js"
 ### Task 3: Add `collectListenData` glue function in renderer-ui.js
 
 **Files:**
+
 - Modify: `src/renderer-ui.js`
 
 - [ ] **Step 1: Add the function**
@@ -181,7 +189,6 @@ export function loadInt(key, fallback) {
 Add immediately after it:
 
 ```js
-
 export function collectListenData(stations) {
   const data = {};
   for (const s of stations) {
@@ -211,6 +218,7 @@ git commit -m "feat: add collectListenData localStorage reader for stats view"
 ### Task 4: HTML markup, CSS, and i18n keys
 
 **Files:**
+
 - Modify: `src/index.html`
 - Modify: `src/index.css`
 - Modify: `src/i18n.js`
@@ -255,67 +263,67 @@ Replace with (adds a new section right after "System", still inside `.settings-b
 Find:
 
 ```html
-    <!-- ── Track History Modal Overlay ─────────────── -->
-    <div
-      id="history-modal"
-      class="modal-overlay hidden"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="history-modal-title"
-    >
-      <div class="modal-content history-modal">
-        <h2 class="modal-title" id="history-modal-title" data-i18n="history.title">Wiedergabeverlauf</h2>
-        <div id="history-list" class="history-list" aria-live="polite"></div>
-        <div class="modal-buttons modal-buttons--full">
-          <button class="modal-btn modal-btn-ghost" id="history-clear-btn" data-i18n="history.clear">
-            Verlauf löschen
-          </button>
-          <button class="modal-btn" id="history-close-btn" data-i18n="about.close">Schließen</button>
-        </div>
-      </div>
+<!-- ── Track History Modal Overlay ─────────────── -->
+<div
+  id="history-modal"
+  class="modal-overlay hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="history-modal-title"
+>
+  <div class="modal-content history-modal">
+    <h2 class="modal-title" id="history-modal-title" data-i18n="history.title">Wiedergabeverlauf</h2>
+    <div id="history-list" class="history-list" aria-live="polite"></div>
+    <div class="modal-buttons modal-buttons--full">
+      <button class="modal-btn modal-btn-ghost" id="history-clear-btn" data-i18n="history.clear">
+        Verlauf löschen
+      </button>
+      <button class="modal-btn" id="history-close-btn" data-i18n="about.close">Schließen</button>
     </div>
+  </div>
+</div>
 ```
 
 Replace with (keeps the history modal unchanged, adds the new stats modal right after it):
 
 ```html
-    <!-- ── Track History Modal Overlay ─────────────── -->
-    <div
-      id="history-modal"
-      class="modal-overlay hidden"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="history-modal-title"
-    >
-      <div class="modal-content history-modal">
-        <h2 class="modal-title" id="history-modal-title" data-i18n="history.title">Wiedergabeverlauf</h2>
-        <div id="history-list" class="history-list" aria-live="polite"></div>
-        <div class="modal-buttons modal-buttons--full">
-          <button class="modal-btn modal-btn-ghost" id="history-clear-btn" data-i18n="history.clear">
-            Verlauf löschen
-          </button>
-          <button class="modal-btn" id="history-close-btn" data-i18n="about.close">Schließen</button>
-        </div>
-      </div>
+<!-- ── Track History Modal Overlay ─────────────── -->
+<div
+  id="history-modal"
+  class="modal-overlay hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="history-modal-title"
+>
+  <div class="modal-content history-modal">
+    <h2 class="modal-title" id="history-modal-title" data-i18n="history.title">Wiedergabeverlauf</h2>
+    <div id="history-list" class="history-list" aria-live="polite"></div>
+    <div class="modal-buttons modal-buttons--full">
+      <button class="modal-btn modal-btn-ghost" id="history-clear-btn" data-i18n="history.clear">
+        Verlauf löschen
+      </button>
+      <button class="modal-btn" id="history-close-btn" data-i18n="about.close">Schließen</button>
     </div>
+  </div>
+</div>
 
-    <!-- ── Listening Stats Modal Overlay ────────────── -->
-    <div
-      id="stats-modal"
-      class="modal-overlay hidden"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="stats-modal-title"
-    >
-      <div class="modal-content history-modal">
-        <h2 class="modal-title" id="stats-modal-title" data-i18n="stats.title">Hörstatistik</h2>
-        <div class="stats-overall" id="stats-overall"></div>
-        <div id="stats-list" class="history-list" aria-live="polite"></div>
-        <div class="modal-buttons modal-buttons--full">
-          <button class="modal-btn" id="stats-close-btn" data-i18n="about.close">Schließen</button>
-        </div>
-      </div>
+<!-- ── Listening Stats Modal Overlay ────────────── -->
+<div
+  id="stats-modal"
+  class="modal-overlay hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="stats-modal-title"
+>
+  <div class="modal-content history-modal">
+    <h2 class="modal-title" id="stats-modal-title" data-i18n="stats.title">Hörstatistik</h2>
+    <div class="stats-overall" id="stats-overall"></div>
+    <div id="stats-list" class="history-list" aria-live="polite"></div>
+    <div class="modal-buttons modal-buttons--full">
+      <button class="modal-btn" id="stats-close-btn" data-i18n="about.close">Schließen</button>
     </div>
+  </div>
+</div>
 ```
 
 - [ ] **Step 3: Add CSS for the stats modal**
@@ -437,6 +445,7 @@ git commit -m "feat: add listening stats modal markup, styles, and i18n strings"
 ### Task 5: Wire up the stats modal in renderer.js
 
 **Files:**
+
 - Modify: `src/renderer.js`
 
 - [ ] **Step 1: Import `collectListenData` and expose `buildStatsList`/`formatListen`**
@@ -493,7 +502,6 @@ if (historyModalEl) {
 Immediately after that closing `}`, insert:
 
 ```js
-
 // ── Listening Stats ──────────────────────────────
 function renderStatsList() {
   const list = document.getElementById('stats-list');
@@ -517,7 +525,9 @@ function renderStatsList() {
     const time = document.createElement('div');
     time.className = 'stats-time';
     time.textContent =
-      s.today > 0 ? `${formatListen(s.total)} · ${t('stats.today', formatListen(s.today))}` : formatListen(s.total);
+      s.today > 0
+        ? `${formatListen(s.total)} · ${t('stats.today', formatListen(s.today))}`
+        : formatListen(s.total);
     item.appendChild(name);
     item.appendChild(time);
     list.appendChild(item);
@@ -569,6 +579,7 @@ git commit -m "feat: wire up listening stats modal open/close/render"
 ### Task 6: Add E2E test for the stats modal
 
 **Files:**
+
 - Modify: `scripts/e2e/app.spec.js`
 
 - [ ] **Step 1: Add the test**
@@ -640,6 +651,7 @@ Expected: `14 passed`.
 - [ ] **Step 3: Visual check (required per this project's established practice — see the "Visuelles Gegenlesen bei UI-Features" memory note)**
 
 Start the app (`npm start` or via the project's preview tooling), open Settings, click "Statistik anzeigen", and take a screenshot or otherwise visually confirm:
+
 - The modal fits fully within the 460×520 window (no clipped rows or buttons).
 - The station name doesn't overlap the time column when a long station name is present.
 - The empty state renders sensibly if no station has any listen time yet (e.g. on a fresh profile).

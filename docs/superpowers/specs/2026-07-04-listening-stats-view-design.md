@@ -21,7 +21,12 @@ Eine neue, rein lesende Statistik-Ansicht zeigt, welche Sender wie lange gehört
 function buildStatsList(stations, listenData) {
   // listenData: { [stationId]: { total: number, today: number } } in ms
   return stations
-    .map((s) => ({ id: s.id, name: s.name, total: listenData[s.id]?.total ?? 0, today: listenData[s.id]?.today ?? 0 }))
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      total: listenData[s.id]?.total ?? 0,
+      today: listenData[s.id]?.today ?? 0,
+    }))
     .filter((s) => s.total > 0)
     .sort((a, b) => b.total - a.total);
 }
