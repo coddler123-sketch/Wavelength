@@ -77,7 +77,8 @@ Current status after project review: the core app is implemented and tests pass.
 - [x] Auto-update — already implemented (electron-updater with autoDownload + quitAndInstall)
 - [x] Automated station health check — weekly CI job (station-health.yml + npm run stations:health)
 - [x] E2E test for EQ persistence — already implemented (equalizer popover e2e suite)
-- [ ] Reduce installer size — assets are bundled twice (asar via `files` + `extraResources`);
-      unifying to one location needs a careful path refactor in stations.js/main.js
+- [x] Reduce installer size — removed `extraResources` duplication; `getIconPath()` now
+      reads icons straight from the asar like `stations.json` already did (Electron's
+      `nativeImage`/`BrowserWindow`/`Notification` icon options support asar paths natively)
 - [x] Crash reporting — covered: uncaughtException/unhandledRejection already logged to app.log
       (visible via support log)

@@ -196,9 +196,7 @@ const SIZES = {
 };
 
 function getIconPath(name) {
-  return app.isPackaged
-    ? path.join(process.resourcesPath, 'assets', name)
-    : path.join(__dirname, '..', 'assets', name);
+  return path.join(__dirname, '..', 'assets', name);
 }
 
 function getFallbackTrayIcon() {

@@ -64,12 +64,6 @@
       "src/**/*",
       "assets/**/*"
     ],
-    "extraResources": [
-      {
-        "from": "assets/",
-        "to": "assets/"
-      }
-    ],
     "publish": {
       "provider": "github",
       "owner": "coddler123-sketch",
