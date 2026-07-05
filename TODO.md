@@ -49,3 +49,33 @@ Current status after project review: the core app is implemented and tests pass.
 - [x] Visualizer overhaul — 16 modes, removed weak modes, fixed Flexi/Unchained/Mandala
 - [x] Tray icon wave shape matches app logo
 - [x] Mini-mode fade transition
+
+## Ideas / Backlog (2026-07-05)
+
+### Features (user-facing)
+
+- [ ] Sleep timer fade-out — fade volume down at timer end instead of hard stop
+- [ ] Favorites — mark stations as favorite, pinned to top of the station list
+- [ ] Keyboard shortcut for EQ — e.g. `E` toggles the EQ popover
+- [ ] Remember last station — auto-select the last played station on startup (verify current behavior)
+- [ ] Show stream quality — display bitrate from ICY metadata in the UI
+- [ ] Search/filter box for the station list
+- [ ] Recording — save the current stream to an MP3 file (check legal note in README)
+- [ ] Global media hotkeys — play/pause via keyboard even when the app is not focused
+- [ ] Notifications on song change (optional, off by default)
+
+### UX / polish
+
+- [ ] EQ presets — a few built-in presets in the EQ popover (Rock, Pop, Bass Boost, Flat)
+- [ ] Volume persistence — restore volume across sessions (verify current behavior)
+- [ ] Tray menu shows metadata — currently playing song visible in the tray context menu
+- [ ] Dark/light theme toggle or follow Windows theme
+- [ ] Onboarding polish — short tooltip tour for EQ, stats, and mini mode
+
+### Technical
+
+- [ ] Auto-update — wire up electron-updater end-to-end (latest.yml is already uploaded to releases)
+- [ ] Automated station health check — periodically verify stream URLs (e.g. weekly CI job)
+- [ ] E2E test for EQ persistence across app restart
+- [ ] Reduce installer size — audit electron-builder file includes
+- [ ] Crash reporting — local crash log summary in the support log
