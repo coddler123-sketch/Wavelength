@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.1
+
+- fix: fill player logo like station list icons instead of letterboxing
+
 ## 1.11.0
 
 - feat: add auto-update toggle setting and 4 new EQ presets
