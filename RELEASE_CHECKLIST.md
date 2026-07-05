@@ -14,7 +14,7 @@ Use this checklist for a Windows control release after `npm.cmd run verify` is g
 
 - [ ] Ask before building.
 - [ ] Run `npm.cmd run build` only after build approval.
-- [ ] Confirm `dist/Wavelength Setup <version>.exe` exists.
+- [ ] Confirm `dist/Wavelength-Setup-<version>.exe` exists.
 - [ ] Confirm the installer is unsigned by design.
 
 ## Installer Smoke Test

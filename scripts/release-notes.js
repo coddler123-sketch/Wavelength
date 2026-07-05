@@ -32,7 +32,7 @@ function main(argv = process.argv.slice(2)) {
   }
 
   const assets = [
-    path.join(root, 'dist', `Wavelength Setup ${pkg.version}.exe`),
+    path.join(root, 'dist', `Wavelength-Setup-${pkg.version}.exe`),
     path.join(root, 'dist', `Wavelength-${pkg.version}-portable.exe`),
   ].filter((asset) => fs.existsSync(asset));
 

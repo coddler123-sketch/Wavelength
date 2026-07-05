@@ -1455,7 +1455,7 @@ test('Release Notes: extrahiert nur den Abschnitt der aktuellen Version', () => 
 });
 
 test('GitHub Release: Build-Artefakte bleiben einzelne Argumente', () => {
-  const installer = path.join('dist', 'Wavelength Setup 2.0.0.exe');
+  const installer = path.join('dist', 'Wavelength-Setup-2.0.0.exe');
   const portable = path.join('dist', 'Wavelength-2.0.0-portable.exe');
   const args = githubReleaseArgs('2.0.0', '- Neu', [installer, portable]);
 

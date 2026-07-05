@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 if (-not $InstallerPath) {
   $version = (Get-Content -Raw (Join-Path $root 'package.json') | ConvertFrom-Json).version
-  $InstallerPath = Join-Path $root "dist\Wavelength Setup $version.exe"
+  $InstallerPath = Join-Path $root "dist\Wavelength-Setup-$version.exe"
 }
 
 $InstallerPath = (Resolve-Path -LiteralPath $InstallerPath).Path

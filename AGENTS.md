@@ -167,7 +167,7 @@ Use `RELEASE_CHECKLIST.md` for manual Windows release checks after `npm.cmd run 
 npm.cmd run build
 ```
 
-Output: `dist/Wavelength Setup <version>.exe` (NSIS installer for x64 Windows)
+Output: `dist/Wavelength-Setup-<version>.exe` (NSIS installer for x64 Windows)
 
 **Build config** (`package.json` > `.build`):
 

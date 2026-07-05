@@ -54,7 +54,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "artifactName": "Wavelength-Setup-${version}.${ext}"
     },
     "portable": {
       "artifactName": "Wavelength-${version}-portable.exe"

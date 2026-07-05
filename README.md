@@ -30,7 +30,7 @@ npm.cmd run verify
 npm.cmd run build
 ```
 
-The NSIS installer is written to `dist/Wavelength Setup <version>.exe`.
+The NSIS installer is written to `dist/Wavelength-Setup-<version>.exe`.
 
 For release validation, use `RELEASE_CHECKLIST.md` after `verify` is green.
 
