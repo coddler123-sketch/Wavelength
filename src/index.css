@@ -101,7 +101,7 @@
   border-radius: 4px;
 }
 .history-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(94, 232, 239, 0.22);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .stats-overall {
@@ -592,7 +592,7 @@ body.mini-mode #mini-view {
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 5.5%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 13%, transparent);
-  color: rgba(180, 246, 250, 0.76);
+  color: color-mix(in srgb, var(--accent) 38%, var(--text));
   font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
@@ -624,7 +624,7 @@ body.sleep-active .listen-badge {
   gap: 5px;
   background: color-mix(in srgb, var(--accent) 7%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent);
-  color: rgba(180, 246, 250, 0.82);
+  color: color-mix(in srgb, var(--accent) 42%, var(--text));
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -807,8 +807,8 @@ body.muted-state .live-wave span {
     box-shadow 0.15s;
 }
 #station-search:focus {
-  border-color: rgba(52, 214, 208, 0.34);
-  box-shadow: 0 0 0 2px rgba(94, 232, 239, 0.08);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 .station-list {
   flex: 1;
@@ -840,11 +840,11 @@ body.muted-state .live-wave span {
 }
 .filter-row select:focus,
 .filter-row select:hover {
-  border-color: rgba(94, 232, 239, 0.24);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--text);
 }
 .filter-row select option {
-  background: #10171d;
+  background: var(--surface);
   color: var(--text);
 }
 .station-list::-webkit-scrollbar {
@@ -858,7 +858,7 @@ body.muted-state .live-wave span {
   border-radius: 4px;
 }
 .station-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(94, 232, 239, 0.22);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 .station-item {
   display: flex;
@@ -878,14 +878,14 @@ body.muted-state .live-wave span {
   background: rgba(240, 236, 228, 0.04);
 }
 .station-item.active {
-  background: rgba(47, 125, 246, 0.095);
-  border-left-color: rgba(94, 232, 239, 0.7);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border-left-color: color-mix(in srgb, var(--accent) 70%, transparent);
 }
 .station-icon {
   width: 26px;
   height: 26px;
   border-radius: 4px;
-  background: #07090d;
+  background: var(--bg);
   border: 1px solid rgba(255, 255, 255, 0.08);
   object-fit: cover;
   flex-shrink: 0;
@@ -914,13 +914,13 @@ body.muted-state .live-wave span {
   padding: 0px 4px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.03);
-  color: rgba(240, 236, 228, 0.36);
+  color: rgba(240, 236, 228, 0.5);
   text-transform: uppercase;
   font-weight: 700;
 }
 .station-item.active .station-tag {
-  background: rgba(94, 232, 239, 0.065);
-  color: rgba(180, 246, 250, 0.62);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: color-mix(in srgb, var(--accent) 45%, var(--text));
 }
 .station-group-header {
   font-size: 8.5px;
@@ -941,7 +941,7 @@ body.muted-state .live-wave span {
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.04);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.07), transparent);
 }
 .station-group-header.fav-header {
   color: rgba(255, 183, 0, 0.8);
@@ -1192,7 +1192,7 @@ body.muted-state .live-wave span {
   margin-left: 8px;
   background: color-mix(in srgb, var(--accent) 18%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  color: #5ee8ef;
+  color: color-mix(in srgb, var(--accent) 55%, white);
   font: inherit;
   font-size: 10px;
   font-weight: 700;
@@ -1453,7 +1453,7 @@ input[type='range']:active::-webkit-slider-thumb {
 .action-btn.pin-active {
   background: color-mix(in srgb, var(--accent) 7.5%, transparent);
   border-color: color-mix(in srgb, var(--accent) 18%, transparent);
-  color: rgba(180, 246, 250, 0.82);
+  color: color-mix(in srgb, var(--accent) 42%, var(--text));
 }
 .action-btn.pin-active svg {
   opacity: 1;
@@ -1474,7 +1474,8 @@ input[type='range']:active::-webkit-slider-thumb {
   flex: 1;
   background:
     radial-gradient(circle at 16% 50%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 45%),
-    linear-gradient(180deg, #10171d, #07090d);
+    linear-gradient(180deg, var(--surface), var(--bg));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
   -webkit-app-region: drag;
 }
 .mini-logo {
@@ -1581,8 +1582,12 @@ input[type='range']:active::-webkit-slider-thumb {
   margin: 0;
   padding: 0;
   border-radius: 2px;
-  background: transparent;
-  background-image: none;
+  background: linear-gradient(
+    to right,
+    var(--accent2) 0%,
+    var(--accent2) var(--vol-fill, 0%),
+    rgba(255, 255, 255, 0.09) var(--vol-fill, 0%)
+  );
 }
 .mini-vol-strip input[type='range']::-webkit-slider-thumb {
   width: 10px;
@@ -1595,13 +1600,24 @@ input[type='range']:active::-webkit-slider-thumb {
 }
 
 /* â”€â”€ Visualizer Context Menu â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 .context-menu {
   position: absolute;
   background: rgba(16, 19, 29, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: popover-in 0.14s ease-out;
   box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.58),
-    0 0 12px rgba(94, 232, 239, 0.08);
+    0 0 12px color-mix(in srgb, var(--accent) 10%, transparent);
   border-radius: 8px;
   padding: 5px 0;
   z-index: 1000;
@@ -1620,11 +1636,11 @@ input[type='range']:active::-webkit-slider-thumb {
   border-radius: 4px;
 }
 .context-menu::-webkit-scrollbar-thumb {
-  background: rgba(47, 125, 246, 0.32);
+  background: color-mix(in srgb, var(--accent) 32%, transparent);
   border-radius: 4px;
 }
 .context-menu::-webkit-scrollbar-thumb:hover {
-  background: rgba(94, 232, 239, 0.46);
+  background: color-mix(in srgb, var(--accent) 48%, transparent);
 }
 .context-menu-title {
   padding: 5px 12px;
@@ -1648,8 +1664,8 @@ input[type='range']:active::-webkit-slider-thumb {
   align-items: center;
 }
 .context-menu-item:hover {
-  background: rgba(47, 125, 246, 0.82);
-  color: #fff;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--text);
 }
 .context-menu-item.active {
   color: var(--accent);
@@ -1661,10 +1677,10 @@ input[type='range']:active::-webkit-slider-thumb {
   color: var(--accent);
 }
 .context-menu-item.active:hover {
-  color: #fff;
+  color: var(--accent);
 }
 .context-menu-item.active:hover::after {
-  color: #fff;
+  color: var(--accent);
 }
 
 /* ── Equalizer Popover ────────────────────────────── */
@@ -1672,9 +1688,10 @@ input[type='range']:active::-webkit-slider-thumb {
   position: absolute;
   background: rgba(16, 19, 29, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  animation: popover-in 0.14s ease-out;
   box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.58),
-    0 0 12px rgba(94, 232, 239, 0.08);
+    0 0 12px color-mix(in srgb, var(--accent) 10%, transparent);
   border-radius: 10px;
   padding: 12px 14px;
   width: 220px;
@@ -1720,11 +1737,13 @@ input[type='range']:active::-webkit-slider-thumb {
   cursor: pointer;
   transition:
     background 0.12s,
+    border-color 0.12s,
     color 0.12s;
 }
 .eq-preset-btn:hover {
-  background: rgba(47, 125, 246, 0.82);
-  color: #fff;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--text);
 }
 .eq-reset-btn {
   width: 100%;
@@ -1738,11 +1757,13 @@ input[type='range']:active::-webkit-slider-thumb {
   cursor: pointer;
   transition:
     background 0.12s,
+    border-color 0.12s,
     color 0.12s;
 }
 .eq-reset-btn:hover {
-  background: rgba(47, 125, 246, 0.82);
-  color: #fff;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--text);
 }
 
 /* â”€â”€ About Modal Overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -1759,15 +1780,15 @@ input[type='range']:active::-webkit-slider-thumb {
 }
 .modal-content {
   width: 290px;
-  background: #10171d;
-  border: 1px solid rgba(52, 214, 208, 0.16);
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
   border-radius: 12px;
   padding: 16px 20px;
   position: relative;
   text-align: center;
   box-shadow:
     0 12px 36px rgba(0, 0, 0, 0.75),
-    0 0 22px rgba(52, 214, 208, 0.08);
+    0 0 22px color-mix(in srgb, var(--accent) 10%, transparent);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1789,10 +1810,13 @@ input[type='range']:active::-webkit-slider-thumb {
   right: 10px;
   background: transparent;
   border: none;
+  border-radius: 6px;
   color: var(--text-dim);
   font-size: 18px;
   cursor: pointer;
-  transition: color 0.12s;
+  transition:
+    color 0.12s,
+    background 0.12s;
   width: 20px;
   height: 20px;
   display: flex;
@@ -1801,13 +1825,14 @@ input[type='range']:active::-webkit-slider-thumb {
 }
 .modal-close:hover {
   color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
 }
 .modal-logo-wrap {
   width: 44px;
   height: 44px;
   border-radius: 10px;
   background: #0b1117;
-  border: 1px solid rgba(52, 214, 208, 0.18);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1880,7 +1905,7 @@ input[type='range']:active::-webkit-slider-thumb {
 }
 .modal-info-label {
   color: var(--text-dim);
-  font-size: 8px;
+  font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-weight: 700;
@@ -1941,7 +1966,7 @@ input[type='range']:active::-webkit-slider-thumb {
 }
 .modal-btn.primary:hover {
   transform: translateY(-0.5px);
-  box-shadow: 0 6px 16px rgba(47, 125, 246, 0.26);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 .modal-btn-ghost {
   background: transparent;
@@ -2022,7 +2047,7 @@ input[type='range']:active::-webkit-slider-thumb {
   opacity: 1;
 }
 .station-edit-btn:hover {
-  color: rgba(180, 246, 250, 0.9);
+  color: color-mix(in srgb, var(--accent) 45%, var(--text));
   background: rgba(255, 255, 255, 0.07);
 }
 .station-delete-btn:hover {
@@ -2176,12 +2201,12 @@ body.view-list-active .track-info-container {
 }
 .fav-toggle-btn:hover {
   border-color: color-mix(in srgb, var(--accent) 22%, transparent);
-  color: rgba(180, 246, 250, 0.84);
+  color: color-mix(in srgb, var(--accent) 42%, var(--text));
 }
 .fav-toggle-btn.active {
-  background: rgba(94, 232, 239, 0.085);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
   border-color: color-mix(in srgb, var(--accent) 20%, transparent);
-  color: rgba(180, 246, 250, 0.88);
+  color: color-mix(in srgb, var(--accent) 42%, var(--text));
 }
 .fav-toggle-btn.active svg {
   fill: var(--accent);
@@ -2203,7 +2228,7 @@ body.view-list-active .track-info-container {
 }
 .add-station-btn:hover {
   border-color: color-mix(in srgb, var(--accent) 22%, transparent);
-  color: rgba(180, 246, 250, 0.84);
+  color: color-mix(in srgb, var(--accent) 42%, var(--text));
 }
 .recents-row {
   display: flex;
@@ -2226,7 +2251,7 @@ body.view-list-active .track-info-container {
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  background: #07090d;
+  background: var(--bg);
   border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   overflow: hidden;
@@ -2239,7 +2264,7 @@ body.view-list-active .track-info-container {
 .recent-item:hover {
   border-color: color-mix(in srgb, var(--accent) 28%, transparent);
   transform: scale(1.05);
-  box-shadow: 0 0 6px rgba(52, 214, 208, 0.16);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 .recent-item img {
   width: 100%;
@@ -2266,7 +2291,7 @@ body.view-list-active .track-info-container {
   border-radius: 4px;
   overflow: hidden;
   flex-shrink: 0;
-  background: #07090d;
+  background: var(--bg);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .station-icon-wrap img {
@@ -2374,7 +2399,7 @@ body.view-list-active .track-info-container {
   }
 }
 .station-item.active.highlighted {
-  background: rgba(47, 125, 246, 0.14);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   border-left-color: color-mix(in srgb, var(--accent) 78%, transparent);
 }
 .station-item.highlighted {
