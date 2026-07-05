@@ -1704,6 +1704,28 @@ input[type='range']:active::-webkit-slider-thumb {
   color: var(--text-dim);
   flex-shrink: 0;
 }
+.eq-presets {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.eq-preset-btn {
+  flex: 1;
+  padding: 4px 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 10px;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.eq-preset-btn:hover {
+  background: rgba(47, 125, 246, 0.82);
+  color: #fff;
+}
 .eq-reset-btn {
   width: 100%;
   margin-top: 4px;

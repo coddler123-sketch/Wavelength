@@ -272,6 +272,25 @@ export function stopPlay() {
   if (state.visualizer) state.visualizer.drawIdle();
 }
 
+// Sleep timer end: fade volume to zero over ~5s, then stop via main.
+const SLEEP_FADE_STEPS = 25;
+const SLEEP_FADE_STEP_MS = 200;
+
+export function sleepFadeOut() {
+  if (!state.playing) return;
+  const startVolume = audio.volume;
+  let step = 0;
+  const timer = setInterval(() => {
+    step++;
+    audio.volume = Math.max(0, startVolume * (1 - step / SLEEP_FADE_STEPS));
+    if (step >= SLEEP_FADE_STEPS || !state.playing) {
+      clearInterval(timer);
+      api.playPause(false);
+      audio.volume = startVolume;
+    }
+  }, SLEEP_FADE_STEP_MS);
+}
+
 // ── Audio Element Events ─────────────────────────
 audio.addEventListener('error', () => {
   if (!state.playing) return;

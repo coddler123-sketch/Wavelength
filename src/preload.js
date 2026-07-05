@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onSetMuted: (cb) => listen('set-muted', cb),
   onWindowVisible: (cb) => listen('window-visible', cb),
   onSleepUpdate: (cb) => listen('sleep-update', cb),
+  onSleepFade: (cb) => listen('sleep-fade', cb, () => cb()),
   onAppVersion: (cb) => listen('app-version', cb),
   onResetSettings: (cb) => listen('reset-settings', cb, () => cb()),
   onSystemIdle: (cb) => listen('system-idle', cb),

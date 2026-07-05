@@ -9,6 +9,7 @@
     "smoke": "node scripts/smoke-check.js",
     "ui:audit": "electron scripts/ui-audit.js",
     "stations:check": "node scripts/validate-stations.js",
+    "stations:health": "node scripts/check-streams.js",
     "lint": "eslint . --max-warnings 0",
     "format:check": "prettier --check . --end-of-line lf",
     "format:write": "prettier --write . --end-of-line lf",

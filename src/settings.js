@@ -5,6 +5,7 @@ export const DEFAULTS = {
   theme: 'nacht',
   autoplayOnStart: false,
   startMini: false,
+  trackNotify: false,
 };
 
 export function loadSettings() {

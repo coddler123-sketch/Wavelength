@@ -212,6 +212,18 @@
     return { title: track, artist: station };
   }
 
+  const EQ_PRESETS = {
+    flat: { bass: 0, mid: 0, treble: 0 },
+    rock: { bass: 5, mid: -2, treble: 4 },
+    pop: { bass: -1, mid: 3, treble: 2 },
+    bass: { bass: 7, mid: 0, treble: -1 },
+  };
+
+  function eqPresetGains(name) {
+    return EQ_PRESETS[name] ? { ...EQ_PRESETS[name] } : null;
+  }
+
+  exports.eqPresetGains = eqPresetGains;
   exports.formatListen = formatListen;
   exports.averageLevel = averageLevel;
   exports.trayState = trayState;

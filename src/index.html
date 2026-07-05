@@ -632,6 +632,12 @@
         />
         <span class="eq-val" id="eq-treble-val">0 dB</span>
       </div>
+      <div class="eq-presets">
+        <button class="eq-preset-btn" data-eq-preset="flat" data-i18n="eq.preset.flat">Neutral</button>
+        <button class="eq-preset-btn" data-eq-preset="rock">Rock</button>
+        <button class="eq-preset-btn" data-eq-preset="pop">Pop</button>
+        <button class="eq-preset-btn" data-eq-preset="bass" data-i18n="eq.preset.bass">Bass</button>
+      </div>
       <button id="eq-reset" class="eq-reset-btn" data-i18n="eq.reset">Zurücksetzen</button>
     </div>
 
@@ -947,6 +953,10 @@
             <label class="settings-check-row">
               <input type="checkbox" id="setting-autostart" />
               <span data-i18n="settings.autostart">Mit Windows starten</span>
+            </label>
+            <label class="settings-check-row">
+              <input type="checkbox" id="setting-tracknotify" />
+              <span data-i18n="settings.trackNotify">Benachrichtigung bei Songwechsel</span>
             </label>
           </div>
 

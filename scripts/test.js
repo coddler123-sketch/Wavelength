@@ -6,7 +6,14 @@ const os = require('os');
 const vm = require('vm');
 const http = require('http');
 
-const { formatListen, averageLevel, trayState, fakeBar, mediaSessionFields } = require('../src/utils.js');
+const {
+  formatListen,
+  averageLevel,
+  trayState,
+  fakeBar,
+  mediaSessionFields,
+  eqPresetGains,
+} = require('../src/utils.js');
 const { createIcyMetadataClient } = require('../src/icy-metadata-client.js');
 const {
   buildTrayStationMenuItems,
@@ -108,6 +115,31 @@ test('fakeBar: Bell-Kurve — Mitte höher als Rand bei t=0', () => {
 });
 test('fakeBar: Randbalken = 0 (shape ist 0 am Rand)', () => {
   assert.equal(fakeBar(99, 0, 44), 0);
+});
+
+test('eqPresetGains: flat liefert 0/0/0', () => {
+  assert.deepEqual(eqPresetGains('flat'), { bass: 0, mid: 0, treble: 0 });
+});
+test('eqPresetGains: bass hebt Bass an', () => {
+  const g = eqPresetGains('bass');
+  assert.ok(g.bass > 0);
+  assert.ok(g.bass <= 15 && g.mid >= -15 && g.treble >= -15);
+});
+test('eqPresetGains: alle Presets innerhalb ±15 dB', () => {
+  for (const name of ['flat', 'rock', 'pop', 'bass']) {
+    const g = eqPresetGains(name);
+    for (const v of [g.bass, g.mid, g.treble]) {
+      assert.ok(v >= -15 && v <= 15, `${name} out of range`);
+    }
+  }
+});
+test('eqPresetGains: unbekanntes Preset liefert null', () => {
+  assert.equal(eqPresetGains('nope'), null);
+});
+test('eqPresetGains: liefert Kopie, keine Referenz', () => {
+  const a = eqPresetGains('rock');
+  a.bass = 99;
+  assert.notEqual(eqPresetGains('rock').bass, 99);
 });
 
 test('mediaSessionFields: Stationsname wenn keine Trackinfo vorhanden ist', () => {

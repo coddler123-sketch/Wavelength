@@ -39,6 +39,7 @@ import {
   startPlay,
   stopPlay,
   updateMediaSession,
+  sleepFadeOut,
 } from './renderer-audio.js';
 import {
   renderStations,
@@ -282,6 +283,16 @@ if (eqBtn && eqPopover) {
     resetEq();
     refreshEqSliders();
   });
+  for (const btn of eqPopover.querySelectorAll('.eq-preset-btn')) {
+    btn.addEventListener('click', () => {
+      const gains = window.utils.eqPresetGains(btn.dataset.eqPreset);
+      if (!gains) return;
+      setEqBand('bass', gains.bass);
+      setEqBand('mid', gains.mid);
+      setEqBand('treble', gains.treble);
+      refreshEqSliders();
+    });
+  }
 }
 
 // ── Double Click Drag Areas ──────────────────────
@@ -457,6 +468,7 @@ api.onSetMini((on) => {
 });
 api.onSetMuted(setMuted);
 api.onSleepUpdate(setSleepEndsAt);
+api.onSleepFade(sleepFadeOut);
 api.onAppVersion(setAppVersion);
 api.onResetSettings(resetLocalSettings);
 api.onSystemIdle((isIdle) => {
@@ -474,10 +486,23 @@ api.onSetStation((station) => {
     selectStation(station, { syncMain: false, startWhenStopped: false });
   }
 });
+let lastNotifiedTrack = '';
 api.onTrackInfo((title) => {
   displayTrackInfo(title);
   recordTrackHistory(title);
   updateMediaSession(state.playing);
+  const track = String(title || '').trim();
+  if (
+    track &&
+    track !== lastNotifiedTrack &&
+    state.playing &&
+    loadSettings().trackNotify &&
+    typeof Notification !== 'undefined' &&
+    Notification.permission === 'granted'
+  ) {
+    lastNotifiedTrack = track;
+    new Notification(state.activeStation?.name || 'Wavelength', { body: track, silent: true });
+  }
 });
 
 // ── Drag to Scroll ───────────────────────────────
@@ -805,6 +830,7 @@ function showSettingsModal() {
   highlightPicker('lang-picker', s.lang, 'data-lang');
   document.getElementById('setting-autoplay').checked = s.autoplayOnStart;
   document.getElementById('setting-startmini').checked = s.startMini;
+  document.getElementById('setting-tracknotify').checked = s.trackNotify;
 
   api.getAutostart().then((on) => {
     document.getElementById('setting-autostart').checked = Boolean(on);
@@ -820,8 +846,9 @@ async function saveAndClose() {
   const autoplayOn = document.getElementById('setting-autoplay').checked;
   const startMini = document.getElementById('setting-startmini').checked;
   const autostartOn = document.getElementById('setting-autostart').checked;
+  const trackNotify = document.getElementById('setting-tracknotify').checked;
 
-  saveSettings({ lang, autoplayOnStart: autoplayOn, startMini });
+  saveSettings({ lang, autoplayOnStart: autoplayOn, startMini, trackNotify });
   setLang(lang);
   api.setLang(lang);
   applyI18n();

@@ -120,7 +120,13 @@ function setSleepTimer(minutes) {
       sleepTickTimer = null;
     }
     sleepEndsAt = 0;
-    if (isPlaying) togglePlay();
+    if (isPlaying) {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('sleep-fade');
+      } else {
+        togglePlay(false);
+      }
+    }
     updateTrayMenu();
     updateTrayTooltip();
     sendSleepToRenderer();
