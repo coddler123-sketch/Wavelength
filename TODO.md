@@ -60,7 +60,6 @@ Current status after project review: the core app is implemented and tests pass.
 - [x] Remember last station — already implemented (wl.lastStationId)
 - [x] Show stream quality — already implemented (bitrate in station tooltip + bitrate filter)
 - [x] Search/filter box for the station list — already implemented (search + genre/lang/bitrate filters)
-- [ ] Recording — save the current stream to an MP3 file (legal note needed; discuss separately)
 - [x] Global media hotkeys — already implemented (MediaPlayPause etc. via globalShortcut)
 - [x] Notifications on song change (optional, off by default)
 
