@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   cacheIcon: (url) => ipcRenderer.invoke('cache-icon', url),
   getAutostart: () => ipcRenderer.invoke('get-autostart'),
   setAutostart: (on) => ipcRenderer.send('set-autostart', on),
+  getAutoUpdateEnabled: () => ipcRenderer.invoke('get-auto-update-enabled'),
+  setAutoUpdateEnabled: (on) => ipcRenderer.send('set-auto-update-enabled', on),
   setLang: (lang) => ipcRenderer.send('set-lang', lang),
 
   // Receive from main

@@ -217,6 +217,10 @@
     rock: { bass: 5, mid: -2, treble: 4 },
     pop: { bass: -1, mid: 3, treble: 2 },
     bass: { bass: 7, mid: 0, treble: -1 },
+    vocal: { bass: -3, mid: 6, treble: 2 },
+    electronic: { bass: 6, mid: -3, treble: 5 },
+    jazz: { bass: 3, mid: 1, treble: 2 },
+    classical: { bass: -2, mid: 0, treble: 3 },
   };
 
   function eqPresetGains(name) {

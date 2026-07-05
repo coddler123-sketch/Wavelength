@@ -52,6 +52,7 @@ const APP_VERSION = app.getVersion();
 const APP_USER_AGENT = `WavelengthRadioPlayer/${APP_VERSION} (Windows Electron App)`;
 const FIRST_RUN_FILE = path.join(app.getPath('userData'), 'first-run-seen');
 const LOG_FILE = path.join(app.getPath('userData'), 'logs', 'app.log');
+const AUTO_UPDATE_DISABLED_FILE = path.join(app.getPath('userData'), 'auto-update-disabled');
 
 let allStations = [];
 let activeStation = null;
@@ -613,6 +614,22 @@ function findMisnamedAutostartEntries() {
   }
 }
 
+function getAutoUpdateEnabled() {
+  return !fs.existsSync(AUTO_UPDATE_DISABLED_FILE);
+}
+
+function setAutoUpdateEnabled(enable) {
+  try {
+    if (enable) {
+      if (fs.existsSync(AUTO_UPDATE_DISABLED_FILE)) fs.unlinkSync(AUTO_UPDATE_DISABLED_FILE);
+    } else {
+      fs.writeFileSync(AUTO_UPDATE_DISABLED_FILE, String(Date.now()));
+    }
+  } catch (err) {
+    log('auto-update-toggle-error', err.message);
+  }
+}
+
 function getAutostart() {
   if (app.getLoginItemSettings({ args: ['--hidden'] }).openAtLogin) return true;
   // Also check for misnamed entries (e.g. 'electron.app.Wavelength') that Electron's API misses
@@ -806,6 +823,9 @@ ipcMain.handle('get-autostart', () => getAutostart());
 ipcMain.on('set-autostart', (e, enable) => {
   if (Boolean(enable) !== getAutostart()) toggleAutostart();
 });
+
+ipcMain.handle('get-auto-update-enabled', () => getAutoUpdateEnabled());
+ipcMain.on('set-auto-update-enabled', (e, enable) => setAutoUpdateEnabled(Boolean(enable)));
 
 ipcMain.on('set-lang', (e, lang) => {
   setTrayLang(lang);
@@ -1054,7 +1074,7 @@ app.whenReady().then(async () => {
 
   setInterval(checkSystemIdle, 30_000);
 
-  if (app.isPackaged) {
+  if (app.isPackaged && getAutoUpdateEnabled()) {
     autoUpdater.logger = { info: log, warn: log, error: log, debug: () => {} };
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;

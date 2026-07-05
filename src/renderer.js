@@ -835,6 +835,9 @@ function showSettingsModal() {
   api.getAutostart().then((on) => {
     document.getElementById('setting-autostart').checked = Boolean(on);
   });
+  api.getAutoUpdateEnabled().then((on) => {
+    document.getElementById('setting-autoupdate').checked = Boolean(on);
+  });
 
   modal.classList.remove('hidden');
   modal.removeAttribute('aria-hidden');
@@ -847,6 +850,7 @@ async function saveAndClose() {
   const startMini = document.getElementById('setting-startmini').checked;
   const autostartOn = document.getElementById('setting-autostart').checked;
   const trackNotify = document.getElementById('setting-tracknotify').checked;
+  const autoUpdateOn = document.getElementById('setting-autoupdate').checked;
 
   saveSettings({ lang, autoplayOnStart: autoplayOn, startMini, trackNotify });
   setLang(lang);
@@ -863,6 +867,7 @@ async function saveAndClose() {
       `${displayGenre(state.activeStation.genre)} · ${state.activeStation.country}${gainStr}`;
   }
   api.setAutostart(autostartOn);
+  api.setAutoUpdateEnabled(autoUpdateOn);
 
   document.getElementById('settings-modal')?.classList.add('hidden');
 }

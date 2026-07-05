@@ -1706,11 +1706,12 @@ input[type='range']:active::-webkit-slider-thumb {
 }
 .eq-presets {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   margin-top: 6px;
 }
 .eq-preset-btn {
-  flex: 1;
+  flex: 1 1 calc(25% - 3px);
   padding: 4px 0;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.12);
