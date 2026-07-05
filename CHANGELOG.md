@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.12.0
+
+- feat(eq): highlight active preset in equalizer popover
+- refactor(ui): theme-aware accent refinement pass
+- docs: drop Recording idea from backlog
+- perf: stop double-bundling assets via extraResources
+- feat: publish GitHub release automatically at the end of npm run release
+
 ## 1.11.1
 
 - fix: fill player logo like station list icons instead of letterboxing
