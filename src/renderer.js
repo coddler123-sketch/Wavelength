@@ -229,6 +229,20 @@ function refreshEqSliders() {
     slider.value = String(state[dbKey]);
     val.textContent = `${state[dbKey]} dB`;
   }
+  refreshEqPresetHighlight();
+}
+
+function refreshEqPresetHighlight() {
+  if (!eqPopover) return;
+  for (const btn of eqPopover.querySelectorAll('.eq-preset-btn')) {
+    const gains = window.utils.eqPresetGains(btn.dataset.eqPreset);
+    const match =
+      gains &&
+      gains.bass === state.eqBassDb &&
+      gains.mid === state.eqMidDb &&
+      gains.treble === state.eqTrebleDb;
+    btn.classList.toggle('active', Boolean(match));
+  }
 }
 
 function openEqPopover() {
@@ -277,6 +291,7 @@ if (eqBtn && eqPopover) {
       const db = parseInt(slider.value, 10);
       setEqBand(band, db);
       if (val) val.textContent = `${db} dB`;
+      refreshEqPresetHighlight();
     });
   }
   safeAddListener('eq-reset', 'click', () => {
