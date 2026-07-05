@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.0
+
+- feat: sleep fade-out, EQ presets, song-change notifications, station health CI
+- docs: add ideas/backlog list to TODO
+
 ## 1.9.5
 
 - chore: add .gitattributes to enforce LF line endings on Windows CI
