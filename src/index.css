@@ -16,8 +16,7 @@
 
 /* Defaults for elements previously styled inline in HTML */
 #player-station-icon {
-  object-fit: contain;
-  padding: 3px;
+  object-fit: cover;
   display: block;
 }
 #mini-station-icon {
