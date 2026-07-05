@@ -31,13 +31,17 @@ function main(argv = process.argv.slice(2)) {
     return;
   }
 
-  const assets = [
+  const requiredAssets = [
     path.join(root, 'dist', `Wavelength-Setup-${pkg.version}.exe`),
+    path.join(root, 'dist', `Wavelength-Setup-${pkg.version}.exe.blockmap`),
+    path.join(root, 'dist', 'latest.yml'),
     path.join(root, 'dist', `Wavelength-${pkg.version}-portable.exe`),
-  ].filter((asset) => fs.existsSync(asset));
+  ];
+  const assets = requiredAssets.filter((asset) => fs.existsSync(asset));
 
-  if (assets.length !== 2) {
-    throw new Error('Release requires both installer and portable build artifacts in dist/.');
+  if (assets.length !== requiredAssets.length) {
+    const missing = requiredAssets.filter((asset) => !fs.existsSync(asset));
+    throw new Error(`Release is missing build artifacts in dist/: ${missing.join(', ')}`);
   }
 
   execFileSync('gh', githubReleaseArgs(pkg.version, notes, assets), { stdio: 'inherit' });

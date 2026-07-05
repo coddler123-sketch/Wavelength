@@ -82,4 +82,15 @@ run('git', ['commit', '-m', `chore: release ${tag}`]);
 run('git', ['tag', '-a', tag, '-m', `Wavelength ${tag}`]);
 run('git', ['push', '--atomic', 'origin', 'main', `refs/tags/${tag}`]);
 
-console.log(`\nDone! ${tag} built, tagged, and pushed.`);
+console.log('\nPublishing GitHub release...');
+try {
+  runNpm('release:gh');
+  console.log(`\nDone! ${tag} built, tagged, pushed, and published on GitHub.`);
+} catch (err) {
+  console.error(`\nGitHub release publish failed: ${err.message}`);
+  console.error(
+    `${tag} was built, tagged, and pushed, but is NOT published on GitHub yet — the auto-updater ` +
+      'will 404 until you publish it. Run manually:\n' +
+      `  npm run release:gh`
+  );
+}
