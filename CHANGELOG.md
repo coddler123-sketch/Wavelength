@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.11.0
+
+- feat: add auto-update toggle setting and 4 new EQ presets
+- fix: align NSIS installer filename with latest.yml to unblock auto-update
+- docs: add SIL OFL license texts for bundled Figtree and Syne fonts
+
 ## 1.10.0
 
 - feat: sleep fade-out, EQ presets, song-change notifications, station health CI
