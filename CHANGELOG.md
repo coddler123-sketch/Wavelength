@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.5
+
+- chore: add .gitattributes to enforce LF line endings on Windows CI
+- ci: upgrade Node.js from 20 to 22 to match local dev environment
+
 ## 1.9.4
 
 - chore: update version references to v1.9.3
